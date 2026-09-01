@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1021945501127",
+    "project_id": "foora-app",
+    "storage_bucket": "foora-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1021945501127:android:2cbea3f90b719047f8b5e2",
+        "android_client_info": {
+          "package_name": "com.foora.foora"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1021945501127-rgkuimjp4ip94ut1ro78d3vaktf9h9qs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6fv1layStE-kEe_m5jof5SUuRfKxsxQU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1021945501127-rgkuimjp4ip94ut1ro78d3vaktf9h9qs.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1021945501127-f6guj20obph09lup75shimqdpku1620f.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.foora.foora"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
