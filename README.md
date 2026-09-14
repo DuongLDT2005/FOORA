@@ -65,7 +65,15 @@ npm install
 cd ..
 ```
 
-### 3. Run Firebase Emulators
+### 3. Setup Environment Variables & Firebase
+
+1. Copy `.env.example.json` to `.env.json`:
+   ```bash
+   cp .env.example.json .env.json
+   ```
+2. Fill in your Firebase API keys into `.env.json` (or generate them via `flutterfire configure`).
+
+### 4. Run Firebase Emulators (Optional)
 
 For local development, start the Firebase Emulator Suite (Firestore, Auth, Functions, Storage):
 
@@ -75,23 +83,32 @@ firebase emulators:start
 
 > 💡 _Emulator UI dashboard will be available at `http://localhost:4000`._
 
-### 4. Run the Application
+### 5. Run & Build the Application
 
 Start your Android Emulator, connect a physical device, or run on Web:
 
 ```bash
-# Run with Local Firebase Emulators (Default Dev)
-flutter run
+# Run with Environment Variables (Default Dev with Emulators)
+flutter run --dart-define-from-file=.env.json
 
-# Run for Web (Admin with Local Emulators)
-flutter run -d chrome
+# Run for Web (Admin)
+flutter run -d chrome --dart-define-from-file=.env.json
 
-# Run with Production Environment (Connect to live Firebase Cloud by default)
-flutter run --dart-define=ENV=prod
+# Run with Production Environment (Connect to live Firebase Cloud)
+flutter run --dart-define-from-file=.env.json --dart-define=ENV=prod
 
 # Run Dev Environment with live Firebase Cloud (Explicitly disable emulators)
-flutter run --dart-define=USE_FIREBASE_EMULATOR=false
+flutter run --dart-define-from-file=.env.json --dart-define=USE_FIREBASE_EMULATOR=false
+
+# Build APK (Release)
+flutter build apk --release --dart-define-from-file=.env.json
+
+# Build App Bundle (for Google Play)
+flutter build appbundle --release --dart-define-from-file=.env.json
 ```
+
+> 💡 **VS Code tip**: You can directly press **F5** or use the Run & Debug panel, as `.vscode/launch.json` is pre-configured with `--dart-define-from-file=.env.json`.
+
 
 ---
 

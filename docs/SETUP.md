@@ -384,7 +384,18 @@ flutter clean
 Run application:
 
 ```bash
-flutter run
+# Run with Environment Variables
+flutter run --dart-define-from-file=.env.json
+```
+
+Build application:
+
+```bash
+# Build APK
+flutter build apk --release --dart-define-from-file=.env.json
+
+# Build App Bundle
+flutter build appbundle --release --dart-define-from-file=.env.json
 ```
 
 Firebase login:
@@ -406,12 +417,15 @@ firebase projects:list
 After cloning the project:
 
 ```bash
-
 flutter --version
 
 flutter doctor -v
 
 flutter pub get
+
+# Setup Environment Variables
+cp .env.example.json .env.json
+# (Edit .env.json with appropriate Firebase API keys)
 
 # Setup Cloud Functions dependencies
 cd functions && npm install && cd ..
@@ -425,9 +439,10 @@ firebase emulators:start
 # Seed Master Data (Categories, Foods, Shelf-life rules, Memberships)
 cd functions && npm run seed:emulator && cd ..
 
-# Run app (connected to Local Emulators)
+# Run app (connected to Local Emulators with environment variables)
 flutter devices
-flutter run --dart-define=USE_FIREBASE_EMULATOR=true
+flutter run --dart-define-from-file=.env.json --dart-define=USE_FIREBASE_EMULATOR=true
 ```
 
 If everything is configured correctly, FOORA should start on the Android Emulator with local backend services running.
+

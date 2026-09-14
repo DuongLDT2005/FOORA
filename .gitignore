@@ -49,6 +49,7 @@ app.*.map.json
 
 # Secrets and Environment Variables
 .env
+.env.json
 *.secret
 
 # Flutter legacy / temporary files
@@ -59,3 +60,6 @@ app.*.map.json
 .agents/
 .claude/
 skills-lock.json
+
+# Firebase Generated Options (Ignored to avoid secret detection)
+lib/firebase_options.dart
