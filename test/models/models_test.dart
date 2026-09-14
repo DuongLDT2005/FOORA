@@ -68,6 +68,8 @@ void main() {
         id: 'item-1',
         foodId: 'tomato',
         name: 'Cà chua Đà Lạt',
+        normalizedName: 'ca chua da lat',
+        categoryId: 'vegetables',
         quantity: 1.5,
         unit: 'kg',
         remainingPercentage: 80,
@@ -199,9 +201,11 @@ void main() {
       final item = ReceiptItemModel(
         id: 'item-1',
         rawName: 'THIT HEO XAY',
-        normalizedName: 'Thịt heo xay',
+        name: 'Thịt heo xay',
+        normalizedName: 'thit heo xay',
         quantity: 0.5,
         unit: 'kg',
+        estimatedExpirationDate: now.add(const Duration(days: 3)),
         confidence: 0.95,
       );
       expect(ReceiptItemModel.fromJson(item.toJson()).rawName, 'THIT HEO XAY');

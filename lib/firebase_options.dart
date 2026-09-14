@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1021945501127',
     projectId: 'foora-app',
     authDomain: 'foora-app.firebaseapp.com',
-    storageBucket: 'foora-app.firebasestorage.app',
+    // storageBucket: 'foora-app.firebasestorage.app',
     measurementId: 'G-LK3F2TNJNZ',
   );
 
@@ -61,14 +61,14 @@ class DefaultFirebaseOptions {
     appId: '1:1021945501127:android:2cbea3f90b719047f8b5e2',
     messagingSenderId: '1021945501127',
     projectId: 'foora-app',
-    storageBucket: 'foora-app.firebasestorage.app',
+    // storageBucket: 'foora-app.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBhvFO7RNQ_YxNXQQ9iRj_WF6ew8TSrTCU',
     appId: '1:1021945501127:ios:d43cff5a7282df38f8b5e2',
     messagingSenderId: '1021945501127',
     projectId: 'foora-app',
-    storageBucket: 'foora-app.firebasestorage.app',
+    // storageBucket: 'foora-app.firebasestorage.app',
     iosClientId: '1021945501127-f6guj20obph09lup75shimqdpku1620f.apps.googleusercontent.com',
     iosBundleId: 'com.foora.foora',
   );

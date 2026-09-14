@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
 
 class SegmentedItem<T> {
   final T value;
@@ -23,6 +25,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
   final Color selectedColor;
   final Color unselectedTextColor;
   final Color backgroundColor;
+  final TextStyle? textStyle;
 
   const AppSegmentedControl({
     super.key,
@@ -30,17 +33,18 @@ class AppSegmentedControl<T> extends StatelessWidget {
     required this.items,
     required this.onValueChanged,
     this.selectedColor = AppColors.primary,
-    this.unselectedTextColor = AppColors.slate600,
+    this.unselectedTextColor = AppColors.slate400,
     this.backgroundColor = AppColors.slate100,
+    this.textStyle,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: EdgeInsets.all(4.r),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
         children: items.map((item) {
@@ -52,16 +56,16 @@ class AppSegmentedControl<T> extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 10.h),
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                            blurRadius: 4.r,
+                            offset: Offset(0, 2.h),
                           ),
                         ]
                       : null,
@@ -72,38 +76,42 @@ class AppSegmentedControl<T> extends StatelessWidget {
                     if (item.icon != null) ...[
                       Icon(
                         item.icon,
-                        size: 16,
+                        size: 16.r,
                         color: isSelected ? selectedColor : unselectedTextColor,
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6.w),
                     ],
                     Text(
                       item.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: isSelected ? selectedColor : unselectedTextColor,
-                      ),
+                      style:
+                          (textStyle ??
+                                  AppTextStyles.headlineSmall.copyWith(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ))
+                              .copyWith(
+                                color: isSelected
+                                    ? selectedColor
+                                    : unselectedTextColor,
+                              ),
                     ),
                     if (item.badgeCount != null && item.badgeCount! > 0) ...[
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6.w),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 2.h,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? selectedColor.withValues(alpha: 0.1)
                               : AppColors.slate200,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Text(
                           '${item.badgeCount}',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 10.sp,
                             fontWeight: FontWeight.bold,
                             color: isSelected
                                 ? selectedColor

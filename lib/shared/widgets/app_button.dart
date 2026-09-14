@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -21,33 +22,16 @@ class PrimaryButton extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.slate100,
-          disabledForegroundColor: AppColors.slate400,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
         child: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
+            ? SizedBox(
+                width: 20.r,
+                height: 20.r,
+                child: const CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.white,
                 ),
               )
-            : Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            : Text(text),
       ),
     );
   }
@@ -64,23 +48,7 @@ class SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: AppColors.slate50,
-          foregroundColor: AppColors.slate800,
-          side: const BorderSide(color: AppColors.slate100),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-        ),
-      ),
+      child: OutlinedButton(onPressed: onPressed, child: Text(text)),
     );
   }
 }
@@ -105,12 +73,12 @@ class DangerButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: onPressed,
         icon: icon != null
-            ? Icon(icon, size: 20, color: AppColors.red500)
+            ? Icon(icon, size: 20.r, color: AppColors.red500)
             : const SizedBox.shrink(),
         label: Text(
           text,
-          style: const TextStyle(
-            fontSize: 15,
+          style: TextStyle(
+            fontSize: 15.sp,
             fontWeight: FontWeight.bold,
             color: AppColors.red500,
           ),
@@ -118,9 +86,9 @@ class DangerButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.red500.withValues(alpha: 0.05),
           side: BorderSide(color: AppColors.red500.withValues(alpha: 0.2)),
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: 16.h),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.r),
           ),
           elevation: 0,
         ),
@@ -140,7 +108,7 @@ class AppFloatingActionButton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.surface, width: 4),
+        border: Border.all(color: AppColors.surface, width: 4.r),
       ),
       child: FloatingActionButton(
         onPressed: onPressed,
@@ -148,7 +116,7 @@ class AppFloatingActionButton extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 6,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, size: 28),
+        child: Icon(Icons.add, size: 28.r),
       ),
     );
   }

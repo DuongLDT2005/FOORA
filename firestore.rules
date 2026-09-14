@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection & Subcollections
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      // Allow user creation by owner (or cloud function admin)
+      allow create: if isOwner(userId);
+      // User can update profile fields (e.g. fullName, avatarUrl), but cannot modify system-protected fields
+      allow update: if isOwner(userId)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'role',
+          'membershipId',
+          'isActive',
+          'activeHouseholdId'
+        ]));
+      allow delete: if false; // Users can only be deleted via Firebase Auth account deletion trigger
+
+      // Devices Subcollection: only device owner can register/update/delete their device
+      match /devices/{deviceId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Notifications Subcollection: user can read and update (mark as read)
+      match /notifications/{notificationId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Subscriptions Subcollection
+      match /subscriptions/{subscriptionId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Managed by Cloud Functions
+      }
+
+      // Receipts Subcollection
+      match /receipts/{receiptId} {
+        allow read, write: if isOwner(userId);
+
+        match /items/{itemId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+
+      // AI Usage Subcollection
+      match /ai_usage/{docId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Managed by Cloud Functions
+      }
+
+      // Payments Subcollection
+      match /payments/{paymentId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Managed by Cloud Functions
+      }
+    }
+
+    // Households collection & Subcollections
+    match /households/{householdId} {
+      allow read, write: if isAuthenticated() && request.auth.uid in resource.data.members;
+      allow create: if isAuthenticated();
+
+      match /inventory_items/{itemId} {
+        allow read, write: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.members;
+      }
+    }
+
+    // Master Data collections (Read-only for authenticated users)
+    match /memberships/{membershipId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin managed
+    }
+
+    match /foods/{foodId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /food_categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /storage_locations/{locationId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /shelf_life_rules/{ruleId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+  }
+}

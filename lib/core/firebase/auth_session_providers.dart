@@ -19,7 +19,8 @@ final currentUserDocStreamProvider =
         return firestore
             .collection(FirestoreConstants.users)
             .doc(user.uid)
-            .snapshots();
+            .snapshots()
+            .handleError((_) => null);
       });
     });
 

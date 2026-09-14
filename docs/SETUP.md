@@ -78,7 +78,7 @@ Android SDK Platform-Tools: 37.0.1
 
 ### Android Emulator
 
-Trong Android Studio:
+In Android Studio:
 
 ```bash
 Device Manager
@@ -89,7 +89,7 @@ Create Device
 Select:
 
 ```bash
-Medium Phone
+Pixel 6a
 ```
 
 Then, start the emulator.
@@ -421,6 +421,9 @@ firebase login
 
 # Run Firebase Emulators in background / separate terminal
 firebase emulators:start
+
+# Seed Master Data (Categories, Foods, Shelf-life rules, Memberships)
+cd functions && npm run seed:emulator && cd ..
 
 # Run app (connected to Local Emulators)
 flutter devices

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1021945501127-f6guj20obph09lup75shimqdpku1620f.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1021945501127-f6guj20obph09lup75shimqdpku1620f</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1021945501127-891us0vobe4pj54dl37vp4dl4a6d49vb.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBhvFO7RNQ_YxNXQQ9iRj_WF6ew8TSrTCU</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1021945501127</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.foora.foora</string>
+	<key>PROJECT_ID</key>
+	<string>foora-app</string>
+	<key>STORAGE_BUCKET</key>
+	<string>foora-app.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1021945501127:ios:d43cff5a7282df38f8b5e2</string>
+</dict>
+</plist>

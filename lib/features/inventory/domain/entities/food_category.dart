@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// Pure domain entity representing a category of food (e.g. Rau củ, Thịt, Hải sản).
+/// Pure domain entity representing a category of food (e.g. Vegetables, Meat, Seafood).
 /// Strictly mapped to food_categories/{categoryId} in docs/DATABASE.md
 @immutable
 class FoodCategory {
@@ -8,6 +8,7 @@ class FoodCategory {
   final String name;
   final String code;
   final String icon;
+  final Map<String, dynamic>? defaultShelfLife;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -17,6 +18,7 @@ class FoodCategory {
     required this.name,
     required this.code,
     required this.icon,
+    this.defaultShelfLife,
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,

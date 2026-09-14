@@ -20,6 +20,7 @@ Rules:
 - Do not invent new business requirements.
 - Do not change architecture without a reason.
 - If requirements are ambiguous, stop and ask or mark TODO.
+- All code comments (inline comments, docstrings, class/function annotations) MUST be written in English. Do not write Vietnamese comments in code.
 ```
 
 ---
@@ -95,6 +96,55 @@ Rules:
 - Pages must not call Firebase services directly.
 - Reusable widgets go to shared/.
 - Feature-specific widgets stay inside the feature.
+- Never hardcode raw Color(0x...) in UI/Widgets. Always use AppColors constants.
+- When converting React/Tailwind code (e.g. text-slate-400, bg-slate-100, border-slate-200, bg-emerald-100, bg-amber-50, text-amber-800), ALWAYS map directly to AppColors constants (AppColors.slate400, AppColors.slate100, AppColors.emerald100, AppColors.amber50, AppColors.amber800,...). Do not use default Tailwind colors.
+- Follow the Tailwind to Flutter Mobile Size Mapping Table below when converting web/React designs to ensure optimal mobile ergonomics and touch targets.
+- Mobile Form UX: Always wrap scrollable form bodies with a GestureDetector(behavior: HitTestBehavior.opaque) calling FocusScope.of(context).unfocus() and keyboardDismissBehavior: onDrag to ensure virtual keyboards and blinking cursors properly dismiss when tapping outside or scrolling.
+- Responsive UI Architecture: All UI components must adapt responsively across diverse phone screen densities, tablets, and web wrapper viewports using `flutter_screenutil` and `ContextExtensions`.
+```
+
+### Tailwind to Flutter Mobile Size Mapping
+
+| Tailwind Class | Original Web Size | Mobile Fixed Size |
+| :--- | :--- | :--- |
+| `text-[9px]` | 9px | `12px` |
+| `text-[10px]` | 10px | `13px` |
+| `text-xs` (`text-[12px]`) | 12px | `15px` |
+| `text-sm` (`text-[14px]`) | 14px | `16px` |
+| `text-base` (`text-[16px]`) | 16px | `17px` |
+| `text-lg` (`text-[18px]`) | 18px | `20px` |
+| `text-xl` (`text-[20px]`) | 20px | `24px` |
+| `text-2xl` (`text-[24px]`) | 24px | `28px` |
+| `text-3xl` (`text-[30px]`) | 30px | `34px` |
+| `py-2` / `py-2.5` | 8px / 10px | `vertical: 12` |
+| `py-3` / `py-3.5` | 12px / 14px | `vertical: 16` |
+| `h-10` / `h-11` / `h-12` | 40px / 44px / 48px | `height: 52` |
+
+### Responsive UI Standards & Guidelines
+
+```bash
+1. Base Design Frame:
+   - Initialized in main.dart: ScreenUtilInit(designSize: const Size(390, 844), minTextAdapt: true, splitScreenMode: true).
+   - Standard reference device: iPhone 13/14/15 viewport (390 x 844 pt).
+
+2. ScreenUtil Units Usage Rules:
+   - Widths, horizontal margins/paddings: Use `.w` (e.g., `16.w`, `SizedBox(width: 12.w)`).
+   - Heights, vertical margins/paddings: Use `.h` (e.g., `50.h`, `SizedBox(height: 16.h)`).
+   - Radius, avatars, square buttons, circular containers, icons: Use `.r` (e.g., `BorderRadius.circular(16.r)`, `width: 40.r, height: 40.r`, `Icon(..., size: 20.r)`).
+   - Font sizes: Use `.sp` (e.g., `fontSize: 14.sp`, `fontSize: 18.sp`).
+
+3. Responsive Breakpoints (from ContextExtensions):
+   - isMobile: screenWidth < 600 px.
+   - isTablet: screenWidth >= 600 px && screenWidth < 1024 px.
+   - isDesktop: screenWidth >= 1024 px.
+
+4. Tablet / Web Constrained Layout Pattern:
+   - Wide screens must NOT stretch phone forms or bottom sheets edge-to-edge.
+   - Subpages (SubpageLayout): Enclosed in `Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 600.w)))`.
+   - Bottom Action Bars (AppBottomBar): Enclosed in `Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 600.w)))`.
+   - Modal Bottom Sheets (AppBottomSheet, ScannedItemsBottomSheet): Constrained to `maxWidth: 520.w` and centered.
+   - Pop-up Dialogs (AppDialog): Constrained to `maxWidth: 420.w`.
+   - Floating Card Overlays: Constrained to `maxWidth: 440.w`.
 ```
 
 Bad:
@@ -964,7 +1014,10 @@ Always reuse the established shared infrastructure and components. Do not write 
 - **Form Inputs**: Use `AppTextField`, `AppDropdown`, and `AppPercentageSlider` from `lib/shared/widgets/app_text_field.dart`.
 - **Cards**: Use `FeatureCard` and `StatisticCard` from `lib/shared/widgets/app_card.dart` for generic banners/statistics. Food inventory item cards belong strictly to `lib/features/inventory/presentation/widgets/inventory_item_card.dart`.
 - **Badges & Avatars**: Use `StatusBadge` and `CategoryAvatar` from `lib/shared/widgets/status_badge.dart`.
-- **Headers & Modals**: Use `AppHeader`, `AppBottomSheet`, `StickyBottomActions`, and `AppToast` from `lib/shared/widgets/app_header.dart`.
+- **Headers**: Use `AppHeader` from `lib/shared/components/app_header.dart` (variants: `itemForm`, `notifications`, `profileDetail`, `membership`, `paymentHistory`).
+- **Bottom Action Bars**: Use `AppBottomBar` from `lib/shared/components/app_bottom_bar.dart` (variants: `form`, `membership`).
+- **Modals & Toasts**: Use `BottomSheetHelper.show` from `lib/shared/helpers/bottom_sheet_helper.dart` (wrapping `AppBottomSheet` from `lib/shared/components/app_bottom_sheet.dart`) and `ToastHelper.show` from `lib/shared/helpers/toast_helper.dart`.
+- **Dialogs**: Use `DialogHelper` from `lib/shared/helpers/dialog_helper.dart` (wrapping `AppDialog` from `lib/shared/components/app_dialog.dart`).
 - **State Views**: Use `LoadingWidget` / `AppLoadingSpinner` / `FullScreenLoader`, `EmptyStateWidget`, and `ErrorStateWidget`.
 
 ---

@@ -139,8 +139,10 @@ functions/src/
 
 | Module | Tên Function | Loại Trigger | Path / Schedule | Đầu Vào (Input) | Đầu Ra (Output) / Hành Động |
 | :--- | :--- | :---: | :--- | :--- | :--- |
-| **`auth`** | `onUserCreated` | Auth Trigger | `firebaseAuth.user().onCreate` | `UserRecord` (uid, email, displayName) | Tạo `users/{uid}`, gán `membershipId: 'free'`, tự động tạo `households` mặc định. |
-| **`inventory`** | `checkExpiryDailyCron` | Scheduled | `0 7 * * *` (07:00 VN) | Không có (Tự động) | Quét các item sắp hết hạn (<= 3 ngày) / hết hạn (< 0 ngày) -> ghi `notifications`. |
+| **`auth`** | `onUserCreated` | Auth Trigger | `firebaseAuth.user().onCreate` | `UserRecord` (uid, email, displayName) | Khởi tạo `users/{uid}` (gán `role: 'member'`, `membershipId: 'free'`, `isActive: true` bằng `merge: true`, client cập nhật `fullName`), tự động tạo `households` mặc định ("Tủ lạnh của {name}") với `activeItemCount: 0` và khởi tạo `ai_usage/current`. |
+| **`inventory`** | `addInventoryItem` | Callable | `onCall` | `{ householdId, name, categoryId, quantity, unit, storageLocationId, ... }` | Chạy Firestore Transaction kiểm tra `foodLimit` của Membership (`Free: 30`, `Premium: null`), tính hạn dùng và tăng `activeItemCount` lên 1. |
+| | `onInventoryItemMutation` | Firestore | `households/{householdId}/inventory_items/{itemId}` | Snapshot document update/delete | Lắng nghe `onUpdate` & `onDelete` (không bắt `onCreate` để tránh double count) đồng bộ `activeItemCount` khi đổi trạng thái sang `consumed`/`discarded`. |
+| | `checkExpiryDailyCron` | Scheduled | `0 7 * * *` (07:00 VN) | Không có (Tự động) | Quét các item sắp hết hạn (<= 3 ngày) / hết hạn (< 0 ngày) -> ghi `notifications`. |
 | **`receipt`** | `parseReceiptAi` | Callable | `onCall` | `{ ocrText: string; householdId: string }` | Trích xuất JSON danh sách thực phẩm (`name`, `quantity`, `unit`, `storageLocationId`). |
 | **`ai`** | `chatWithAssistant` | Callable | `onCall` | `{ prompt: string; householdId?: string }` | Trả về câu trả lời AI Markdown + cập nhật `receiptScanUsed` nếu cần. |
 | | `getAiQuota` | Callable | `onCall` | Không có | `{ period: '2026-09', used: 3, limit: 5, isUnlimited: false }`. |

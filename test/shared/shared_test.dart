@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/shared/components/app_dialog.dart';
 import 'package:foora/shared/components/app_search_bar.dart';
@@ -7,6 +8,7 @@ import 'package:foora/shared/components/app_shimmer.dart';
 import 'package:foora/shared/extensions/context_extensions.dart';
 import 'package:foora/shared/extensions/string_extensions.dart';
 import 'package:foora/shared/helpers/debouncer.dart';
+import '../helpers/test_helpers.dart';
 
 void main() {
   group('StringExtensions Tests', () {
@@ -53,17 +55,16 @@ void main() {
       bool confirmed = false;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AppDialog(
-              title: 'Xóa món ăn',
-              message: 'Bạn có chắc chắn muốn xóa?',
-              isDestructive: true,
-              onConfirm: () => confirmed = true,
-            ),
+        makeTestableWidget(
+          AppDialog(
+            title: 'Xóa món ăn',
+            message: 'Bạn có chắc chắn muốn xóa?',
+            isDestructive: true,
+            onConfirm: () => confirmed = true,
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('Xóa món ăn'), findsOneWidget);
       expect(find.text('Bạn có chắc chắn muốn xóa?'), findsOneWidget);
@@ -78,15 +79,14 @@ void main() {
       String query = '';
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AppSearchBar(
-              debounceDuration: const Duration(milliseconds: 10),
-              onChanged: (val) => query = val,
-            ),
+        makeTestableWidget(
+          AppSearchBar(
+            debounceDuration: const Duration(milliseconds: 10),
+            onChanged: (val) => query = val,
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'Thịt heo');
       await tester.pump(const Duration(milliseconds: 30));
@@ -97,23 +97,29 @@ void main() {
       String selected = 'fridge';
 
       await tester.pumpWidget(
-        StatefulBuilder(
-          builder: (context, setState) {
-            return MaterialApp(
-              home: Scaffold(
-                body: AppSegmentedControl<String>(
-                  selectedValue: selected,
-                  items: const [
-                    SegmentedItem(value: 'fridge', label: 'Ngăn mát'),
-                    SegmentedItem(value: 'freezer', label: 'Ngăn đông'),
-                  ],
-                  onValueChanged: (val) => setState(() => selected = val),
+        ScreenUtilInit(
+          designSize: const Size(390, 844),
+          minTextAdapt: true,
+          splitScreenMode: true,
+          builder: (context, _) => StatefulBuilder(
+            builder: (context, setState) {
+              return MaterialApp(
+                home: Scaffold(
+                  body: AppSegmentedControl<String>(
+                    selectedValue: selected,
+                    items: const [
+                      SegmentedItem(value: 'fridge', label: 'Ngăn mát'),
+                      SegmentedItem(value: 'freezer', label: 'Ngăn đông'),
+                    ],
+                    onValueChanged: (val) => setState(() => selected = val),
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('Ngăn mát'), findsOneWidget);
       expect(find.text('Ngăn đông'), findsOneWidget);
@@ -129,8 +135,8 @@ void main() {
       late bool isMobileContext;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
+        makeTestableWidget(
+          Builder(
             builder: (context) {
               isMobileContext = context.isMobile;
               return Scaffold(
@@ -140,6 +146,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(isMobileContext, isNotNull);
       expect(find.byType(AppShimmer), findsOneWidget);

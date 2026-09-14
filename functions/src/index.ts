@@ -7,20 +7,10 @@ setGlobalOptions({
   region: REGION,
 });
 
-// Export Shared Infrastructure
-export * from "./config/firebase";
-export * from "./constants/collections";
-export * from "./types";
-export * from "./utils/auth";
-export * from "./utils/errors";
+// Export Feature Submodules (Cloud Functions Triggers & Callables)
+export * from "./auth";
+export * from "./notification";
+export * from "./inventory";
+export * from "./receipt";
 
-// Export Feature Submodules
-export * as authFunctions from "./auth";
-export * as inventoryFunctions from "./inventory";
-export * as receiptFunctions from "./receipt";
-export * as aiFunctions from "./ai";
-export * as notificationFunctions from "./notification";
-export * as membershipFunctions from "./membership";
-export * as paymentFunctions from "./payment";
-export * as householdFunctions from "./household";
-export * as adminFunctions from "./admin";
+

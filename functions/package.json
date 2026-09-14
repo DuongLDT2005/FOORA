@@ -8,13 +8,17 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
+    "seed": "npm run build && node lib/scripts/seed_firestore.js",
+    "seed:emulator": "npm run build && node lib/scripts/seed_firestore.js",
+    "seed:prod": "npm run build && node lib/scripts/seed_firestore.js --prod",
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "24"
+    "node": "22"
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@google/genai": "^2.21.0",
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^7.0.0"
   },

@@ -33,6 +33,6 @@ module.exports = {
     "linebreak-style": "off",
     "require-jsdoc": "off",
     "valid-jsdoc": "off",
-    "max-len": ["warn", {"code": 100}],
+    "max-len": "off",
   },
 };

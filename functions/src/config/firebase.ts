@@ -2,7 +2,9 @@ import * as admin from "firebase-admin";
 
 // Initialize Firebase Admin SDK once across the entire functions codebase
 if (admin.apps.length === 0) {
-  admin.initializeApp();
+  admin.initializeApp({
+    projectId: process.env.GCLOUD_PROJECT || "foora-app",
+  });
 }
 
 export const db = admin.firestore();

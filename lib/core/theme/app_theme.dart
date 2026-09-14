@@ -10,7 +10,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
 
-      // Bảng màu chung Material Light
+      // General Material Light color scheme
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: Colors.white,
@@ -27,7 +27,7 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       fontFamily: AppTextStyles.fontFamilySans,
 
-      // Gắn TextTheme cho Light Mode
+      // Attach TextTheme for Light Mode
       textTheme: TextTheme(
         displayLarge: AppTextStyles.displayLarge,
         headlineLarge: AppTextStyles.headlineLarge,
@@ -50,7 +50,9 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.headlineSmall,
+        titleTextStyle: AppTextStyles.headlineSmall.copyWith(
+          color: Colors.white,
+        ),
       ),
 
       // Elevated Button Light Mode
@@ -58,9 +60,24 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          textStyle: AppTextStyles.labelLarge.copyWith(
-            fontWeight: FontWeight.w700,
+          disabledBackgroundColor: AppColors.slate100,
+          disabledForegroundColor: AppColors.slate400,
+          textStyle: AppTextStyles.buttonPrimary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
+          elevation: 0,
+        ),
+      ),
+
+      // Outlined Button Light Mode
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: AppColors.slate100,
+          foregroundColor: AppColors.slate600,
+          side: const BorderSide(color: AppColors.slate100),
+          textStyle: AppTextStyles.buttonPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -83,10 +100,10 @@ class AppTheme {
       // TextField Light Mode
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.slate50,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 16,
+          vertical: 15,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -100,17 +117,18 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primary),
         ),
-        labelStyle: AppTextStyles.labelSmall.copyWith(
-          color: AppColors.slate600,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1,
+        labelStyle: AppTextStyles.inputLabel.copyWith(
+          color: AppColors.slate400,
         ),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.slate400),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.slate400,
+          fontWeight: FontWeight.normal,
+        ),
       ),
 
       // Divider Light Mode
       dividerTheme: const DividerThemeData(
-        color: AppColors.slate50,
+        color: AppColors.slate100,
         thickness: 1,
         space: 1,
       ),
@@ -121,7 +139,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
 
-      // Bảng màu chung Material Dark
+      // General Material Dark color scheme
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: Colors.white,
@@ -138,7 +156,7 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.slate900,
       fontFamily: AppTextStyles.fontFamilySans,
 
-      // Gắn TextTheme cho Dark Mode
+      // Attach TextTheme for Dark Mode
       textTheme: TextTheme(
         displayLarge: AppTextStyles.displayLarge,
         headlineLarge: AppTextStyles.headlineLarge,
@@ -161,7 +179,9 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.headlineSmall,
+        titleTextStyle: AppTextStyles.headlineSmall.copyWith(
+          color: Colors.white,
+        ),
       ),
 
       // Elevated Button Dark Mode
@@ -169,9 +189,9 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          textStyle: AppTextStyles.labelLarge.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          disabledBackgroundColor: AppColors.slate800,
+          disabledForegroundColor: AppColors.slate500,
+          textStyle: AppTextStyles.buttonPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -180,7 +200,22 @@ class AppTheme {
         ),
       ),
 
-      // Card Dark Mode (Surface slate800, viền slate700)
+      // Outlined Button Dark Mode
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: AppColors.slate800,
+          foregroundColor: AppColors.slate50,
+          side: const BorderSide(color: AppColors.slate700),
+          textStyle: AppTextStyles.buttonPrimary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+        ),
+      ),
+
+      // Card Dark Mode (Surface slate800, border slate700)
       cardTheme: CardThemeData(
         color: AppColors.slate800,
         elevation: 0,
@@ -197,7 +232,7 @@ class AppTheme {
         fillColor: AppColors.slate800,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 16,
+          vertical: 15,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -211,12 +246,13 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primary),
         ),
-        labelStyle: AppTextStyles.labelSmall.copyWith(
+        labelStyle: AppTextStyles.inputLabel.copyWith(
           color: AppColors.slate400,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1,
         ),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.slate500),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.slate500,
+          fontWeight: FontWeight.normal,
+        ),
       ),
 
       // Divider Dark Mode

@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:foora/core/constants/app_enums.dart';
 
-/// Pure domain entity representing a storage location (e.g. Ngăn mát, Ngăn đông).
+import '../../../../core/constants/app_enums.dart';
+
+/// Pure domain entity representing a storage location (e.g. Fridge, Freezer).
 /// Strictly mapped to storage_locations/{locationId} in docs/DATABASE.md
 @immutable
 class StorageLocation {

@@ -69,6 +69,15 @@ firebase emulators:start
   - Xem tài khoản Auth test.
   - Theo dõi trigger và log của Cloud Functions.
 
+#### Nạp dữ liệu Master Data vào Firestore Emulator:
+Sau khi Emulator đã chạy, nạp danh mục thực phẩm, thực phẩm, thời hạn bảo quản FEFO và gói thành viên vào Firestore Emulator bằng lệnh:
+
+```bash
+cd functions
+npm run seed:emulator
+cd ..
+```
+
 ---
 
 ### Bước 4: Khởi động chế độ Watch cho Cloud Functions _(Nếu task có đụng tới Backend)_

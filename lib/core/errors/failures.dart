@@ -73,3 +73,10 @@ class PermissionDeniedFailure extends Failure {
     super.code,
   ]);
 }
+
+class ResourceExhaustedFailure extends Failure {
+  const ResourceExhaustedFailure([
+    super.message = 'Đã đạt giới hạn tài nguyên của gói tài khoản.',
+    super.code,
+  ]);
+}

@@ -8,6 +8,7 @@ class FoodCategoryModel extends FoodCategory {
     required super.name,
     required super.code,
     required super.icon,
+    super.defaultShelfLife,
     super.isActive = true,
     required super.createdAt,
     required super.updatedAt,
@@ -26,6 +27,9 @@ class FoodCategoryModel extends FoodCategory {
       name: json['name'] as String? ?? '',
       code: json['code'] as String? ?? '',
       icon: json['icon'] as String? ?? '',
+      defaultShelfLife: json['defaultShelfLife'] is Map
+          ? Map<String, dynamic>.from(json['defaultShelfLife'] as Map)
+          : null,
       isActive: json['isActive'] as bool? ?? true,
       createdAt: _parseDateTime(json['createdAt']),
       updatedAt: _parseDateTime(json['updatedAt']),
@@ -37,6 +41,7 @@ class FoodCategoryModel extends FoodCategory {
       'name': name,
       'code': code,
       'icon': icon,
+      'defaultShelfLife': defaultShelfLife,
       'isActive': isActive,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),

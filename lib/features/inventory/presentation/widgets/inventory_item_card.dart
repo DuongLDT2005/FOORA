@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/status_badge.dart';
 
 /// Food item card with progress bar, expiration state styling, and swipe-to-delete
 class InventoryItemCard extends StatelessWidget {
@@ -10,7 +12,7 @@ class InventoryItemCard extends StatelessWidget {
   final String unit;
   final int percentageRemaining;
   final String imageUrl;
-  final int daysUntilExpiry; // < 0: Hết hạn, 0-3: Sắp hết
+  final int daysUntilExpiry; // < 0: Expired, 0-3: Expiring soon
   final VoidCallback onDelete;
   final VoidCallback onTap;
 
@@ -32,11 +34,11 @@ class InventoryItemCard extends StatelessWidget {
     final isExpired = daysUntilExpiry < 0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12.h),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.red500.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
       ),
       child: Dismissible(
         key: Key(id),
@@ -44,27 +46,27 @@ class InventoryItemCard extends StatelessWidget {
         onDismissed: (_) => onDelete(),
         background: Container(
           alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
-          child: const Icon(Icons.delete, color: AppColors.red500),
+          padding: EdgeInsets.only(right: 20.w),
+          child: Icon(Icons.delete, color: AppColors.red500, size: 24.r),
         ),
         child: GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12.r),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: AppColors.slate100),
             ),
             child: Row(
               children: [
                 // Image with expired grayscale filter
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 56.r,
+                  height: 56.r,
                   decoration: BoxDecoration(
                     color: AppColors.slate50,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
                       color: isExpired
                           ? AppColors.red500.withValues(alpha: 0.2)
@@ -72,7 +74,7 @@ class InventoryItemCard extends StatelessWidget {
                     ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                     child: ColorFiltered(
                       colorFilter: isExpired
                           ? const ColorFilter.matrix([
@@ -104,15 +106,16 @@ class InventoryItemCard extends StatelessWidget {
                       child: Image.network(
                         imageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => const Icon(
+                        errorBuilder: (c, e, s) => Icon(
                           Icons.fastfood,
+                          size: 24.r,
                           color: AppColors.slate300,
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 // Content
                 Expanded(
                   child: Column(
@@ -125,7 +128,7 @@ class InventoryItemCard extends StatelessWidget {
                             child: Text(
                               name,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.bold,
                                 color: isExpired
                                     ? AppColors.slate400
@@ -138,49 +141,60 @@ class InventoryItemCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.slate50,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.slate100),
-                            ),
-                            child: Text(
-                              '$quantity $unit',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.slate400,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isExpired)
+                                StatusBadge.expired()
+                              else if (daysUntilExpiry <= 3)
+                                StatusBadge.warning(),
+                              if (isExpired || daysUntilExpiry <= 3)
+                                SizedBox(width: 6.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.slate50,
+                                  borderRadius: BorderRadius.circular(6.r),
+                                  border: Border.all(color: AppColors.slate100),
+                                ),
+                                child: Text(
+                                  '$quantity $unit',
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.slate400,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8.h),
                       // Progress Bar
                       Row(
                         children: [
                           Expanded(
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(4.r),
                               child: LinearProgressIndicator(
                                 value: percentageRemaining / 100,
                                 backgroundColor: AppColors.slate100,
                                 color: isExpired
                                     ? AppColors.slate300
                                     : AppColors.primary,
-                                minHeight: 6,
+                                minHeight: 6.h,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8.w),
                           Text(
                             '$percentageRemaining%',
-                            style: const TextStyle(
-                              fontSize: 9,
+                            style: TextStyle(
+                              fontSize: 9.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.slate400,
                             ),

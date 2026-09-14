@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1021945501127-891us0vobe4pj54dl37vp4dl4a6d49vb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foora.foora",
+            "certificate_hash": "94e842242978e4a74cedb5f7f2aa4e461768516d"
+          }
+        },
+        {
           "client_id": "1021945501127-rgkuimjp4ip94ut1ro78d3vaktf9h9qs.apps.googleusercontent.com",
           "client_type": 3
         }

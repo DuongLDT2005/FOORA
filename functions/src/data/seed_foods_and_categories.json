@@ -1,0 +1,4644 @@
+{
+  "food_categories": [
+    {
+      "categoryId": "vegetables",
+      "name": "Rau củ",
+      "code": "VEGETABLES",
+      "icon": "lucide-carrot",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 3,
+          "maxValue": 5,
+          "unit": "days"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "fruits",
+      "name": "Trái cây",
+      "code": "FRUITS",
+      "icon": "lucide-apple",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 3,
+          "maxValue": 7,
+          "unit": "days"
+        },
+        "freezer": {
+          "minValue": 8,
+          "maxValue": 12,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "meat",
+      "name": "Thịt",
+      "code": "MEAT",
+      "icon": "lucide-beef",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 3,
+          "maxValue": 5,
+          "unit": "days"
+        },
+        "freezer": {
+          "minValue": 4,
+          "maxValue": 12,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "seafood",
+      "name": "Thủy hải sản",
+      "code": "SEAFOOD",
+      "icon": "lucide-fish",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 1,
+          "maxValue": 2,
+          "unit": "days"
+        },
+        "freezer": {
+          "minValue": 3,
+          "maxValue": 6,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "dairy_eggs",
+      "name": "Trứng & Sữa",
+      "code": "DAIRY_EGGS",
+      "icon": "lucide-egg",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 5,
+          "maxValue": 7,
+          "unit": "days"
+        },
+        "freezer": {
+          "minValue": 1,
+          "maxValue": 3,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "grains_staples",
+      "name": "Gạo & Ngũ cốc",
+      "code": "GRAINS_STAPLES",
+      "icon": "lucide-wheat",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 1,
+          "maxValue": 2,
+          "unit": "weeks"
+        },
+        "freezer": {
+          "minValue": 6,
+          "maxValue": 12,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "condiments_spices",
+      "name": "Gia vị",
+      "code": "CONDIMENTS_SPICES",
+      "icon": "lucide-flask-conical",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 1,
+          "maxValue": 3,
+          "unit": "months"
+        },
+        "freezer": {
+          "minValue": 6,
+          "maxValue": 12,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "beverages",
+      "name": "Đồ uống",
+      "code": "BEVERAGES",
+      "icon": "lucide-cup-soda",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 3,
+          "maxValue": 7,
+          "unit": "days"
+        },
+        "freezer": {
+          "minValue": 8,
+          "maxValue": 12,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "frozen_foods",
+      "name": "Đồ đông lạnh",
+      "code": "FROZEN_FOODS",
+      "icon": "lucide-snowflake",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 1,
+          "maxValue": 2,
+          "unit": "days"
+        },
+        "freezer": {
+          "minValue": 2,
+          "maxValue": 6,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    },
+    {
+      "categoryId": "canned_dry_goods",
+      "name": "Đồ hộp & Đồ khô",
+      "code": "CANNED_DRY_GOODS",
+      "icon": "lucide-package",
+      "defaultShelfLife": {
+        "fridge": {
+          "minValue": 3,
+          "maxValue": 5,
+          "unit": "days"
+        },
+        "freezer": {
+          "minValue": 2,
+          "maxValue": 3,
+          "unit": "months"
+        }
+      },
+      "isActive": true
+    }
+  ],
+  "foods": [
+    {
+      "foodId": "water-spinach",
+      "name": "Rau muống",
+      "normalizedName": "rau muong",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "rau muong",
+        "rau muống nước",
+        "rau muống hạt",
+        "water spinach"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "choy-sum",
+      "name": "Cải ngọt",
+      "normalizedName": "cai ngot",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "cai ngot",
+        "rau cai ngot",
+        "choy sum",
+        "cải ngọt hữu cơ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "bok-choy",
+      "name": "Cải thìa (Cải chíp)",
+      "normalizedName": "cai thia",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "cai thia",
+        "cải chíp",
+        "bok choy",
+        "cai chip"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598030304671-5aa1d6f21128?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mustard-greens",
+      "name": "Cải xanh (Cải bẹ xanh)",
+      "normalizedName": "cai xanh",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "cai xanh",
+        "cải đắng",
+        "cai be xanh",
+        "mustard greens"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "napa-cabbage",
+      "name": "Bắp cải thảo",
+      "normalizedName": "bap cai thao",
+      "categoryId": "vegetables",
+      "defaultUnit": "cái",
+      "aliases": [
+        "cai thao",
+        "bắp thảo",
+        "napa cabbage",
+        "cải thảo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598030304671-5aa1d6f21128?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cabbage",
+      "name": "Bắp cải trắng",
+      "normalizedName": "bap cai",
+      "categoryId": "vegetables",
+      "defaultUnit": "cái",
+      "aliases": [
+        "bap cai",
+        "cải bắp",
+        "cabbage",
+        "bắp cải đà lạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598030304671-5aa1d6f21128?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "malabar-spinach",
+      "name": "Rau mồng tơi",
+      "normalizedName": "rau mong toi",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "rau mong toi",
+        "mồng tơi",
+        "malabar spinach"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "katuk",
+      "name": "Rau ngót",
+      "normalizedName": "rau ngot",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "rau ngot",
+        "bồ ngót",
+        "rau ngót ta"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "amaranth",
+      "name": "Rau dền",
+      "normalizedName": "rau den",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "rau den",
+        "dền đỏ",
+        "dền cơm",
+        "amaranth"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "lettuce",
+      "name": "Xà lách",
+      "normalizedName": "xa lach",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "xa lach",
+        "rau xà lách",
+        "lettuce",
+        "xà lách mỡ",
+        "romaine"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1556801712-76c8eb07bbc9?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "watercress",
+      "name": "Xà lách xoong",
+      "normalizedName": "xa lach xoong",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "xa lach xoong",
+        "cải xoong",
+        "watercress"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "broccoli",
+      "name": "Bông cải xanh (Súp lơ xanh)",
+      "normalizedName": "bong cai xanh",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "broccoli",
+        "sup lo xanh",
+        "bông cải xanh",
+        "súp lơ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cauliflower",
+      "name": "Bông cải trắng (Súp lơ trắng)",
+      "normalizedName": "bong cai trang",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cauliflower",
+        "sup lo trang",
+        "bông cải trắng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tomato",
+      "name": "Cà chua",
+      "normalizedName": "ca chua",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca chua",
+        "ca chua bi",
+        "tomato",
+        "cà chua đà lạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cucumber",
+      "name": "Dưa leo (Dưa chuột)",
+      "normalizedName": "dua leo",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dua leo",
+        "dua chuot",
+        "cucumber",
+        "dưa chuột"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "carrot",
+      "name": "Cà rốt",
+      "normalizedName": "ca rot",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca rot",
+        "carrot",
+        "carot",
+        "củ cà rốt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "white-radish",
+      "name": "Củ cải trắng",
+      "normalizedName": "cu cai trang",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cu cai trang",
+        "củ cải",
+        "white radish",
+        "daikon"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "potato",
+      "name": "Khoai tây",
+      "normalizedName": "khoai tay",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "khoai tay",
+        "potato",
+        "củ khoai tây"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "onion",
+      "name": "Hành tây",
+      "normalizedName": "hanh tay",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "hanh tay",
+        "onion",
+        "củ hành tây",
+        "hành tây trắng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1508747703725-719777637510?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "garlic",
+      "name": "Tỏi",
+      "normalizedName": "toi",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "toi",
+        "garlic",
+        "tỏi khô",
+        "cu toi",
+        "tỏi lý sơn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1588615419958-4770a8d71ea4?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "scallion",
+      "name": "Hành lá",
+      "normalizedName": "hanh la",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "hanh la",
+        "green onion",
+        "scallion",
+        "hành hoa",
+        "hành ngò"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1589135233689-d56d354b3913?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "coriander",
+      "name": "Ngò rí (Rau mùi)",
+      "normalizedName": "ngo ri",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "ngo ri",
+        "rau mùi",
+        "coriander",
+        "ngò"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1589135233689-d56d354b3913?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "culantro",
+      "name": "Ngò gai (Mùi tàu)",
+      "normalizedName": "ngo gai",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "ngo gai",
+        "mùi tàu",
+        "culantro",
+        "rau mùi tàu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1589135233689-d56d354b3913?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "ginger",
+      "name": "Gừng",
+      "normalizedName": "gung",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gung",
+        "ginger",
+        "củ gừng",
+        "gừng tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-chili",
+      "name": "Ớt tươi",
+      "normalizedName": "ot tuoi",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ot",
+        "chili",
+        "ớt hiểm",
+        "ớt đỏ",
+        "ot hiem"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1588252303782-cb80119abd6d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "bell-pepper",
+      "name": "Ớt chuông",
+      "normalizedName": "ot chuong",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ot chuong",
+        "bell pepper",
+        "ớt ngọt",
+        "ớt đà lạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "kohlrabi",
+      "name": "Su hào",
+      "normalizedName": "su hao",
+      "categoryId": "vegetables",
+      "defaultUnit": "củ",
+      "aliases": [
+        "su hao",
+        "kohlrabi",
+        "củ su hào"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chayote",
+      "name": "Su su",
+      "normalizedName": "su su",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "su su",
+        "chayote",
+        "quả su su"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "winter-melon",
+      "name": "Bí đao (Bí xanh)",
+      "normalizedName": "bi dao",
+      "categoryId": "vegetables",
+      "defaultUnit": "quả",
+      "aliases": [
+        "bi dao",
+        "bi xanh",
+        "winter melon",
+        "trái bí đao"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pumpkin",
+      "name": "Bí đỏ",
+      "normalizedName": "bi do",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "bi do",
+        "pumpkin",
+        "bí ngô",
+        "trái bí đỏ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1570586437263-ab629fccc818?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "eggplant",
+      "name": "Cà tím",
+      "normalizedName": "ca tim",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca tim",
+        "eggplant",
+        "cà tím dài",
+        "cà dái dê"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "bitter-melon",
+      "name": "Khổ qua (Mướp đắng)",
+      "normalizedName": "kho qua",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "kho qua",
+        "mướp đắng",
+        "bitter melon",
+        "muop dang"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "sponge-gourd",
+      "name": "Mướp hương",
+      "normalizedName": "muop huong",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "muop huong",
+        "mướp",
+        "sponge gourd",
+        "trái mướp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "okra",
+      "name": "Đậu bắp",
+      "normalizedName": "dau bap",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau bap",
+        "okra",
+        "trái đậu bắp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "string-beans",
+      "name": "Đậu que (Đậu cô ve)",
+      "normalizedName": "dau que",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau que",
+        "đậu cove",
+        "green beans",
+        "dau co ve"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "bean-sprouts",
+      "name": "Giá đỗ",
+      "normalizedName": "gia do",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gia do",
+        "giá",
+        "bean sprouts",
+        "giá sạch"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "enoki-mushroom",
+      "name": "Nấm kim châm",
+      "normalizedName": "nam kim cham",
+      "categoryId": "vegetables",
+      "defaultUnit": "gói",
+      "aliases": [
+        "nam kim cham",
+        "enoki mushroom",
+        "nấm kim châm tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "shimeji-mushroom",
+      "name": "Nấm linh chi nâu",
+      "normalizedName": "nam linh chi nau",
+      "categoryId": "vegetables",
+      "defaultUnit": "gói",
+      "aliases": [
+        "nam linh chi",
+        "shimeji",
+        "nấm nâu",
+        "nấm linh chi trắng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "king-oyster-mushroom",
+      "name": "Nấm đùi gà",
+      "normalizedName": "nam dui ga",
+      "categoryId": "vegetables",
+      "defaultUnit": "gói",
+      "aliases": [
+        "nam dui ga",
+        "king oyster mushroom",
+        "nấm đùi gà tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "straw-mushroom",
+      "name": "Nấm rơm",
+      "normalizedName": "nam rom",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "nam rom",
+        "nấm rơm tươi",
+        "straw mushroom"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "shiitake-mushroom",
+      "name": "Nấm đông cô tươi",
+      "normalizedName": "nam dong co tuoi",
+      "categoryId": "vegetables",
+      "defaultUnit": "gói",
+      "aliases": [
+        "nam dong co",
+        "nấm hương tươi",
+        "shiitake"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "sweet-corn",
+      "name": "Bắp ngọt (Ngô ngọt)",
+      "normalizedName": "bap ngot",
+      "categoryId": "vegetables",
+      "defaultUnit": "quả",
+      "aliases": [
+        "bap ngot",
+        "ngô ngọt",
+        "bắp mỹ",
+        "sweet corn",
+        "bắp ngô"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cherry-tomato",
+      "name": "Cà chua bi",
+      "normalizedName": "ca chua bi",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca chua bi",
+        "cherry tomato",
+        "cà chua bi đà lạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "taro",
+      "name": "Khoai môn",
+      "normalizedName": "khoai mon",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "khoai mon",
+        "củ khoai môn",
+        "taro",
+        "khoai môn cao"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "eddo",
+      "name": "Khoai sọ",
+      "normalizedName": "khoai so",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "khoai so",
+        "củ khoai sọ",
+        "eddo",
+        "khoai sọ trắng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "red-radish",
+      "name": "Củ cải đỏ",
+      "normalizedName": "cu cai do",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "cu cai do",
+        "red radish",
+        "củ cải đỏ baby",
+        "radish"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beetroot",
+      "name": "Củ dền",
+      "normalizedName": "cu den",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cu den",
+        "củ dền đỏ",
+        "beetroot",
+        "củ dền đà lạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "shallot",
+      "name": "Hành tím",
+      "normalizedName": "hanh tim",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "hanh tim",
+        "hành khô",
+        "shallot",
+        "củ hành tím",
+        "hành tím lý sơn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1508747703725-719777637510?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "galangal",
+      "name": "Riềng",
+      "normalizedName": "rieng",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "rieng",
+        "củ riềng",
+        "galangal",
+        "riềng tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "turmeric",
+      "name": "Nghệ",
+      "normalizedName": "nghe",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "nghe",
+        "củ nghệ",
+        "turmeric",
+        "nghệ vàng",
+        "nghệ tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "lemongrass",
+      "name": "Sả",
+      "normalizedName": "sa",
+      "categoryId": "vegetables",
+      "defaultUnit": "kg",
+      "aliases": [
+        "sa",
+        "cây sả",
+        "lemongrass",
+        "sả tươi",
+        "sả cây"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1589135233689-d56d354b3913?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "celery",
+      "name": "Cần tây",
+      "normalizedName": "can tay",
+      "categoryId": "vegetables",
+      "defaultUnit": "bó",
+      "aliases": [
+        "can tay",
+        "celery",
+        "rau cần tây",
+        "cần tây đà lạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "banana",
+      "name": "Chuối",
+      "normalizedName": "chuoi",
+      "categoryId": "fruits",
+      "defaultUnit": "nải",
+      "aliases": [
+        "chuoi",
+        "banana",
+        "chuối già",
+        "chuối xiêm",
+        "chuối sứ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "apple",
+      "name": "Táo",
+      "normalizedName": "tao",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tao",
+        "apple",
+        "táo đỏ",
+        "táo envy",
+        "táo fuji",
+        "táo xanh"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "orange",
+      "name": "Cam",
+      "normalizedName": "cam",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cam",
+        "orange",
+        "cam sành",
+        "cam vắt",
+        "cam ngọt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1547514701-42782101795e?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "lemon",
+      "name": "Chanh",
+      "normalizedName": "chanh",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "chanh",
+        "lemon",
+        "lime",
+        "chanh tươi",
+        "chanh không hạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "kumquat",
+      "name": "Tắc (Quất)",
+      "normalizedName": "tac",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tac",
+        "quất",
+        "kumquat",
+        "trái tắc"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "watermelon",
+      "name": "Dưa hấu",
+      "normalizedName": "dua hau",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "dua hau",
+        "watermelon",
+        "dưa hấu đỏ",
+        "dưa hấu không hạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cantaloupe",
+      "name": "Dưa lưới",
+      "normalizedName": "dua luoi",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "dua luoi",
+        "cantaloupe",
+        "dưa lưới ruột cam",
+        "dưa lưới xanh"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1571575175525-455a73e4a42b?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "grape",
+      "name": "Nho",
+      "normalizedName": "nho",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "nho",
+        "grape",
+        "nho xanh",
+        "nho đỏ",
+        "nho ngón tay",
+        "nho không hạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "strawberry",
+      "name": "Dâu tây",
+      "normalizedName": "dau tay",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau tay",
+        "strawberry",
+        "dâu đà lạt",
+        "dâu hàn quốc"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "avocado",
+      "name": "Bơ",
+      "normalizedName": "bo",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "bo",
+        "avocado",
+        "trái bơ",
+        "bơ sáp",
+        "bơ 034"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mango",
+      "name": "Xoài",
+      "normalizedName": "xoai",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "xoai",
+        "mango",
+        "xoài cát hòa lộc",
+        "xoài keo",
+        "xoài chín"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1553279768-865429fa0078?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "dragon-fruit",
+      "name": "Thanh long",
+      "normalizedName": "thanh long",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thanh long",
+        "dragon fruit",
+        "thanh long ruột đỏ",
+        "thanh long trắng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1527325678964-54921661f888?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "guava",
+      "name": "Ổi",
+      "normalizedName": "oi",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "oi",
+        "guava",
+        "ổi nữ hoàng",
+        "ổi ruột hồng",
+        "trái ổi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1536511135899-7389c9339ff0?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "papaya",
+      "name": "Đu đủ",
+      "normalizedName": "du du",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "du du",
+        "papaya",
+        "đu đủ chín",
+        "đu đủ ruột đỏ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1517282009859-f000ec3b26fe?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pineapple",
+      "name": "Dứa (Thơm / Khóm)",
+      "normalizedName": "dua",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "dua",
+        "thom",
+        "khom",
+        "pineapple",
+        "trái thơm"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pomelo",
+      "name": "Bưởi",
+      "normalizedName": "buoi",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "buoi",
+        "pomelo",
+        "bưởi da xanh",
+        "bưởi năm roi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1577234286642-fc512a5f8f11?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pear",
+      "name": "Lê",
+      "normalizedName": "le",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "le",
+        "pear",
+        "trái lê",
+        "lê đường",
+        "lê hàn quốc"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "kiwi",
+      "name": "Kiwi",
+      "normalizedName": "kiwi",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "kiwi",
+        "kiwi xanh",
+        "kiwi vàng",
+        "trái kiwi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1585059895524-72359e06133a?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "plum",
+      "name": "Mận Hà Nội",
+      "normalizedName": "man ha noi",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "man ha noi",
+        "mận hậu",
+        "mận bắc",
+        "plum"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "rose-apple",
+      "name": "Mận (Roi)",
+      "normalizedName": "man roi",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "man",
+        "roi",
+        "mận an phước",
+        "trái roi",
+        "rose apple"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mangosteen",
+      "name": "Măng cụt",
+      "normalizedName": "mang cut",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "mang cut",
+        "mangosteen",
+        "trái măng cụt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "rambutan",
+      "name": "Chôm chôm",
+      "normalizedName": "chom chom",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "chom chom",
+        "rambutan",
+        "chôm chôm nhãn",
+        "chôm chôm thái"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "longan",
+      "name": "Nhãn",
+      "normalizedName": "nhan",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "nhan",
+        "longan",
+        "nhãn xuồng",
+        "nhãn lồng",
+        "trái nhãn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "lychee",
+      "name": "Vải thiều",
+      "normalizedName": "vai thieu",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "vai thieu",
+        "vải",
+        "lychee",
+        "vải lục ngạn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "jackfruit",
+      "name": "Mít",
+      "normalizedName": "mit",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "mit",
+        "jackfruit",
+        "mít thái",
+        "mít tố nữ",
+        "múi mít"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "durian",
+      "name": "Sầu riêng",
+      "normalizedName": "sau rieng",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "sau rieng",
+        "durian",
+        "sầu riêng ri6",
+        "múi sầu riêng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "passion-fruit",
+      "name": "Chanh dây (Chanh leo)",
+      "normalizedName": "chanh day",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "chanh day",
+        "chanh leo",
+        "passion fruit"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pomegranate",
+      "name": "Lựu",
+      "normalizedName": "luu",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "luu",
+        "pomegranate",
+        "trái lựu",
+        "lựu đỏ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "peach",
+      "name": "Đào",
+      "normalizedName": "dao",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dao",
+        "peach",
+        "trái đào",
+        "đào giòn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "blueberry",
+      "name": "Việt quất",
+      "normalizedName": "viet quat",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "viet quat",
+        "blueberry",
+        "quả việt quất"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "persimmon",
+      "name": "Hồng giòn",
+      "normalizedName": "hong gion",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "hong gion",
+        "trái hồng",
+        "hồng đà lạt",
+        "persimmon"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "custard-apple",
+      "name": "Mãng cầu ta (Na)",
+      "normalizedName": "mang cau ta na",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "mang cau",
+        "na",
+        "trái na",
+        "mãng cầu ta",
+        "quả na",
+        "custard apple"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "sapodilla",
+      "name": "Hồng xiêm (Sa-pô-chê)",
+      "normalizedName": "hong xiem",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "hong xiem",
+        "sa po che",
+        "sapoche",
+        "sapodilla",
+        "trái sa bô chê"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "coconut",
+      "name": "Dừa tươi",
+      "normalizedName": "dua tuoi",
+      "categoryId": "fruits",
+      "defaultUnit": "quả",
+      "aliases": [
+        "dua tuoi",
+        "trái dừa",
+        "dừa xiêm",
+        "dừa",
+        "coconut"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tangerine",
+      "name": "Quýt",
+      "normalizedName": "quyt",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "quyt",
+        "tangerine",
+        "quýt đường",
+        "quýt tiều"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1547514701-42782101795e?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "ambarella",
+      "name": "Cóc",
+      "normalizedName": "coc",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "coc",
+        "trái cóc",
+        "cóc non",
+        "cóc bao tử",
+        "ambarella"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tamarind",
+      "name": "Me",
+      "normalizedName": "me",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "me",
+        "trái me",
+        "me ngọt",
+        "me thái",
+        "tamarind"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "starfruit",
+      "name": "Khế",
+      "normalizedName": "khe",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "khe",
+        "trái khế",
+        "khế ngọt",
+        "khế chua",
+        "starfruit"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "star-apple",
+      "name": "Vú sữa",
+      "normalizedName": "vu sua",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "vu sua",
+        "trái vú sữa",
+        "vú sữa lò rèn",
+        "star apple"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "canarium",
+      "name": "Cà na",
+      "normalizedName": "ca na",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca na",
+        "trái cà na",
+        "cà na tươi",
+        "canarium"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "soursop",
+      "name": "Mãng cầu xiêm",
+      "normalizedName": "mang cau xiem",
+      "categoryId": "fruits",
+      "defaultUnit": "kg",
+      "aliases": [
+        "mang cau xiem",
+        "mãng cầu gai",
+        "soursop",
+        "trái mãng cầu xiêm"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-belly",
+      "name": "Thịt ba rọi (Ba chỉ heo)",
+      "normalizedName": "thit ba roi heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit ba roi",
+        "thịt ba chỉ",
+        "pork belly",
+        "ba rọi heo",
+        "thịt heo ba chỉ",
+        "thit heo ba chi",
+        "thịt ba chỉ heo",
+        "ba chỉ heo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-shoulder",
+      "name": "Thịt nạc dăm heo",
+      "normalizedName": "thit nac dam heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit nac dam",
+        "thịt nạc heo",
+        "pork shoulder",
+        "thit nac",
+        "thịt heo nạc vai",
+        "nạc vai",
+        "nac vai heo",
+        "thit heo nac vai",
+        "thịt heo nạc dăm",
+        "thit heo nac dam",
+        "nạc dăm"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-loin",
+      "name": "Thịt nạc thăn heo",
+      "normalizedName": "thit nac than heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit nac than",
+        "thăn heo",
+        "pork loin",
+        "thăn lợn",
+        "thịt heo thăn",
+        "thit heo than",
+        "thịt thăn heo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "minced-pork",
+      "name": "Thịt heo xay",
+      "normalizedName": "thit heo xay",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit heo xay",
+        "thịt băm",
+        "minced pork",
+        "thịt xay",
+        "thịt heo xay"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-ribs",
+      "name": "Sườn non heo",
+      "normalizedName": "suon non heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "suon non",
+        "sườn heo",
+        "pork ribs",
+        "sườn cọng",
+        "thịt heo sườn",
+        "suon heo",
+        "thit heo suon",
+        "sườn non"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-shank",
+      "name": "Chân giò heo (Móng giò)",
+      "normalizedName": "chan gio heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "chan gio",
+        "móng giò",
+        "giò heo",
+        "pork shank",
+        "móng giò heo",
+        "thịt heo móng giò",
+        "chân giò heo",
+        "chan gio heo",
+        "thit heo mong gio"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-paste",
+      "name": "Giò sống (Mọc)",
+      "normalizedName": "gio song",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gio song",
+        "mọc",
+        "thịt mọc",
+        "chả sống"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-liver",
+      "name": "Gan heo",
+      "normalizedName": "gan heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gan heo",
+        "pork liver",
+        "gan lợn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-heart",
+      "name": "Tim heo",
+      "normalizedName": "tim heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tim heo",
+        "pork heart",
+        "tim lợn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-tenderloin",
+      "name": "Thịt bò thăn (Fillet)",
+      "normalizedName": "thit bo than",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit bo than",
+        "thăn bò",
+        "bò fillet",
+        "beef tenderloin",
+        "thịt bò tái",
+        "bò tái",
+        "thịt bò phi lê",
+        "thit bo phi le",
+        "bò phi lê",
+        "thịt bò thăn",
+        "thit bo tai"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-shank",
+      "name": "Bắp bò",
+      "normalizedName": "bap bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "bap bo",
+        "bắp hoa bò",
+        "beef shank",
+        "thịt bò bắp",
+        "thit bo bap",
+        "bắp bò"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-short-plate",
+      "name": "Ba chỉ bò cuộn lẩu",
+      "normalizedName": "ba chi bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ba chi bo",
+        "beef short plate",
+        "ba chỉ bò mỹ",
+        "thịt bò ba chỉ",
+        "thit bo ba chi",
+        "ba chỉ bò"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1558030006-450675393462?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-brisket",
+      "name": "Gầu bò (Nạm bò)",
+      "normalizedName": "gau bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gau bo",
+        "nạm bò",
+        "beef brisket"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "minced-beef",
+      "name": "Thịt bò xay",
+      "normalizedName": "thit bo xay",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit bo xay",
+        "minced beef",
+        "bò băm",
+        "thịt bò xay"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-ribs",
+      "name": "Sườn bò",
+      "normalizedName": "suon bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "suon bo",
+        "beef ribs",
+        "sườn bò có xương"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chicken-breast",
+      "name": "Ức gà phi lê",
+      "normalizedName": "uc ga",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "uc ga",
+        "chicken breast",
+        "file ức gà",
+        "lườn gà",
+        "ức gà"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chicken-thigh",
+      "name": "Đùi gà",
+      "normalizedName": "dui ga",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dui ga",
+        "chicken drumstick",
+        "đùi tỏi gà",
+        "má đùi gà",
+        "đùi gà"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chicken-wings",
+      "name": "Cánh gà",
+      "normalizedName": "canh ga",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "canh ga",
+        "chicken wings",
+        "khúc cánh gà",
+        "cánh gà"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chicken-feet",
+      "name": "Chân gà",
+      "normalizedName": "chan ga",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "chan ga",
+        "chicken feet",
+        "chân gà rút xương",
+        "chân gà"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "whole-chicken",
+      "name": "Thịt gà nguyên con",
+      "normalizedName": "thit ga nguyen con",
+      "categoryId": "meat",
+      "defaultUnit": "con",
+      "aliases": [
+        "ga nguyen con",
+        "gà ta",
+        "gà làm sẵn",
+        "whole chicken",
+        "thịt gà ta",
+        "thịt gà công nghiệp",
+        "gà công nghiệp",
+        "ga cong nghiep",
+        "ga ta",
+        "thit ga ta",
+        "thit ga cong nghiep",
+        "gà nguyên con"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chicken-giblets",
+      "name": "Lòng mề gà",
+      "normalizedName": "long ga",
+      "categoryId": "meat",
+      "defaultUnit": "bộ",
+      "aliases": [
+        "long ga",
+        "mề gà",
+        "tim mề gà",
+        "chicken giblets"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "duck-meat",
+      "name": "Thịt vịt",
+      "normalizedName": "thit vit",
+      "categoryId": "meat",
+      "defaultUnit": "con",
+      "aliases": [
+        "thit vit",
+        "vịt làm sẵn",
+        "duck meat",
+        "vịt xiêm",
+        "vịt nguyên con",
+        "vit nguyen con",
+        "thịt vịt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "duck-breast",
+      "name": "Ức vịt",
+      "normalizedName": "uc vit",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "uc vit",
+        "file ức vịt",
+        "duck breast"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "duck-thigh",
+      "name": "Đùi vịt",
+      "normalizedName": "dui vit",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dui vit",
+        "duck leg",
+        "đùi vịt tươi",
+        "đùi vịt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "quail-meat",
+      "name": "Chim cút",
+      "normalizedName": "chim cut",
+      "categoryId": "meat",
+      "defaultUnit": "con",
+      "aliases": [
+        "chim cut",
+        "cút làm sẵn",
+        "quail",
+        "thịt chim cút",
+        "thit chim cut",
+        "chim cút"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "lamb-chops",
+      "name": "Sườn cừu",
+      "normalizedName": "suon cuu",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "suon cuu",
+        "lamb chops",
+        "thịt cừu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "goat-meat",
+      "name": "Thịt dê",
+      "normalizedName": "thit de",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit de",
+        "goat meat",
+        "thịt dê tươi",
+        "thịt dê"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-skin",
+      "name": "Da heo (Bì heo)",
+      "normalizedName": "da heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "da heo",
+        "bì heo",
+        "pork skin"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-fat",
+      "name": "Mỡ heo",
+      "normalizedName": "mo heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "mo heo",
+        "mỡ lá",
+        "mỡ khổ",
+        "pork fat"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-intestines",
+      "name": "Lòng non heo",
+      "normalizedName": "long non heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "long non",
+        "lòng heo",
+        "dồi trường",
+        "phèo non"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-tail",
+      "name": "Đuôi bò",
+      "normalizedName": "duoi bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "duoi bo",
+        "oxtail",
+        "đuôi bò chặt khúc"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-tail",
+      "name": "Đuôi heo",
+      "normalizedName": "duoi heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "duoi heo",
+        "pork tail",
+        "đuôi lợn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-ears",
+      "name": "Tai heo",
+      "normalizedName": "tai heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tai heo",
+        "pork ear",
+        "tai lợn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-tripe",
+      "name": "Khăn lông bò (Sách bò)",
+      "normalizedName": "khan long bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "long bo",
+        "sách bò",
+        "tổ ong bò",
+        "beef tripe"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-leg",
+      "name": "Thịt heo đùi (Thịt đùi)",
+      "normalizedName": "thit heo dui",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit dui heo",
+        "thịt heo đùi",
+        "thịt đùi",
+        "pork leg",
+        "thit heo dui",
+        "thịt đùi heo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-bones",
+      "name": "Xương heo (Xương ống)",
+      "normalizedName": "xuong heo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "xuong heo",
+        "xương lợn",
+        "xương ống heo",
+        "pork bones",
+        "xương hầm",
+        "xương heo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-chuck",
+      "name": "Thịt bò nạc vai",
+      "normalizedName": "thit bo nac vai",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "nac vai bo",
+        "thịt bò nạc vai",
+        "beef chuck",
+        "thit nac vai bo",
+        "thit bo nac vai",
+        "nạc vai bò"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-tendon",
+      "name": "Gân bò (Thịt bò gân)",
+      "normalizedName": "gan bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gan bo",
+        "thịt bò gân",
+        "gân trong bò",
+        "beef tendon",
+        "thit bo gan",
+        "gân bò"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-bones",
+      "name": "Xương bò (Xương nấu phở)",
+      "normalizedName": "xuong bo",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "xuong bo",
+        "xương ống bò",
+        "xương bò nấu phở",
+        "beef bones",
+        "xương bò"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "minced-chicken",
+      "name": "Thịt gà xay",
+      "normalizedName": "thit ga xay",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit ga xay",
+        "gà xay",
+        "minced chicken",
+        "gà băm",
+        "thịt gà xay"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "minced-goat",
+      "name": "Thịt dê xay",
+      "normalizedName": "thit de xay",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit de xay",
+        "dê xay",
+        "minced goat",
+        "dê băm",
+        "thịt dê xay"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "muscovy-duck",
+      "name": "Thịt ngan",
+      "normalizedName": "thit ngan",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit ngan",
+        "ngan dé",
+        "vịt xiêm trắng",
+        "muscovy duck",
+        "thịt ngan"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "goose-meat",
+      "name": "Thịt ngỗng",
+      "normalizedName": "thit ngong",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit ngong",
+        "ngỗng tươi",
+        "goose meat",
+        "thịt ngỗng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pigeon-meat",
+      "name": "Thịt chim bồ câu",
+      "normalizedName": "thit chim bo cau",
+      "categoryId": "meat",
+      "defaultUnit": "con",
+      "aliases": [
+        "chim bo cau",
+        "bồ câu ra ràng",
+        "thịt chim bồ câu",
+        "squab",
+        "pigeon",
+        "thit chim bo cau",
+        "chim bồ câu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "rabbit-meat",
+      "name": "Thịt thỏ",
+      "normalizedName": "thit tho",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit tho",
+        "thỏ làm sẵn",
+        "rabbit meat",
+        "thịt thỏ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "buffalo-meat",
+      "name": "Thịt trâu",
+      "normalizedName": "thit trau",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit trau",
+        "bắp trâu",
+        "thịt trâu tươi",
+        "water buffalo meat",
+        "thịt trâu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "veal-meat",
+      "name": "Thịt bê",
+      "normalizedName": "thit be",
+      "categoryId": "meat",
+      "defaultUnit": "kg",
+      "aliases": [
+        "thit be",
+        "bê non",
+        "thịt bê thui",
+        "veal",
+        "thịt bê"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "red-tilapia",
+      "name": "Cá điêu hồng",
+      "normalizedName": "ca dieu hong",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca dieu hong",
+        "cá diêu hồng",
+        "red tilapia",
+        "cá điêu hồng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "snakehead-fish",
+      "name": "Cá lóc (Cá quả)",
+      "normalizedName": "ca loc",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca loc",
+        "cá quả",
+        "cá chuối",
+        "snakehead fish",
+        "cá lóc"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "basa-fish",
+      "name": "Cá basa (Cá tra)",
+      "normalizedName": "ca basa",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca basa",
+        "cá tra",
+        "file cá basa",
+        "basa fillet",
+        "cá basa"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "salmon",
+      "name": "Cá hồi fillet",
+      "normalizedName": "ca hoi",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca hoi",
+        "salmon",
+        "cá hồi fillet",
+        "file ca hoi",
+        "cá hồi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mackerel",
+      "name": "Cá thu",
+      "normalizedName": "ca thu",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca thu",
+        "cá thu cắt khúc",
+        "mackerel",
+        "cá thu tươi",
+        "cá thu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "scad-fish",
+      "name": "Cá nục",
+      "normalizedName": "ca nuc",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca nuc",
+        "cá nục bông",
+        "scad fish",
+        "ca nuc tuoi",
+        "cá nục"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pangasius-hu",
+      "name": "Cá hú",
+      "normalizedName": "ca hu",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca hu",
+        "cá hú cắt khúc",
+        "ca hu tuoi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "catfish",
+      "name": "Cá trê",
+      "normalizedName": "ca tre",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca tre",
+        "cá trê vàng",
+        "catfish",
+        "cá trê"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tilapia",
+      "name": "Cá rô phi",
+      "normalizedName": "ca ro phi",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca ro phi",
+        "tilapia",
+        "cá rô phi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "carp",
+      "name": "Cá chép",
+      "normalizedName": "ca chep",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca chep",
+        "cá chép giòn",
+        "carp",
+        "cá chép"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cobia",
+      "name": "Cá bớp",
+      "normalizedName": "ca bop",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca bop",
+        "cá bớp cắt khoanh",
+        "cobia",
+        "cá bớp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "seabass",
+      "name": "Cá chẽm (Cá vược)",
+      "normalizedName": "ca chem",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca chem",
+        "cá vược",
+        "seabass",
+        "barramundi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chub-mackerel",
+      "name": "Cá bạc má",
+      "normalizedName": "ca bac ma",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca bac ma",
+        "cá bạc má tươi",
+        "chub mackerel",
+        "cá bạc má"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pomfret",
+      "name": "Cá chim",
+      "normalizedName": "ca chim",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca chim",
+        "cá chim trắng",
+        "cá chim đen",
+        "pomfret",
+        "cá chim"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tuna-fish",
+      "name": "Cá ngừ",
+      "normalizedName": "ca ngu",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca ngu",
+        "cá ngừ đại dương",
+        "tuna",
+        "cá ngừ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "goby-fish",
+      "name": "Cá kèo",
+      "normalizedName": "ca keo",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca keo",
+        "cá kèo sống",
+        "goby fish",
+        "cá kèo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "climbing-perch",
+      "name": "Cá rô đồng",
+      "normalizedName": "ca ro dong",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca ro dong",
+        "cá rô làm sạch",
+        "climbing perch",
+        "cá rô",
+        "ca ro",
+        "cá rô đồng",
+        "cá rô ta"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "featherback-fish-paste",
+      "name": "Chả cá thát lát",
+      "normalizedName": "cha ca that lat",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cha ca that lat",
+        "cá thát lát nạo",
+        "featherback fish paste"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "white-shrimp",
+      "name": "Tôm thẻ",
+      "normalizedName": "tom the",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tom the",
+        "white shrimp",
+        "tôm thẻ chân trắng",
+        "tôm thẻ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "black-tiger-shrimp",
+      "name": "Tôm sú",
+      "normalizedName": "tom su",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tom su",
+        "black tiger shrimp",
+        "tôm sú tươi",
+        "tôm sú"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "giant-river-prawn",
+      "name": "Tôm càng xanh",
+      "normalizedName": "tom cang xanh",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tom cang xanh",
+        "tôm càng",
+        "river prawn",
+        "tôm càng xanh"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "squid-tube",
+      "name": "Mực ống",
+      "normalizedName": "muc ong",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "muc ong",
+        "squid",
+        "mực ống tươi",
+        "mực ống"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1545418776-a37fba72a75d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "squid-broad",
+      "name": "Mực lá",
+      "normalizedName": "muc la",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "muc la",
+        "mực lá tươi",
+        "broadclub cuttlefish"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1545418776-a37fba72a75d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "squid-egg",
+      "name": "Mực trứng",
+      "normalizedName": "muc trung",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "muc trung",
+        "mực cơm",
+        "mực sim"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1545418776-a37fba72a75d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "octopus",
+      "name": "Bạch tuộc",
+      "normalizedName": "bach tuoc",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "bach tuoc",
+        "octopus",
+        "bạch tuộc baby",
+        "bạch tuộc tươi",
+        "bạch tuộc"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1545418776-a37fba72a75d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mud-crab",
+      "name": "Cua biển (Cua Cà Mau)",
+      "normalizedName": "cua bien",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cua bien",
+        "cua ca mau",
+        "cua gạch",
+        "cua thịt",
+        "mud crab",
+        "cua biển"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "swimmer-crab",
+      "name": "Ghẹ xanh",
+      "normalizedName": "ghe xanh",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ghe xanh",
+        "ghẹ phan thiết",
+        "swimmer crab",
+        "ghe tươi",
+        "ghẹ",
+        "ghe"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "clams",
+      "name": "Nghêu (Ngao)",
+      "normalizedName": "ngheu",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ngheu",
+        "ngao",
+        "nghêu trắng",
+        "clams",
+        "nghêu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "blood-cockle",
+      "name": "Sò huyết",
+      "normalizedName": "so huyet",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "so huyet",
+        "blood cockle",
+        "sò huyết cồ",
+        "sò huyết"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "oyster",
+      "name": "Hàu sữa",
+      "normalizedName": "hau sua",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "hau sua",
+        "hàu tươi",
+        "oyster",
+        "thịt hàu",
+        "hàu",
+        "hau"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "scallop",
+      "name": "Sò điệp",
+      "normalizedName": "so diep",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "so diep",
+        "cồi sò điệp",
+        "scallop"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "sweet-snails",
+      "name": "Ốc hương",
+      "normalizedName": "oc huong",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "oc huong",
+        "sweet snails",
+        "ốc hương cồ",
+        "ốc hương"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mussels",
+      "name": "Vẹm xanh",
+      "normalizedName": "vem xanh",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "vem xanh",
+        "mussels",
+        "vẹm xanh new zealand"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "field-crab-meat",
+      "name": "Cua đồng xay",
+      "normalizedName": "cua dong xay",
+      "categoryId": "seafood",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "cua dong",
+        "cua đồng tinh chế",
+        "thịt cua đồng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "stingray",
+      "name": "Cá đuối",
+      "normalizedName": "ca duoi",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca duoi",
+        "stingray",
+        "cá đuối tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "grass-carp",
+      "name": "Cá trắm (Trắm cỏ / Trắm đen)",
+      "normalizedName": "ca tram",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca tram",
+        "cá trắm",
+        "cá trắm cỏ",
+        "cá trắm đen",
+        "grass carp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "red-snapper",
+      "name": "Cá hồng",
+      "normalizedName": "ca hong",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca hong",
+        "cá hồng",
+        "cá hồng biển",
+        "red snapper"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "grouper",
+      "name": "Cá mú (Cá song)",
+      "normalizedName": "ca mu",
+      "categoryId": "seafood",
+      "defaultUnit": "con",
+      "aliases": [
+        "ca mu",
+        "cá mú",
+        "cá song",
+        "cá mú đỏ",
+        "grouper"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "herring-fish",
+      "name": "Cá trích",
+      "normalizedName": "ca trich",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca trich",
+        "cá trích",
+        "cá trích tươi",
+        "herring"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mullet-fish",
+      "name": "Cá đối",
+      "normalizedName": "ca doi",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ca doi",
+        "cá đối",
+        "cá đối tươi",
+        "mullet fish"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "greasyback-shrimp",
+      "name": "Tôm đất",
+      "normalizedName": "tom dat",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tom dat",
+        "tôm đất",
+        "tôm đất sống",
+        "greasyback shrimp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cuttlefish",
+      "name": "Mực nang",
+      "normalizedName": "muc nang",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "muc nang",
+        "mực nang",
+        "mực nang làm sạch",
+        "cuttlefish"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1545659475-b384ff6653df?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "hairy-ark-clam",
+      "name": "Sò lông",
+      "normalizedName": "so long",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "so long",
+        "sò lông",
+        "sò lông tươi",
+        "hairy ark clam"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "apple-snail",
+      "name": "Ốc bươu (Ốc nhồi)",
+      "normalizedName": "oc buou",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "oc buou",
+        "ốc bươu",
+        "ốc nhồi",
+        "oc nhoi",
+        "ốc bươu đen",
+        "apple snail"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "razor-clam",
+      "name": "Ốc móng tay",
+      "normalizedName": "oc mong tay",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "oc mong tay",
+        "ốc móng tay",
+        "razor clam"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "baby-clam",
+      "name": "Hến",
+      "normalizedName": "hen",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "hen",
+        "hến",
+        "thịt hến",
+        "baby clam",
+        "hến sông"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "swamp-eel",
+      "name": "Lươn đồng",
+      "normalizedName": "luon dong",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "luon",
+        "lươn",
+        "thịt lươn",
+        "lươn đồng",
+        "swamp eel"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "frog-meat",
+      "name": "Thịt ếch (Ếch đồng)",
+      "normalizedName": "thit ech",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "ech",
+        "ếch",
+        "thịt ếch",
+        "đùi ếch",
+        "frog meat",
+        "ếch đồng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "small-shrimp",
+      "name": "Tép (Tép đồng / Tép riu)",
+      "normalizedName": "tep",
+      "categoryId": "seafood",
+      "defaultUnit": "kg",
+      "aliases": [
+        "tep",
+        "tép",
+        "tép đồng",
+        "tép riu",
+        "tép bạc",
+        "small shrimp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chicken-eggs",
+      "name": "Trứng gà",
+      "normalizedName": "trung ga",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung ga",
+        "eggs",
+        "trứng",
+        "hộp trứng gà",
+        "vỉ trứng gà",
+        "trứng gà",
+        "trứng gà ta",
+        "trung ga ta"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "duck-eggs",
+      "name": "Trứng vịt",
+      "normalizedName": "trung vit",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung vit",
+        "hộp trứng vịt",
+        "trứng vịt tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "quail-eggs",
+      "name": "Trứng cút",
+      "normalizedName": "trung cut",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung cut",
+        "vỉ 30 trứng cút",
+        "trứng cút tươi"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "salted-duck-eggs",
+      "name": "Trứng vịt muối",
+      "normalizedName": "trung vit muoi",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung muoi",
+        "trứng muối",
+        "hộp trứng muối"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "century-eggs",
+      "name": "Trứng bắc thảo",
+      "normalizedName": "trung bac thao",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung bac thao",
+        "century eggs",
+        "trứng bách thảo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-milk-unsweetened",
+      "name": "Sữa tươi không đường",
+      "normalizedName": "sua tuoi khong duong",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua tuoi khong duong",
+        "sữa th không đường",
+        "sữa vinamilk không đường",
+        "fresh milk",
+        "sữa tươi không đường",
+        "sữa tươi",
+        "sua tuoi",
+        "sữa bò",
+        "sua bo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-milk-sweetened",
+      "name": "Sữa tươi có đường",
+      "normalizedName": "sua tuoi co duong",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua tuoi co duong",
+        "sữa th có đường",
+        "sữa vinamilk có đường",
+        "sữa tươi có đường",
+        "sữa bò có đường"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "yogurt",
+      "name": "Sữa chua (Sữa chua có đường)",
+      "normalizedName": "sua chua",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua chua",
+        "yogurt",
+        "yaourt",
+        "lốc 4 hộp sữa chua",
+        "sữa chua",
+        "sữa chua có đường",
+        "sua chua co duong"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "butter-unsalted",
+      "name": "Bơ lạt",
+      "normalizedName": "bo lat",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "gói",
+      "aliases": [
+        "bo lat",
+        "butter",
+        "bơ",
+        "bơ nhạt",
+        "bo anchor",
+        "bơ lạt",
+        "bơ động vật",
+        "bo dong vat"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cheddar-cheese-slices",
+      "name": "Phô mai lát",
+      "normalizedName": "pho mai lat",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "gói",
+      "aliases": [
+        "pho mai lat",
+        "cheese slices",
+        "phô mai kẹp bánh mì",
+        "cheddar cheese",
+        "phô mai",
+        "pho mai",
+        "phô mai lát"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mozzarella-cheese",
+      "name": "Phô mai sợi Mozzarella",
+      "normalizedName": "pho mai soi mozzarella",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "gói",
+      "aliases": [
+        "pho mai soi",
+        "mozzarella",
+        "phô mai kéo sợi",
+        "phô mai pizza"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "laughing-cow-cheese",
+      "name": "Phô mai Con Bò Cười",
+      "normalizedName": "pho mai con bo cuoi",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "con bo cuoi",
+        "phô mai tam giác",
+        "laughing cow",
+        "phô mai viên",
+        "pho mai vien",
+        "phô mai bò cười"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "whipping-cream",
+      "name": "Kem tươi (Whipping Cream)",
+      "normalizedName": "kem tuoi whipping cream",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "whipping cream",
+        "kem tươi làm bánh",
+        "kem sữa tươi",
+        "kem tươi",
+        "kem tuoi",
+        "whipping"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tofu-white",
+      "name": "Đậu hũ trắng",
+      "normalizedName": "dau hu trang",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "miếng",
+      "aliases": [
+        "dau hu",
+        "đậu phụ",
+        "tofu",
+        "miếng đậu hũ",
+        "đậu hũ",
+        "tàu hũ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tofu-silken",
+      "name": "Đậu hũ non",
+      "normalizedName": "dau hu non",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "cây",
+      "aliases": [
+        "dau hu non",
+        "đậu phụ non",
+        "cây đậu hũ non",
+        "đậu hũ non"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tofu-fried",
+      "name": "Đậu hũ chiên",
+      "normalizedName": "dau hu chien",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "miếng",
+      "aliases": [
+        "dau hu chien",
+        "đậu phụ rán",
+        "đậu chiên vàng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "balut-egg",
+      "name": "Trứng vịt lộn",
+      "normalizedName": "trung vit lon",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung vit lon",
+        "trứng vịt lộn",
+        "hột vịt lộn",
+        "balut"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "goose-egg",
+      "name": "Trứng ngỗng",
+      "normalizedName": "trung ngong",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung ngong",
+        "trứng ngỗng",
+        "goose egg"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "salted-chicken-egg",
+      "name": "Trứng gà muối",
+      "normalizedName": "trung ga muoi",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "quả",
+      "aliases": [
+        "trung ga muoi",
+        "trứng gà muối",
+        "salted chicken egg"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-milk-less-sweet",
+      "name": "Sữa tươi ít đường",
+      "normalizedName": "sua tuoi it duong",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua tuoi it duong",
+        "sữa tươi ít đường",
+        "sữa ít đường",
+        "low sugar milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pasteurized-milk",
+      "name": "Sữa thanh trùng",
+      "normalizedName": "sua thanh trung",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "chai",
+      "aliases": [
+        "sua thanh trung",
+        "sữa thanh trùng",
+        "sữa tươi thanh trùng",
+        "pasteurized milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "uht-milk",
+      "name": "Sữa tiệt trùng",
+      "normalizedName": "sua tiet trung",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua tiet trung",
+        "sữa tiệt trùng",
+        "sữa tươi tiệt trùng",
+        "uht milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "drinking-yogurt",
+      "name": "Sữa chua uống",
+      "normalizedName": "sua chua uong",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "chai",
+      "aliases": [
+        "sua chua uong",
+        "sữa chua uống",
+        "drinking yogurt",
+        "sữa chua men sống"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "yogurt-unsweetened",
+      "name": "Sữa chua không đường",
+      "normalizedName": "sua chua khong duong",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua chua khong duong",
+        "sữa chua không đường",
+        "yaourt không đường",
+        "unsweetened yogurt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "greek-yogurt",
+      "name": "Sữa chua Hy Lạp",
+      "normalizedName": "sua chua hy lap",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua chua hy lap",
+        "sữa chua hy lạp",
+        "greek yogurt",
+        "sữa chua dẻo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cream-cheese",
+      "name": "Kem phô mai (Cream Cheese)",
+      "normalizedName": "kem pho mai",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "kem pho mai",
+        "kem phô mai",
+        "cream cheese",
+        "phô mai kem"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "condensed-milk",
+      "name": "Sữa đặc",
+      "normalizedName": "sua dac",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "lon",
+      "aliases": [
+        "sua dac",
+        "sữa đặc",
+        "sữa ông thọ",
+        "sữa đặc có đường",
+        "condensed milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "nut-milk",
+      "name": "Sữa hạt",
+      "normalizedName": "sua hat",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua hat",
+        "sữa hạt",
+        "sữa hạt dinh dưỡng",
+        "nut milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "soy-milk",
+      "name": "Sữa đậu nành",
+      "normalizedName": "sua dau nanh",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua dau nanh",
+        "sữa đậu nành",
+        "sữa fami",
+        "soy milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "walnut-milk",
+      "name": "Sữa óc chó",
+      "normalizedName": "sua oc cho",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua oc cho",
+        "sữa óc chó",
+        "sữa hạt óc chó",
+        "walnut milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "almond-milk",
+      "name": "Sữa hạnh nhân",
+      "normalizedName": "sua hanh nhan",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua hanh nhan",
+        "sữa hạnh nhân",
+        "almond milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "oat-milk",
+      "name": "Sữa yến mạch",
+      "normalizedName": "sua yen mach",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua yen mach",
+        "sữa yến mạch",
+        "oat milk"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "coconut-milk-drink",
+      "name": "Sữa dừa",
+      "normalizedName": "sua dua",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "sua dua",
+        "sữa dừa",
+        "sữa dừa uống",
+        "coconut milk drink"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "milk-custard",
+      "name": "Váng sữa",
+      "normalizedName": "vang sua",
+      "categoryId": "dairy_eggs",
+      "defaultUnit": "vỉ",
+      "aliases": [
+        "vang sua",
+        "váng sữa",
+        "váng sữa monte",
+        "váng sữa hoff",
+        "milk custard"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "rice-st25",
+      "name": "Gạo ST25",
+      "normalizedName": "gao st25",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gao st25",
+        "gạo thơm st25",
+        "st25 rice",
+        "túi 5kg gạo st25"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "rice-jasmine",
+      "name": "Gạo thơm Jasmine",
+      "normalizedName": "gao thom jasmine",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gao jasmine",
+        "gạo lài miên",
+        "gạo dẻo thơm"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "glutinous-rice",
+      "name": "Gạo nếp (Nếp cái hoa vàng)",
+      "normalizedName": "gao nep",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gao nep",
+        "nếp cái hoa vàng",
+        "nếp ngỗng",
+        "nếp thơm"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-rice-noodles",
+      "name": "Bún tươi",
+      "normalizedName": "bun tuoi",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "bun tuoi",
+        "bún sợi nhỏ",
+        "bún lá",
+        "rice vermicelli"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-pho-noodles",
+      "name": "Bánh phở tươi",
+      "normalizedName": "banh pho tuoi",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "banh pho",
+        "bánh phở sợi",
+        "pho noodles"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-egg-noodles",
+      "name": "Mì trứng tươi",
+      "normalizedName": "mi trung tuoi",
+      "categoryId": "grains_staples",
+      "defaultUnit": "gói",
+      "aliases": [
+        "mi trung",
+        "mì sợi vàng",
+        "egg noodles"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "wheat-flour",
+      "name": "Bột mì đa dụng",
+      "normalizedName": "bot mi da dung",
+      "categoryId": "grains_staples",
+      "defaultUnit": "gói",
+      "aliases": [
+        "bot mi",
+        "bột mì số 11",
+        "bột mì meizan",
+        "wheat flour",
+        "bột mì"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "white-bread",
+      "name": "Bánh mì sandwich",
+      "normalizedName": "banh mi sandwich",
+      "categoryId": "grains_staples",
+      "defaultUnit": "bịch",
+      "aliases": [
+        "sandwich",
+        "bánh mì gối",
+        "bánh mì lát",
+        "bread"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mung-beans",
+      "name": "Đậu xanh (Đỗ xanh)",
+      "normalizedName": "dau xanh",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau xanh",
+        "đậu xanh",
+        "đỗ xanh",
+        "do xanh",
+        "đậu xanh cà vỏ",
+        "mung beans"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "black-beans",
+      "name": "Đậu đen (Đỗ đen)",
+      "normalizedName": "dau den",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau den",
+        "đậu đen",
+        "đỗ đen",
+        "do den",
+        "đậu đen xanh lòng",
+        "black beans"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "red-beans",
+      "name": "Đậu đỏ (Đỗ đỏ)",
+      "normalizedName": "dau do",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau do",
+        "đậu đỏ",
+        "đỗ đỏ",
+        "do do",
+        "red beans",
+        "azuki beans"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "white-beans",
+      "name": "Đậu trắng (Đỗ trắng)",
+      "normalizedName": "dau trang",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau trang",
+        "đậu trắng",
+        "đỗ trắng",
+        "do trang",
+        "đậu mắt cua",
+        "white beans"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "soybeans",
+      "name": "Đậu nành (Đậu tương)",
+      "normalizedName": "dau nanh",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau nanh",
+        "đậu nành",
+        "đậu tương",
+        "đỗ tương",
+        "dau tuong",
+        "soybeans"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "peanuts",
+      "name": "Đậu phộng (Lạc)",
+      "normalizedName": "dau phong",
+      "categoryId": "grains_staples",
+      "defaultUnit": "kg",
+      "aliases": [
+        "dau phong",
+        "đậu phộng",
+        "lạc",
+        "củ lạc",
+        "hạt lạc",
+        "đậu phụng",
+        "peanuts"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cashew-nuts",
+      "name": "Hạt điều",
+      "normalizedName": "hat dieu",
+      "categoryId": "grains_staples",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "hat dieu",
+        "hạt điều",
+        "hạt điều rang muối",
+        "cashews",
+        "cashew nuts"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "almonds",
+      "name": "Hạnh nhân",
+      "normalizedName": "hanh nhan",
+      "categoryId": "grains_staples",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "hanh nhan",
+        "hạnh nhân",
+        "hạt hạnh nhân",
+        "almonds"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "walnuts",
+      "name": "Óc chó (Hạt óc chó)",
+      "normalizedName": "oc cho",
+      "categoryId": "grains_staples",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "oc cho",
+        "óc chó",
+        "hạt óc chó",
+        "walnuts"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pumpkin-seeds",
+      "name": "Hạt bí",
+      "normalizedName": "hat bi",
+      "categoryId": "grains_staples",
+      "defaultUnit": "gói",
+      "aliases": [
+        "hat bi",
+        "hạt bí",
+        "hạt bí xanh",
+        "hạt bí rang",
+        "pumpkin seeds"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "sunflower-seeds",
+      "name": "Hạt hướng dương",
+      "normalizedName": "hat huong duong",
+      "categoryId": "grains_staples",
+      "defaultUnit": "gói",
+      "aliases": [
+        "hat huong duong",
+        "hạt hướng dương",
+        "sunflower seeds"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cooking-oil",
+      "name": "Dầu ăn",
+      "normalizedName": "dau an",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "dau an",
+        "cooking oil",
+        "dầu thực vật",
+        "dầu simply",
+        "dầu neptune"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "chili-sauce",
+      "name": "Tương ớt",
+      "normalizedName": "tuong ot",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "tuong ot",
+        "chili sauce",
+        "chilli sauce",
+        "tương ớt chinsu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568899307548-479860b29864?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "tomato-ketchup",
+      "name": "Tương cà (Ketchup)",
+      "normalizedName": "tuong ca ketchup",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "tuong ca",
+        "ketchup",
+        "tomato sauce",
+        "tương cà chinsu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568899307548-479860b29864?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "mayonnaise",
+      "name": "Sốt Mayonnaise",
+      "normalizedName": "sot mayonnaise",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "mayonnaise",
+        "xốt mayonnaise",
+        "mayo"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "kewpie-sesame-sauce",
+      "name": "Sốt mè rang Kewpie",
+      "normalizedName": "sot me rang kewpie",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "sot me rang",
+        "kewpie",
+        "sốt mè",
+        "nước xốt mè rang"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "oyster-sauce",
+      "name": "Dầu hào",
+      "normalizedName": "dau hao",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "dau hao",
+        "oyster sauce",
+        "dầu hào maggi",
+        "dầu hào lee kum kee"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "bbq-marinade-sauce",
+      "name": "Sốt ướp thịt nướng BBQ",
+      "normalizedName": "sot uop thit nuong bbq",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "sot uop thit",
+        "bbq sauce",
+        "sốt thịt nướng cholimex"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "shrimp-satay-sauce",
+      "name": "Sa tế tôm",
+      "normalizedName": "sa te tom",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "sa te",
+        "sa tế tôm cholimex",
+        "satay sauce"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568899307548-479860b29864?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "green-chili-salt",
+      "name": "Muối ớt xanh chấm hải sản",
+      "normalizedName": "muoi ot xanh cham hai san",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "muoi ot xanh",
+        "muối ớt nha trang",
+        "nước chấm hải sản"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1568899307548-479860b29864?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "wasabi-paste",
+      "name": "Mù tạt Wasabi",
+      "normalizedName": "mu tat wasabi",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "tuýp",
+      "aliases": [
+        "wasabi",
+        "mù tạt xanh",
+        "wasabi paste"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "peanut-butter",
+      "name": "Bơ đậu phộng",
+      "normalizedName": "bo dau phong",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "bo dau phong",
+        "bơ lạc",
+        "peanut butter"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "strawberry-jam",
+      "name": "Mứt dâu tây phết bánh mì",
+      "normalizedName": "mut dau tay",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "mut dau",
+        "strawberry jam",
+        "mứt dâu đà lạt"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "sweet-bean-sauce",
+      "name": "Tương đen ăn phở",
+      "normalizedName": "tuong den an pho",
+      "categoryId": "condiments_spices",
+      "defaultUnit": "chai",
+      "aliases": [
+        "tuong den",
+        "tương hột",
+        "hoisin sauce"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "orange-juice",
+      "name": "Nước ép cam tươi",
+      "normalizedName": "nuoc ep cam",
+      "categoryId": "beverages",
+      "defaultUnit": "chai",
+      "aliases": [
+        "nuoc ep cam",
+        "nước cam ép",
+        "orange juice"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "apple-juice",
+      "name": "Nước ép táo",
+      "normalizedName": "nuoc ep tao",
+      "categoryId": "beverages",
+      "defaultUnit": "chai",
+      "aliases": [
+        "nuoc ep tao",
+        "apple juice",
+        "nước táo ép"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "coconut-water",
+      "name": "Nước dừa tươi đóng lon",
+      "normalizedName": "nuoc dua tuoi",
+      "categoryId": "beverages",
+      "defaultUnit": "lon",
+      "aliases": [
+        "nuoc dua lon",
+        "nước dừa cocoxim",
+        "coconut water"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "corn-milk",
+      "name": "Sữa bắp non",
+      "normalizedName": "sua bap non",
+      "categoryId": "beverages",
+      "defaultUnit": "chai",
+      "aliases": [
+        "sua bap",
+        "sữa bắp thái sơn",
+        "sữa ngô"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "smoked-sausage",
+      "name": "Xúc xích Đức xông khói",
+      "normalizedName": "xuc xich duc xong khoi",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "xuc xich",
+        "xúc xích đức",
+        "sausage",
+        "gói xúc xích"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "frozen-spring-rolls",
+      "name": "Chả giò tôm thịt",
+      "normalizedName": "cha gio tom thit",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "cha gio",
+        "chả ram",
+        "spring rolls",
+        "nem rán"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fish-balls",
+      "name": "Cá viên",
+      "normalizedName": "ca vien",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "ca vien",
+        "cá viên chiên",
+        "fish balls"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "beef-balls",
+      "name": "Bò viên gân",
+      "normalizedName": "bo vien gan",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "bo vien",
+        "bò viên nấu phở",
+        "beef balls"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "shrimp-balls",
+      "name": "Tôm viên",
+      "normalizedName": "tom vien",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "tom vien",
+        "tôm viên chiên",
+        "shrimp balls"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-dumplings",
+      "name": "Sủi cảo / Há cảo nhân thịt",
+      "normalizedName": "sui cao ha cao nhan thit",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "sui cao",
+        "há cảo",
+        "dumplings",
+        "mandu",
+        "bánh xếp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "frozen-steamed-buns",
+      "name": "Bánh bao nhân thịt trứng cút",
+      "normalizedName": "banh bao nhan thit trung cut",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "banh bao",
+        "bánh bao đông lạnh",
+        "steamed buns"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "frozen-french-fries",
+      "name": "Khoai tây cọng chiên đông lạnh",
+      "normalizedName": "khoai tay cong chien dong lanh",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "khoai tay chien",
+        "french fries",
+        "khoai tây cọng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "frozen-pizza",
+      "name": "Pizza đông lạnh",
+      "normalizedName": "pizza dong lanh",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "pizza",
+        "pizza hải sản",
+        "pizza bò",
+        "frozen pizza"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "crab-sticks",
+      "name": "Thanh cua (Surimi)",
+      "normalizedName": "thanh cua surimi",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "thanh cua",
+        "surimi",
+        "crab sticks"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fried-fermented-pork",
+      "name": "Nem chua rán",
+      "normalizedName": "nem chua ran",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "nem chua ran",
+        "nem rán hà nội",
+        "nem chua tẩm bột"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "popcorn-chicken",
+      "name": "Gà viên chiên Popcorn",
+      "normalizedName": "ga vien chien popcorn",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "ga vien",
+        "popcorn chicken",
+        "gà tẩm bột"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "breaded-shrimp",
+      "name": "Tôm tẩm bột chiên xù",
+      "normalizedName": "tom tam bot chien xu",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "tom tam bot",
+        "tôm chiên xù",
+        "tempura tôm"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cheese-sausage",
+      "name": "Xúc xích nhân phô mai",
+      "normalizedName": "xuc xich nhan pho mai",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "xuc xich pho mai",
+        "cheese sausage"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "frozen-sweet-corn",
+      "name": "Bắp ngọt hạt đông lạnh",
+      "normalizedName": "bap ngot hat dong lanh",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "bap ngot",
+        "ngô ngọt",
+        "frozen sweet corn"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "edamame",
+      "name": "Đậu nành Nhật (Edamame)",
+      "normalizedName": "dau nanh nhat edamame",
+      "categoryId": "frozen_foods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "edamame",
+        "đậu lông nhật",
+        "đậu nành nguyên quả"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "vietnamese-pork-roll",
+      "name": "Chả lụa (Giò lụa)",
+      "normalizedName": "cha lua gio lua",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cha lua",
+        "giò lụa",
+        "đòn chả lụa",
+        "vietnamese pork roll"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "head-cheese-roll",
+      "name": "Giò thủ (Giò xào)",
+      "normalizedName": "gio thu gio xao",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "kg",
+      "aliases": [
+        "gio thu",
+        "giò xào",
+        "chả thủ"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cabbage-kimchi",
+      "name": "Kim chi cải thảo Hàn Quốc",
+      "normalizedName": "kim chi cai thao han quoc",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "kim chi",
+        "kimchi",
+        "hũ kim chi",
+        "kim chi ông kim"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1583032015879-67990035b80c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pickled-mustard-greens",
+      "name": "Dưa cải muối chua",
+      "normalizedName": "dua cai muoi chua",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "bịch",
+      "aliases": [
+        "dua cai",
+        "dưa chua",
+        "cải chua",
+        "dưa cải chua"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1583032015879-67990035b80c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pickled-scallion-heads",
+      "name": "Củ kiệu ngâm chua ngọt",
+      "normalizedName": "cu kieu ngam chua ngot",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "hũ",
+      "aliases": [
+        "cu kieu",
+        "củ kiệu",
+        "kiệu ngâm",
+        "hũ củ kiệu"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1583032015879-67990035b80c?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "pork-liver-pate",
+      "name": "Pate gan heo",
+      "normalizedName": "pate gan heo",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "pate",
+        "pate gan",
+        "pate cột đèn",
+        "pate hạ long"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534483509719-3feaee7c30da?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "canned-luncheon-meat",
+      "name": "Thịt hộp Spam / Luncheon Meat",
+      "normalizedName": "thit hop spam luncheon meat",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "spam",
+        "thịt hộp",
+        "luncheon meat",
+        "thịt heo hộp"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534483509719-3feaee7c30da?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "canned-sardines",
+      "name": "Cá mòi hộp sốt cà chua",
+      "normalizedName": "ca moi hop sot ca chua",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "lon",
+      "aliases": [
+        "ca moi",
+        "cá hộp",
+        "cá mòi ba cô gái",
+        "canned sardines"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534483509719-3feaee7c30da?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "canned-tuna",
+      "name": "Cá ngừ ngâm dầu",
+      "normalizedName": "ca ngu ngam dau",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "lon",
+      "aliases": [
+        "ca ngu ngam dau",
+        "cá ngừ lon",
+        "canned tuna"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1534483509719-3feaee7c30da?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "smoked-ham",
+      "name": "Thịt nguội Jambon",
+      "normalizedName": "thit nguoi jambon",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "gói",
+      "aliases": [
+        "jambon",
+        "thịt nguội",
+        "dăm bông",
+        "smoked ham"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fermented-pork-nem-chua",
+      "name": "Nem chua",
+      "normalizedName": "nem chua",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "chục",
+      "aliases": [
+        "nem chua",
+        "nem chua thanh hóa",
+        "nem chua cây"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fresh-chinese-sausage",
+      "name": "Lạp xưởng tươi",
+      "normalizedName": "lap xuong tuoi",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "kg",
+      "aliases": [
+        "lap xuong",
+        "lạp xưởng cai lậy",
+        "lạp xưởng tôm"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "caramel-flan",
+      "name": "Bánh Flan",
+      "normalizedName": "banh flan",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "banh flan",
+        "caramel flan",
+        "lốc bánh flan"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "fruit-jelly",
+      "name": "Thạch rau câu trái cây",
+      "normalizedName": "thach rau cau trai cay",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "thach rau cau",
+        "thạch trái cây",
+        "jelly"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "cinnamon-pork-roll",
+      "name": "Chả quế",
+      "normalizedName": "cha que",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "kg",
+      "aliases": [
+        "cha que",
+        "chả quế nướng",
+        "chả lợn nướng"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    },
+    {
+      "foodId": "seaweed-salad",
+      "name": "Rong biển trộn mè",
+      "normalizedName": "rong bien tron me",
+      "categoryId": "canned_dry_goods",
+      "defaultUnit": "hộp",
+      "aliases": [
+        "rong bien",
+        "salad rong biển",
+        "seaweed salad"
+      ],
+      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "isActive": true
+    }
+  ]
+}

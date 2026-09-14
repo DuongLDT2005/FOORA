@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -13,7 +14,7 @@ class EmptyStateWidget extends StatelessWidget {
     super.key,
     this.title = 'Tủ đang trống hoặc không có kết quả!',
     this.subtitle =
-        'Hãy nhấn Thêm nhanh hoặc quét mã để lấp đầy căn bếp của bạn.',
+        'Hãy nhấn Thêm nhanh hoặc quét mã để lấp đầy tủ lạnh của bạn.',
     this.icon = Icons.sentiment_dissatisfied,
     this.action,
   });
@@ -22,34 +23,34 @@ class EmptyStateWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 20),
+      padding: EdgeInsets.symmetric(vertical: 48.h, horizontal: 20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.slate100),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 40, color: AppColors.slate300),
-          const SizedBox(height: 12),
+          Icon(icon, size: 40.r, color: AppColors.slate300),
+          SizedBox(height: 12.h),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: 14.sp,
               fontWeight: FontWeight.bold,
               fontFamily: 'Lexend',
               color: AppColors.slate700,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6.h),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: AppColors.slate400),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.slate400),
           ),
-          if (action != null) ...[const SizedBox(height: 16), action!],
+          if (action != null) ...[SizedBox(height: 16.h), action!],
         ],
       ),
     );

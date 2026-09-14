@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:foora/core/constants/app_enums.dart';
+
+import '../../../../core/constants/app_enums.dart';
 
 import '../../domain/entities/inventory_item.dart';
 
 class InventoryItemModel extends InventoryItem {
   const InventoryItemModel({
     required super.id,
-    required super.foodId,
+    super.foodId,
     required super.name,
+    required super.normalizedName,
+    required super.categoryId,
     required super.quantity,
     required super.unit,
     required super.remainingPercentage,
@@ -15,6 +18,7 @@ class InventoryItemModel extends InventoryItem {
     required super.purchaseDate,
     required super.expirationDate,
     super.source = InventoryItemSource.manual,
+    super.status = InventoryItemStatus.active,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -27,14 +31,18 @@ class InventoryItemModel extends InventoryItem {
   }
 
   factory InventoryItemModel.fromJson(Map<String, dynamic> json, {String? id}) {
+    final name = json['name'] as String? ?? '';
     return InventoryItemModel(
       id:
           id ??
           json['id'] as String? ??
           json['inventoryItemId'] as String? ??
           '',
-      foodId: json['foodId'] as String? ?? '',
-      name: json['name'] as String? ?? '',
+      foodId: json['foodId'] as String?,
+      name: name,
+      normalizedName:
+          json['normalizedName'] as String? ?? name.toLowerCase().trim(),
+      categoryId: json['categoryId'] as String? ?? 'other',
       quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
       unit: json['unit'] as String? ?? '',
       remainingPercentage:
@@ -43,6 +51,7 @@ class InventoryItemModel extends InventoryItem {
       purchaseDate: _parseDateTime(json['purchaseDate']),
       expirationDate: _parseDateTime(json['expirationDate']),
       source: InventoryItemSource.fromString(json['source'] as String?),
+      status: InventoryItemStatus.fromString(json['status'] as String?),
       createdAt: _parseDateTime(json['createdAt']),
       updatedAt: _parseDateTime(json['updatedAt']),
     );
@@ -53,6 +62,8 @@ class InventoryItemModel extends InventoryItem {
       id: item.id,
       foodId: item.foodId,
       name: item.name,
+      normalizedName: item.normalizedName,
+      categoryId: item.categoryId,
       quantity: item.quantity,
       unit: item.unit,
       remainingPercentage: item.remainingPercentage,
@@ -60,6 +71,7 @@ class InventoryItemModel extends InventoryItem {
       purchaseDate: item.purchaseDate,
       expirationDate: item.expirationDate,
       source: item.source,
+      status: item.status,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     );
@@ -69,6 +81,8 @@ class InventoryItemModel extends InventoryItem {
     return {
       'foodId': foodId,
       'name': name,
+      'normalizedName': normalizedName,
+      'categoryId': categoryId,
       'quantity': quantity,
       'unit': unit,
       'remainingPercentage': remainingPercentage,
@@ -76,6 +90,7 @@ class InventoryItemModel extends InventoryItem {
       'purchaseDate': Timestamp.fromDate(purchaseDate),
       'expirationDate': Timestamp.fromDate(expirationDate),
       'source': source.value,
+      'status': status.value,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -86,6 +101,8 @@ class InventoryItemModel extends InventoryItem {
       'id': id,
       'foodId': foodId,
       'name': name,
+      'normalizedName': normalizedName,
+      'categoryId': categoryId,
       'quantity': quantity,
       'unit': unit,
       'remainingPercentage': remainingPercentage,
@@ -93,6 +110,7 @@ class InventoryItemModel extends InventoryItem {
       'purchaseDate': purchaseDate.toIso8601String(),
       'expirationDate': expirationDate.toIso8601String(),
       'source': source.value,
+      'status': status.value,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };

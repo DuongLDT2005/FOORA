@@ -101,8 +101,9 @@ Chứa các thành phần giao diện, tiện ích mở rộng và helper có th
 
 ```text
 lib/shared/
-├── widgets/      # Atomic UI: Các widget cơ bản không chứa business logic
-├── components/   # Molecule UI: Các khối UI phức hợp có logic tương tác nội bộ
+├── layouts/      # App Scaffolds & Page Shells: mobile_shell_scaffold, subpage_layout
+├── components/   # Molecule UI: Khối UI phức hợp (app_header, app_bottom_bar, app_search_bar, app_dialog, app_shimmer,...)
+├── widgets/      # Atomic UI: Các widget cơ bản không chứa logic (button, text_field, card, badge, toast,...)
 ├── extensions/   # Tiện ích mở rộng cú pháp cho BuildContext, String
 ├── helpers/      # Helper điều hướng Dialog, Debouncer tìm kiếm
 └── models/       # Data models dùng chung (Pagination, Dropdown items)
@@ -112,22 +113,28 @@ lib/shared/
 
 | Thư mục | File | Chức năng & Trách nhiệm |
 | :--- | :--- | :--- |
-| **`widgets`** | `app_button.dart` | `PrimaryButton` (nút chính bo 16px kèm loading), `SecondaryButton`, `DangerButton`, `AppFloatingActionButton`. |
-| | `app_text_field.dart` | `AppTextField` (input chữ in hoa, required sao đỏ), `AppDropdown<T>`, `AppPercentageSlider` (thanh trượt 0-100%). |
-| | `app_card.dart` | `FeatureCard` (thẻ menu/tính năng có icon), `StatisticCard` (thẻ thống kê Dashboard: `good`, `warning`, `expired`). |
-| | `status_badge.dart` | `StatusBadge` (nhãn trạng thái bo 8px: Hết hạn, Sắp hết, Premium), `CategoryAvatar` (khung icon danh mục). |
-| | `app_header.dart` | `AppHeader` (AppBar font Lexend, hỗ trợ `isDark`), `AppBottomSheet` (modal sheet kéo), `StickyBottomActions`, `AppToast`. |
-| | `loading_widget.dart` | `AppLoadingSpinner`, `FullScreenLoader`, `LoadingWidget` (vòng xoay tải trang). |
-| | `empty_state.dart` | `EmptyStateWidget` (giao diện placeholder khi danh sách rỗng). |
-| | `error_state.dart` | `ErrorStateWidget` (giao diện báo lỗi kèm nút Thử lại). |
-| **`components`** | `app_shimmer.dart` | Hiệu ứng Skeleton Shimmer loading quét gradient mượt mà (`AppShimmer.box`, `AppShimmer.circle`). |
-| | `app_search_bar.dart` | Thanh tìm kiếm bo 16px tích hợp `Debouncer`, icon kính lúp và nút xóa text tự động. |
+| **`layouts`** | `mobile_shell_scaffold.dart` | Shell Scaffold cho các tab chính Mobile (Home, Inventory, Scan, Profile) tích hợp Bottom Navigation Bar & Responsive header. |
+| | `subpage_layout.dart` | `SubpageLayout` (Khung Scaffold wrapper hoàn chỉnh kết hợp `AppHeader` + `body` + `AppBottomBar` tích hợp giới hạn responsive `maxWidth: 600.w` căn giữa cho tablet/web). |
+| **`components`** | `app_header.dart` | `AppHeader` (Header chuẩn di động font Lexend, nền xanh primary, nút back bo tròn, responsive `.w`/`.h`/`.sp`, variants: `itemForm`, `notifications`, `profileDetail`, `membership`, `paymentHistory`). |
+| | `app_bottom_bar.dart` | `AppBottomBar` (Thanh action bar đáy màn hình hỗ trợ Safe Area, responsive units & giới hạn `maxWidth: 600.w`: variants `form` Hủy/Lưu 1:2 kèm loading spinner, `membership` giá 29k/tháng & nâng cấp/quản lý gói). |
+| | `app_shimmer.dart` | Hiệu ứng Skeleton Shimmer loading quét gradient mượt mà (`AppShimmer.box`, `AppShimmer.circle`). |
+| | `app_search_bar.dart` | Thanh tìm kiếm bo 16px tích hợp `Debouncer`, responsive scaling, icon kính lúp và nút xóa text tự động. |
 | | `app_segmented_control.dart` | Bộ nút gạt phân loại tab mềm (Ngăn mát / Ngăn đông) hỗ trợ icon và badge số lượng. |
-| | `app_dialog.dart` | Khung Dialog pop-up Material 3 bo góc 20px, icon tiêu đề và 2 nút hành động. |
-| **`extensions`** | `context_extensions.dart` | Mở rộng `BuildContext`: `theme`, `colorScheme`, `textTheme`, `screenHeight`, `isMobile`, `showToast()`. |
+| | `app_dialog.dart` | Khung Dialog pop-up Material 3 bo góc 20px, giới hạn responsive `maxWidth: 420.w`, icon tiêu đề và 2 nút hành động. |
+| | `app_bottom_sheet.dart` | Khung Modal Bottom Sheet vuốt kéo bo tròn 24px kèm thanh drag handle, giới hạn `maxWidth: 520.w` căn giữa trên tablet/web. |
+| **`widgets`** | `app_button.dart` | `PrimaryButton` (nút chính bo 16px kèm loading), `SecondaryButton`, `DangerButton`, `AppFloatingActionButton` (chuẩn responsive `.w`/`.h`/`.r`/`.sp`). |
+| | `app_text_field.dart` | `AppTextField` (input chữ in hoa, required sao đỏ), `AppDropdown<T>`, `AppPercentageSlider` (thanh trượt 0-100%). |
+| | `app_card.dart` | `FeatureCard` (thẻ menu/tính năng có icon), `StatisticCard` (thẻ thống kê Dashboard: `good`, `warning`, `expired`) chuẩn hóa responsive. |
+| | `status_badge.dart` | `StatusBadge` (nhãn trạng thái bo 8px: Hết hạn, Sắp hết, Premium), `CategoryAvatar` (khung icon danh mục) chuẩn hóa responsive. |
+| | `loading_widget.dart` | `AppLoadingSpinner`, `FullScreenLoader`, `LoadingWidget` (vòng xoay tải trang) chuẩn hóa responsive. |
+| | `empty_state.dart` | `EmptyStateWidget` (giao diện placeholder khi danh sách rỗng, chuẩn hóa responsive). |
+| | `error_state.dart` | `ErrorStateWidget`, `AppErrorBanner` (giao diện báo lỗi kèm nút Thử lại, chuẩn hóa responsive). |
+| **`extensions`** | `context_extensions.dart` | Mở rộng `BuildContext`: `theme`, `colorScheme`, `textTheme`, `screenHeight`, responsive breakpoints (`isMobile`, `isTablet`, `isDesktop`, `isWebPlatform`), `showToast()`. |
 | | `string_extensions.dart` | Mở rộng `String`: `capitalize()`, `toTitleCase()`, `obscureEmail()` (*d***5@gmail.com*), `isValidEmail`. |
 | **`helpers`** | `debouncer.dart` | Cơ chế hoãn thực thi tìm kiếm (Debounce 300–500ms khi người dùng gõ phím). |
 | | `dialog_helper.dart` | Tiện ích gọi Dialog: `showConfirmDialog()`, `showDeleteDialog()`, `showInfoDialog()`. |
+| | `bottom_sheet_helper.dart` | Tiện ích gọi Modal Bottom Sheet: `BottomSheetHelper.show(...)`, `showSelect(...)`. |
+| | `toast_helper.dart` | Tiện ích gọi hộp thông báo SnackBar nổi bo góc 16px: `ToastHelper.show(...)`. |
 
 ---
 
@@ -162,7 +169,7 @@ features/{feature_name}/
 | **3** | **`membership`** | Quản lý gói thành viên (Free / Premium), gói đăng ký (Subscription). | `membership_plan.dart`, `membership_plan_model.dart`, `subscription.dart`, `subscription_model.dart`, `get_membership_plans.dart`, `membership_page.dart`, `membership_provider.dart`. |
 | **4** | **`payment`** | Tích hợp In-App Purchase (IAP Google Play / App Store), xem lịch sử giao dịch. | `payment_transaction.dart`, `payment_transaction_model.dart`, `create_payment_intent.dart`, `payment_page.dart`, `payment_history_page.dart`. |
 | **5** | **`household`** | Quản lý gia đình/nhóm: tạo kho chung (Scope hiện tại), tham gia qua mã mời (Hạ tầng cho sau). | `household.dart`, `household_model.dart`, `invite_member.dart`, `household_page.dart`, `household_provider.dart`. |
-| **6** | **`inventory`** | Quản lý kho thực phẩm trong tủ lạnh (`inventory_items`), theo dõi hạn dùng FEFO & Master Data Catalog (`foods`, `food_categories`, `storage_locations`, `shelf_life_rules`). | `inventory_item.dart`, `inventory_item_model.dart`, `food.dart`, `food_model.dart`, `food_category.dart`, `food_category_model.dart`, `storage_location.dart`, `storage_location_model.dart`, `shelf_life_rule.dart`, `shelf_life_rule_model.dart`, `inventory_page.dart`, `inventory_item_card.dart`. |
+| **6** | **`inventory`** | Quản lý kho thực phẩm trong tủ lạnh (`inventory_items`), theo dõi hạn dùng FEFO & Master Data Catalog (`foods`, `food_categories`, `storage_locations`, `shelf_life_rules`). | `inventory_item.dart`, `inventory_item_model.dart`, usecases (`add_inventory_item.dart`, `update_inventory_item.dart`, `get_inventory_items.dart`), pages (`inventory_page.dart`, `item_form_page.dart`), providers (`inventory_provider.dart`, `inventory_form_state.dart`), `inventory_item_card.dart`. |
 | **7** | **`receipt`** | Chụp/quét hóa đơn bằng Camera OCR (ML Kit) & trích xuất AI. | `receipt.dart`, `receipt_model.dart`, `receipt_item.dart`, `receipt_item_model.dart`, `scan_receipt.dart`, `receipt_scan_page.dart`, `receipt_review_page.dart`. |
 | **8** | **`notification`** | Danh sách thông báo đẩy cảnh báo thực phẩm sắp hết hạn & Quản lý thiết bị (Devices). | `app_notification.dart`, `app_notification_model.dart`, `device.dart`, `device_model.dart`, `get_notifications.dart`, `notification_page.dart`. |
 | **9** | **`ai`** | Trò chuyện với Trợ lý AI (gợi ý món ăn, tra cứu dinh dưỡng, quản lý quota). | `ai_usage_quota.dart`, `ai_usage_quota_model.dart`, `ai_chat_message.dart`, `send_ai_query.dart`, `get_ai_usage_quota.dart`, `ai_chat_page.dart`. |

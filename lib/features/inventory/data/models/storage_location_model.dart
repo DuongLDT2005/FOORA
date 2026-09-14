@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:foora/core/constants/app_enums.dart';
+
+import '../../../../core/constants/app_enums.dart';
 
 import '../../domain/entities/storage_location.dart';
 

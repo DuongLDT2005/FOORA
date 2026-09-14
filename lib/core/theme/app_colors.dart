@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  AppColors._(); // Ngăn việc khởi tạo class này
+  AppColors._(); // Prevents instantiation of this utility class
 
   // Primary
   static const Color primary = Color(0xFF0F5238);
@@ -39,19 +39,42 @@ class AppColors {
   static const Color surfaceContainerHighest = Color(0xFFC1ECD4);
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
 
-  // Màu phụ trợ thường dùng trong app (tương tự Tailwind slate, amber, red...)
-  static const Color slate50 = Color(0xFFF8FAFC);
-  static const Color slate100 = Color(0xFFF1F5F9);
-  static const Color slate200 = Color(0xFFE2E8F0);
-  static const Color slate300 = Color(0xFFCBD5E1);
-  static const Color slate400 = Color(0xFF94A3B8);
-  static const Color slate500 = Color(0xFF64748B);
-  static const Color slate600 = Color(0xFF475569);
-  static const Color slate700 = Color(0xFF334155);
-  static const Color slate800 = Color(0xFF1E293B);
-  static const Color slate900 = Color(0xFF0F172A); // Dark mode background
+  // Slate Palette
+  static const Color slate50 = Color(0xFFF3F6F9);
+  static const Color slate100 = Color(0xFFE8EEF3);
+  static const Color slate200 = Color(0xFFD4DFE9);
+  static const Color slate300 = Color(0xFFAABBCB);
+  static const Color slate400 = Color(0xFF758A9F);
+  static const Color slate500 = Color(0xFF54697E);
+  static const Color slate600 = Color(0xFF394C5F);
+  static const Color slate700 = Color(0xFF233547);
+  static const Color slate800 = Color(0xFF112030);
+  static const Color slate900 = Color(0xFF08121B);
 
+  // Emerald & Green Tones
+  static const Color emerald50 = Color(0xFFECFDF5);
+  static const Color emerald100 = Color(0xFFD1FAE5);
+  static const Color emerald200 = Color(0xFFA7F3D0);
+  static const Color emerald500 = Color(0xFF10B981);
+  static const Color emerald800 = Color(0xFF065F46);
+  static const Color emerald900 = Color(0xFF064E3B);
+
+  // Red & Warning Light Tones
+  static const Color red50 = Color(0xFFFEF2F2);
+  static const Color red100 = Color(0xFFFEE2E2);
+  static const Color red600 = Color(0xFFDC2626);
+
+  // Amber & Warning Light Tones
+  static const Color amber50 = Color(0xFFFFFBEB);
+  static const Color amber100 = Color(0xFFFEF3C7);
+  static const Color amber200 = Color(0xFFFDE68A);
   static const Color amber500 = Color(0xFFF59E0B);
+  static const Color amber600 = Color(0xFFD97706);
+  static const Color amber700 = Color(0xFFB45309);
+  static const Color amber800 = Color(0xFF92400E);
   static const Color red500 = Color(0xFFEF4444);
   static const Color blue500 = Color(0xFF3B82F6);
+
+  // Surface helper
+  static const Color primarySurface = Color(0xFFECFDF5); // emerald-50
 }

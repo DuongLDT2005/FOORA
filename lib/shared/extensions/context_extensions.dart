@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../widgets/app_header.dart';
+import '../helpers/toast_helper.dart';
 
 extension ContextExtensions on BuildContext {
   // Theme & Colors
@@ -25,6 +25,6 @@ extension ContextExtensions on BuildContext {
 
   // Quick Feedback Toast
   void showToast(String message, {bool isError = false}) {
-    AppToast.show(this, message, isError: isError);
+    ToastHelper.show(this, message, isError: isError);
   }
 }

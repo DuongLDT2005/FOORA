@@ -65,6 +65,23 @@ enum InventoryItemSource {
   }
 }
 
+/// Lifecycle status of an inventory item: 'active', 'consumed', 'discarded'
+enum InventoryItemStatus {
+  active('active'),
+  consumed('consumed'),
+  discarded('discarded');
+
+  final String value;
+  const InventoryItemStatus(this.value);
+
+  static InventoryItemStatus fromString(String? value) {
+    return InventoryItemStatus.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => InventoryItemStatus.active,
+    );
+  }
+}
+
 /// Receipt scanning processing status: 'pending', 'processing', 'completed', 'failed'
 enum ReceiptStatus {
   pending('pending'),

@@ -8,6 +8,7 @@ class Household {
   final String name;
   final String ownerId;
   final List<String> members; // Array of userIds
+  final int activeItemCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -16,6 +17,7 @@ class Household {
     required this.name,
     required this.ownerId,
     required this.members,
+    this.activeItemCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -28,6 +30,7 @@ class Household {
     String? name,
     String? ownerId,
     List<String>? members,
+    int? activeItemCount,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -36,6 +39,7 @@ class Household {
       name: name ?? this.name,
       ownerId: ownerId ?? this.ownerId,
       members: members ?? this.members,
+      activeItemCount: activeItemCount ?? this.activeItemCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -49,6 +53,7 @@ class Household {
         other.name == name &&
         other.ownerId == ownerId &&
         listEquals(other.members, members) &&
+        other.activeItemCount == activeItemCount &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -59,7 +64,9 @@ class Household {
     name,
     ownerId,
     Object.hashAll(members),
+    activeItemCount,
     createdAt,
     updatedAt,
   );
 }
+

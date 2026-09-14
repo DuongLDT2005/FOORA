@@ -1,13 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:foora/core/constants/app_enums.dart';
+
+import '../../../../core/constants/app_enums.dart';
 
 /// Pure domain entity representing an item stored in a household inventory.
 /// Strictly mapped to households/{householdId}/inventory_items/{inventoryItemId} in docs/DATABASE.md
 @immutable
 class InventoryItem {
   final String id;
-  final String foodId;
+  final String?
+  foodId; // Nullable when added manually or not mapped to master foods
   final String name;
+  final String normalizedName; // Lowercase/unaccented for autocomplete & search
+  final String categoryId; // Foreign key to food_categories
   final double quantity;
   final String unit;
   final int remainingPercentage; // 0 to 100
@@ -15,13 +19,16 @@ class InventoryItem {
   final DateTime purchaseDate;
   final DateTime expirationDate;
   final InventoryItemSource source;
+  final InventoryItemStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   const InventoryItem({
     required this.id,
-    required this.foodId,
+    this.foodId,
     required this.name,
+    required this.normalizedName,
+    required this.categoryId,
     required this.quantity,
     required this.unit,
     required this.remainingPercentage,
@@ -29,6 +36,7 @@ class InventoryItem {
     required this.purchaseDate,
     required this.expirationDate,
     this.source = InventoryItemSource.manual,
+    this.status = InventoryItemStatus.active,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -39,6 +47,8 @@ class InventoryItem {
     String? id,
     String? foodId,
     String? name,
+    String? normalizedName,
+    String? categoryId,
     double? quantity,
     String? unit,
     int? remainingPercentage,
@@ -46,6 +56,7 @@ class InventoryItem {
     DateTime? purchaseDate,
     DateTime? expirationDate,
     InventoryItemSource? source,
+    InventoryItemStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -53,6 +64,8 @@ class InventoryItem {
       id: id ?? this.id,
       foodId: foodId ?? this.foodId,
       name: name ?? this.name,
+      normalizedName: normalizedName ?? this.normalizedName,
+      categoryId: categoryId ?? this.categoryId,
       quantity: quantity ?? this.quantity,
       unit: unit ?? this.unit,
       remainingPercentage: remainingPercentage ?? this.remainingPercentage,
@@ -60,6 +73,7 @@ class InventoryItem {
       purchaseDate: purchaseDate ?? this.purchaseDate,
       expirationDate: expirationDate ?? this.expirationDate,
       source: source ?? this.source,
+      status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -72,6 +86,8 @@ class InventoryItem {
         other.id == id &&
         other.foodId == foodId &&
         other.name == name &&
+        other.normalizedName == normalizedName &&
+        other.categoryId == categoryId &&
         other.quantity == quantity &&
         other.unit == unit &&
         other.remainingPercentage == remainingPercentage &&
@@ -79,6 +95,7 @@ class InventoryItem {
         other.purchaseDate == purchaseDate &&
         other.expirationDate == expirationDate &&
         other.source == source &&
+        other.status == status &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -88,6 +105,8 @@ class InventoryItem {
     id,
     foodId,
     name,
+    normalizedName,
+    categoryId,
     quantity,
     unit,
     remainingPercentage,
@@ -95,6 +114,7 @@ class InventoryItem {
     purchaseDate,
     expirationDate,
     source,
+    status,
     createdAt,
     updatedAt,
   );

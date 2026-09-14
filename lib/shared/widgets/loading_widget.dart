@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -18,8 +19,8 @@ class AppLoadingSpinner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: size,
-      height: size,
+      width: size.r,
+      height: size.r,
       child: CircularProgressIndicator(
         strokeWidth: strokeWidth,
         valueColor: AlwaysStoppedAnimation<Color>(color),
@@ -38,9 +39,9 @@ class FullScreenLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: backgroundColor,
-      child: const Center(
+      child: Center(
         child: AppLoadingSpinner(
-          size: 40,
+          size: 40.r,
           color: AppColors.primary,
           strokeWidth: 3,
         ),
@@ -64,18 +65,18 @@ class LoadingWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.r),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppLoadingSpinner(size: 32, color: color, strokeWidth: 3),
+            AppLoadingSpinner(size: 32.r, color: color, strokeWidth: 3),
             if (message != null) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               Text(
                 message!,
-                style: const TextStyle(
-                  fontSize: 13,
+                style: TextStyle(
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w500,
                   color: AppColors.slate500,
                 ),

@@ -1,3 +1,2 @@
-// Feature module: auth
-export {};
+export * from "./triggers/on_user_created";
 
