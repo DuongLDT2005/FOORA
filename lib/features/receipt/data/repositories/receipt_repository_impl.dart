@@ -32,8 +32,8 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
       );
     } on ServerException catch (e) {
       throw ServerFailure(e.message);
-    } catch (e) {
-      throw ServerFailure('Lỗi quét hóa đơn: $e');
+    } catch (_) {
+      throw const ServerFailure('Đã xảy ra lỗi khi quét hóa đơn. Vui lòng thử lại.');
     }
   }
 
@@ -69,8 +69,8 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
       );
     } on ServerException catch (e) {
       throw ServerFailure(e.message);
-    } catch (e) {
-      throw ServerFailure('Lỗi lưu các món từ hóa đơn: $e');
+    } catch (_) {
+      throw const ServerFailure('Đã xảy ra lỗi khi lưu các món từ hóa đơn. Vui lòng thử lại sau.');
     }
   }
 }

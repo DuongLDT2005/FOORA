@@ -29,7 +29,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         storageLocationId: item.storageLocationId,
         purchaseDate: item.purchaseDate,
         expirationDate: item.expirationDate,
-        photoUrl: null,
+        photoUrl: item.photoUrl,
         source: item.source.value,
       );
     } on ServerException catch (e) {
@@ -37,8 +37,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
         throw ResourceExhaustedFailure(e.message, e.code);
       }
       throw ServerFailure(e.message, e.code);
-    } catch (e) {
-      throw ServerFailure('Không thể thêm thực phẩm vào kho: $e');
+    } catch (_) {
+      throw const ServerFailure('Không thể thêm thực phẩm vào tủ lạnh. Vui lòng thử lại.');
     }
   }
 
@@ -55,8 +55,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
     } on ServerException catch (e) {
       throw ServerFailure(e.message, e.code);
-    } catch (e) {
-      throw ServerFailure('Không thể cập nhật thực phẩm: $e');
+    } catch (_) {
+      throw const ServerFailure('Không thể cập nhật thực phẩm. Vui lòng thử lại.');
     }
   }
 
@@ -71,8 +71,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       return await remoteDataSource.getCategories();
     } on ServerException catch (e) {
       throw ServerFailure(e.message, e.code);
-    } catch (e) {
-      throw ServerFailure('Không thể tải danh mục thực phẩm: $e');
+    } catch (_) {
+      throw const ServerFailure('Không thể tải danh mục thực phẩm. Vui lòng thử lại.');
     }
   }
 
@@ -82,8 +82,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       return await remoteDataSource.getStorageLocations();
     } on ServerException catch (e) {
       throw ServerFailure(e.message, e.code);
-    } catch (e) {
-      throw ServerFailure('Không thể tải vị trí bảo quản: $e');
+    } catch (_) {
+      throw const ServerFailure('Không thể tải vị trí bảo quản. Vui lòng thử lại.');
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import 'food_image_avatar.dart';
 
 /// Food item card with progress bar, expiration state styling, and swipe-to-delete
 class InventoryItemCard extends StatelessWidget {
@@ -11,7 +12,8 @@ class InventoryItemCard extends StatelessWidget {
   final String quantity;
   final String unit;
   final int percentageRemaining;
-  final String imageUrl;
+  final String? imageUrl;
+  final String categoryId;
   final int daysUntilExpiry; // < 0: Expired, 0-3: Expiring soon
   final VoidCallback onDelete;
   final VoidCallback onTap;
@@ -23,7 +25,8 @@ class InventoryItemCard extends StatelessWidget {
     required this.quantity,
     required this.unit,
     required this.percentageRemaining,
-    required this.imageUrl,
+    this.imageUrl,
+    this.categoryId = 'vegetables',
     required this.daysUntilExpiry,
     required this.onDelete,
     required this.onTap,
@@ -61,58 +64,40 @@ class InventoryItemCard extends StatelessWidget {
             child: Row(
               children: [
                 // Image with expired grayscale filter
-                Container(
-                  width: 56.r,
-                  height: 56.r,
-                  decoration: BoxDecoration(
-                    color: AppColors.slate50,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: isExpired
-                          ? AppColors.red500.withValues(alpha: 0.2)
-                          : AppColors.slate100,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: ColorFiltered(
-                      colorFilter: isExpired
-                          ? const ColorFilter.matrix([
-                              0.2126,
-                              0.7152,
-                              0.0722,
-                              0,
-                              0,
-                              0.2126,
-                              0.7152,
-                              0.0722,
-                              0,
-                              0,
-                              0.2126,
-                              0.7152,
-                              0.0722,
-                              0,
-                              0,
-                              0,
-                              0,
-                              0,
-                              1,
-                              0,
-                            ])
-                          : const ColorFilter.mode(
-                              Colors.transparent,
-                              BlendMode.multiply,
-                            ),
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => Icon(
-                          Icons.fastfood,
-                          size: 24.r,
-                          color: AppColors.slate300,
+                ColorFiltered(
+                  colorFilter: isExpired
+                      ? const ColorFilter.matrix([
+                          0.2126,
+                          0.7152,
+                          0.0722,
+                          0,
+                          0,
+                          0.2126,
+                          0.7152,
+                          0.0722,
+                          0,
+                          0,
+                          0.2126,
+                          0.7152,
+                          0.0722,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          1,
+                          0,
+                        ])
+                      : const ColorFilter.mode(
+                          Colors.transparent,
+                          BlendMode.multiply,
                         ),
-                      ),
-                    ),
+                  child: FoodImageAvatar(
+                    photoUrl: imageUrl,
+                    categoryId: categoryId,
+                    size: 56,
+                    borderRadius: 12,
+                    backgroundColor: AppColors.slate50,
                   ),
                 ),
                 SizedBox(width: 12.w),

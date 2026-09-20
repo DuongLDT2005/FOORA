@@ -136,6 +136,7 @@ class SubpageLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
+      resizeToAvoidBottomInset: true,
       body: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 600.w),
@@ -148,8 +149,9 @@ class SubpageLayout extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: (bottomBar != null || bottomNavigationBar != null)
-          ? Center(
-              heightFactor: 1,
+          ? Align(
+              alignment: Alignment.bottomCenter,
+              heightFactor: 1.0,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 600.w),
                 child: bottomBar ?? bottomNavigationBar,

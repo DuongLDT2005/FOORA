@@ -27,7 +27,9 @@ class AppBottomSheet extends StatelessWidget {
         ? screenHeight * maxHeightFactor!
         : screenHeight - (MediaQuery.of(context).padding.top + 40.h);
 
-    return Center(
+    return Align(
+      alignment: Alignment.bottomCenter,
+      heightFactor: 1.0,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: maxAllowedHeight,
@@ -55,16 +57,27 @@ class AppBottomSheet extends StatelessWidget {
               ),
               // Header
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    title,
-                    style: AppTextStyles.headlineSmall.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
+                padding: EdgeInsets.only(
+                  left: 20.w,
+                  right: 12.w,
+                  top: 4.h,
+                  bottom: 4.h,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.headlineSmall.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               // Content

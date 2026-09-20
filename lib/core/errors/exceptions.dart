@@ -79,9 +79,16 @@ class AuthException extends AppException {
           'Quá nhiều lần thử thất bại. Vui lòng thử lại sau ít phút.',
           'too-many-requests',
         );
+      case 'network-request-failed':
+        return const AuthException(
+          'Không thể kết nối mạng. Vui lòng kiểm tra lại kết nối Internet của bạn.',
+          'network-request-failed',
+        );
       default:
         return AuthException(
-          e.message ?? 'Đăng nhập/xác thực thất bại.',
+          e.message != null && !e.message!.contains('Exception') && !e.message!.contains('com.google')
+              ? e.message!
+              : 'Đăng nhập/xác thực thất bại. Vui lòng thử lại.',
           e.code,
         );
     }

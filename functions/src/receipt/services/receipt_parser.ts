@@ -26,6 +26,7 @@ export interface MasterFoodItem {
   aliases: string[];
   categoryId: string;
   defaultUnit: string;
+  photoUrl?: string | null;
 }
 
 export interface MatchedExistingStock {
@@ -49,6 +50,7 @@ export interface EnrichedParsedItem {
   storageLocationId: string;
   estimatedExpirationDate: string;
   confidence: number;
+  photoUrl?: string | null;
   matchedExistingItem: MatchedExistingStock | null;
 }
 
@@ -103,6 +105,7 @@ export class ReceiptParserService {
         aliases: ((data.aliases || []) as string[]).map((a) => a.toLowerCase()),
         categoryId: data.categoryId as string,
         defaultUnit: data.defaultUnit as string,
+        photoUrl: (data.photoUrl as string) || null,
       };
     });
 
@@ -255,6 +258,7 @@ export class ReceiptParserService {
         storageLocationId,
         estimatedExpirationDate: estimatedExp.toISOString(),
         confidence,
+        photoUrl: matchedFood?.photoUrl || null,
         matchedExistingItem: duplicateAlert,
       });
     }
@@ -283,45 +287,77 @@ export class ReceiptParserService {
       const ai = new GoogleGenAI({apiKey});
 
       const promptText = [
-        "You are an expert AI food receipt parser specialized in Vietnamese supermarket and grocery receipts ",
-        "(e.g. WinMart, Co.opmart, Bách Hóa Xanh, Big C, GO!, Lotte Mart, Aeon, Kingfoodmart, GS25, Circle K).\n\n",
-        "YOUR SOLE TASK:\n",
-        "Inspect the receipt image (primary) and OCR text (secondary/assistive) to extract ONLY purchased edible food, beverage, condiment, fresh produce, meat, and grocery items.\n\n",
-        "CRITICAL EXTRACTION RULES (MUST FOLLOW STRICTLY):\n",
-        "1. MULTI-LINE PRODUCT BOUNDARIES (TÊN SẢN PHẨM XUỐNG DÒNG):\n",
-        "   - Supermarket receipts often wrap ONE single product across 2 or 3 lines before the quantity and price columns.\n",
-        "   - You MUST merge all wrapped lines belonging to the same product into ONE single rawName.\n",
-        "   - Example:\n",
-        "     Line 1: 'NAM DƯƠNG Sốt'\n",
-        "     Line 2: 'Dầu Dấm Trộn'\n",
-        "     Line 3: 'Salad 250g'\n",
-        "     -> MUST become ONE item: rawName: 'NAM DƯƠNG Sốt Dầu Dấm Trộn Salad 250g'.\n",
-        "     -> NEVER create separate items for 'NAM DƯƠNG', 'Sốt', 'Dầu Dấm Trộn', or 'Salad 250g'!\n\n",
-        "2. QUANTITY MUST BE READ FROM 'SL' (SỐ LƯỢNG) COLUMN:\n",
-        "   - purchaseQuantity MUST come strictly from the 'SL' / quantity column of that item on the receipt.\n",
-        "   - NEVER use unit price (Đơn giá), subtotal/total (Thành tiền), barcode, or product specifications (size/weight) as purchaseQuantity!\n",
-        "   - Example: 'MỘC CHÂU Sữa thanh trùng không đường H 900ml' with SL: 1, Price: 40,700:\n",
-        "     * purchaseQuantity: 1 (from SL column)\n",
-        "     * productSize: 900\n",
-        "     * productSizeUnit: 'ml'\n",
-        "     * DO NOT set purchaseQuantity to 900 or 40,700!\n\n",
-        "3. PACK / BUNDLE EXTRACTION:\n",
-        "   - If the product text indicates a multi-pack or bundle (e.g. 'Lốc 4 hộp', 'Thùng 24 lon', 'Vỉ 10 quả', 'Gói 6 cái', 'Túi 5 quả', 'Combo 2 chai', 'Set 3 hũ'):\n",
-        "     * extract packCount (e.g. 4) and packUnit (e.g. 'hộp').\n",
-        "     * purchaseQuantity remains the count from the SL column (e.g. 2).\n",
-        "     * Do not perform multiplication yourself; backend will multiply purchaseQuantity * packCount.\n\n",
-        "4. VIETNAMESE ACCENT & OCR CORRECTION:\n",
-        "   - Supermarket OCR frequently loses diacritical marks or joins words together (e.g. 'DUƠNG' -> 'DƯƠNG', 'MOC CHẦU' -> 'MỘC CHÂU', 'Sữathanh trùngk.đưòng' -> 'Sữa thanh trùng không đường').\n",
-        "   - Use the visual receipt image to restore the correct Vietnamese accents, spaces, and spelling.\n",
-        "   - Keep visible brand names (e.g. 'NAM DƯƠNG', 'MỘC CHÂU', 'WINECO', 'Vinamilk').\n",
-        "   - DO NOT invent new products, DO NOT change to a different food, and DO NOT translate product names to English.\n\n",
-        "5. STRICT EXCLUSIONS (DO NOT EXTRACT AS ITEMS):\n",
-        "   - Store information: WinMart, address, phone, tax code (MST), cashier/NV, receipt number (PTT/HD), dates, timestamps.\n",
-        "   - Table headers & financial figures: 'Giá', 'SL', 'TT', 'KM', 'Tổng giá trị đơn', 'Tổng tiền giảm', 'Tổng tiền thanh toán', '20,200', '40,700', '15,500', '76,400', '-3,100', '73,300'.\n",
-        "   - Footers, return policies, QR code instructions, payment methods.\n",
-        "   - Non-food household items: plastic bags (túi nilon/xốp/t-shirt), dish soap, detergent, tissues, shampoo.\n\n",
-        `OCR TEXT FROM RECEIPT FOR REFERENCE:\n"""\n${ocrText}\n"""`,
+        "Bạn là chuyên gia thị giác AI phân tích hóa đơn siêu thị Việt Nam (WinMart, Co.opmart, Bách Hóa Xanh, Big C, GO!, Lotte Mart, Aeon, Kingfoodmart, GS25, Circle K, v.v.).\n\n",
+        "NGUYÊN TẮC QUAN TRỌNG NHẤT VỀ NGUỒN DỮ LIỆU:\n",
+        "- HÌNH ẢNH HÓA ĐƠN LÀ NGUỒN CHÂN LÝ DUY NHẤT (PRIMARY GROUND TRUTH): Hãy nhìn trực tiếp hình ảnh để đọc layout, bảng cột, vị trí xuống dòng, tên sản phẩm và cột số lượng (SL).\n",
+        "- VĂN BẢN OCR CHỈ LÀ PHỤ TRỢ (SECONDARY/ASSISTIVE): OCR từ camera di động thường bị ngắt dòng sai, dính chữ, nhảy hàng hoặc mất dấu. NẾU OCR VÀ HÌNH ẢNH CÓ MÂU THUẪN, BẠN BẮT BUỘC PHẢI THEO HÌNH ẢNH!\n\n",
+        "NHIỆM VỤ:\n",
+        "Trích xuất danh sách các sản phẩm thực phẩm, đồ uống, gia vị, đồ ăn tươi sống/chế biến từ hóa đơn.\n\n",
+        "QUY TẮC BẮT BUỘC (TUÂN THỦ TUYỆT ĐỐI):\n\n",
+        "1. GHÉP TÊN SẢN PHẨM NHIỀU DÒNG (DỰA THEO BẢNG CỘT TRÊN ẢNH):\n",
+        "   - Nhìn hình ảnh: Một mặt hàng thường in tên dài trên 2-3 dòng, nhưng toàn bộ các dòng đó CHỈ ỨNG VỚI 1 DÒNG SỐ LƯỢNG (SL) VÀ THÀNH TIỀN ở bên phải hoặc ngay dưới.\n",
+        "   - CHỈ TẠO 1 SẢN PHẨM MỚI KHI CÓ DÒNG TÍNH TIỀN / SỐ LƯỢNG MỚI TRÊN ẢNH.\n",
+        "   - Các dòng ghi quy cách, hương vị, dung tích (ví dụ: 'Salad 250g', 'Dầu Dấm Trộn', 'Không đường', '900ml', 'Lốc 4 hộp', 'Vị dâu') BẮT BUỘC PHẢI GHÉP NỐI vào tên sản phẩm phía trên tạo thành một rawName duy nhất hoàn chỉnh.\n",
+        "   - TUYỆT ĐỐI KHÔNG tạo item riêng cho các mảnh như 'Salad 250g', 'Dầu Dấm Trộn'!\n\n",
+        "2. SỐ LƯỢNG (purchaseQuantity) BẮT BUỘC LẤY TỪ CỘT 'SL' TRÊN ẢNH:\n",
+        "   - Nhìn trực quan cột 'SL' / 'Số lượng' trên ảnh hóa đơn.\n",
+        "   - CẤM lấy Đơn giá, Thành tiền, Mã vạch hay Quy cách (250g, 900ml) làm số lượng mua!\n\n",
+        "3. ĐÓNG GÓI / COMBO / LỐC (PACK / BUNDLE):\n",
+        "   - Nếu tên trên ảnh có 'Lốc 4 hộp', 'Thùng 24 lon', 'Vỉ 10 quả', 'Gói 6 cái', 'Túi 5 quả':\n",
+        "     * packCount: số lượng trong lốc (ví dụ: 4)\n",
+        "     * packUnit: đơn vị trong lốc (ví dụ: 'hộp')\n",
+        "     * purchaseQuantity: vẫn là số lượng ghi ở cột SL (ví dụ mua 2 lốc thì SL = 2).\n\n",
+        "4. LOẠI BỎ THÔNG TIN KHÔNG PHẢI THỰC PHẨM:\n",
+        "   - Tiêu đề siêu thị, địa chỉ, MST, nhân viên, số hóa đơn, ngày giờ.\n",
+        "   - Tiêu đề bảng: 'Giá', 'SL', 'TT', 'KM', tổng tiền thanh toán, tiền thối.\n",
+        "   - Đồ gia dụng: túi xốp/túi nilon, nước rửa chén, xà phòng, khăn giấy, hóa mỹ phẩm.\n\n",
+        "VÍ DỤ MẪU (FEW-SHOT EXAMPLES):\n\n",
+
+        "--- VÍ DỤ 1: SẢN PHẨM TÊN TRẢI QUA 3 DÒNG (CHỈ 1 DÒNG SL & GIÁ) ---\n",
+        "Hình ảnh hiển thị:\n",
+        "NAM DƯƠNG Sốt                          (dòng 1 - tên thương hiệu)\n",
+        "Dầu Dấm Trộn                           (dòng 2 - loại sản phẩm)\n",
+        "Salad 250g      20,200   1   20,200    (dòng 3 - quy cách + Giá + SL + TT)\n",
+        "Kết quả JSON mong đợi:\n",
+        "[\n",
+        "  {\"rawName\": \"NAM DƯƠNG Sốt Dầu Dấm Trộn Salad 250g\", \"purchaseQuantity\": 1, \"purchaseUnit\": \"chai\", \"productSize\": 250, \"productSizeUnit\": \"g\"}\n",
+        "]\n\n",
+
+        "--- VÍ DỤ 2: SẢN PHẨM TÊN 3 DÒNG VỚI CHỮ MÔ TẢ 'THANH TRÙNG', 'K.ĐƯỜNG' ---\n",
+        "Hình ảnh hiển thị:\n",
+        "MỘC CHÂU Sữa                           (dòng 1)\n",
+        "thanh trùng                            (dòng 2 - mô tả sản xuất, KHÔNG phải SL)\n",
+        "k.đường H 900ml   40,700   1   40,700  (dòng 3 - quy cách + Giá + SL + TT)\n",
+        "Kết quả JSON mong đợi:\n",
+        "[\n",
+        "  {\"rawName\": \"MỘC CHÂU Sữa thanh trùng k.đường H 900ml\", \"purchaseQuantity\": 1, \"purchaseUnit\": \"hộp\", \"productSize\": 900, \"productSizeUnit\": \"ml\"}\n",
+        "]\n\n",
+        "LÝ DO: 'thanh trùng' và 'k.đường' là MÔ TẢ thuộc tính của sản phẩm, KHÔNG PHẢI sản phẩm riêng. Chỉ có 1 dòng SL=1, do đó chỉ tạo 1 item duy nhất.\n\n",
+
+        "--- VÍ DỤ 3: SẢN PHẨM RAU CỦ VỚI KHUYẾN MÃI ---\n",
+        "Hình ảnh hiển thị:\n",
+        "WINECO Xà lách\n",
+        "lolo xanh L1 300g   15,500   1   15,500\n",
+        "                              KM: -3,100\n",
+        "Kết quả JSON mong đợi:\n",
+        "[\n",
+        "  {\"rawName\": \"WINECO Xà lách lolo xanh L1 300g\", \"purchaseQuantity\": 1, \"purchaseUnit\": \"gói\", \"productSize\": 300, \"productSizeUnit\": \"g\"}\n",
+        "]\n\n",
+
+        "--- VÍ DỤ 4: SẢN PHẨM LỐC / COMBO ---\n",
+        "Hình ảnh hiển thị:\n",
+        "TH Sữa chua ăn nha đam Lốc 4x100g   SL: 2   ĐG: 32.000   TT: 64.000\n",
+        "Kết quả JSON mong đợi:\n",
+        "[\n",
+        "  {\"rawName\": \"TH Sữa chua ăn nha đam Lốc 4x100g\", \"purchaseQuantity\": 2, \"purchaseUnit\": \"lốc\", \"productSize\": 100, \"productSizeUnit\": \"g\", \"packCount\": 4, \"packUnit\": \"hộp\"}\n",
+        "]\n\n",
+
+        imageBase64 ?
+          `LƯU Ý: HÃY ƯU TIÊN ĐỌC TRỰC TIẾP TỪ ẢNH TRÊN. Dưới đây chỉ là văn bản OCR thô để bạn tham khảo thêm khi gặp chữ mờ:\n"""\n${ocrText}\n"""` :
+          `VĂN BẢN OCR TỪ HÓA ĐƠN:\n"""\n${ocrText}\n"""`,
+
       ].join("");
+
 
       // Build multimodal contents: receipt image + prompt text
       const parts: Array<{
@@ -346,31 +382,60 @@ export class ReceiptParserService {
         `[ReceiptParserService] Calling Gemini 3.6 Flash (hasImage: ${!!imageBase64}, mimeType: ${mimeType || "image/jpeg"}, ocrLength: ${ocrText.length})`
       );
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: parts,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                rawName: {type: Type.STRING},
-                purchaseQuantity: {type: Type.NUMBER},
-                purchaseUnit: {type: Type.STRING},
-                productSize: {type: Type.NUMBER},
-                productSizeUnit: {type: Type.STRING},
-                packCount: {type: Type.NUMBER},
-                packUnit: {type: Type.STRING},
-              },
-              required: ["rawName", "purchaseQuantity", "purchaseUnit"],
-            },
-          },
-        },
-      });
+      // Retry with backoff for transient 503 (high demand) / 429 errors
+      let response: Awaited<ReturnType<typeof ai.models.generateContent>> | null = null;
+      const MAX_RETRIES = 3;
 
-      const responseText = response.text?.trim();
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          response = await ai.models.generateContent({
+            model: "gemini-3.6-flash",
+            contents: parts,
+            config: {
+              temperature: 0.1,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    rawName: {type: Type.STRING},
+                    purchaseQuantity: {type: Type.NUMBER},
+                    purchaseUnit: {type: Type.STRING},
+                    productSize: {type: Type.NUMBER},
+                    productSizeUnit: {type: Type.STRING},
+                    packCount: {type: Type.NUMBER},
+                    packUnit: {type: Type.STRING},
+                  },
+                  required: ["rawName", "purchaseQuantity", "purchaseUnit"],
+                },
+              },
+            },
+          });
+          break; // Succeeded!
+        } catch (callErr: unknown) {
+          const errObj = callErr as {status?: number; message?: string};
+          const isRetryable =
+            errObj?.status === 503 ||
+            errObj?.status === 429 ||
+            (typeof errObj?.message === "string" &&
+              (errObj.message.includes("503") ||
+                errObj.message.includes("high demand") ||
+                errObj.message.includes("UNAVAILABLE")));
+
+          if (isRetryable && attempt < MAX_RETRIES) {
+            const delayMs = attempt * 2000;
+            logger.warn(
+              `[ReceiptParserService] Gemini returned ${errObj?.status || 503} (high demand). Retrying attempt ${attempt + 1}/${MAX_RETRIES} in ${delayMs}ms...`
+            );
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+          } else {
+            throw callErr;
+          }
+        }
+      }
+
+      const responseText = response?.text?.trim();
       logger.info("[ReceiptParserService] Gemini response received:", responseText);
       if (!responseText) {
         logger.warn("[ReceiptParserService] Empty Gemini response, using fallback parser.");
@@ -409,7 +474,27 @@ export class ReceiptParserService {
               logger.warn("[ReceiptParserService] Discarding malformed raw item from Gemini:", item);
             }
           }
-          return validatedItems;
+
+          // Safeguard / Heuristic: Merge any orphan fragment that slipped through
+          // E.g. rawName is just a size/unit like "Salad 250g", "250g", "Vị Dâu" without a proper subject
+          const mergedItems: ParsedReceiptItemRaw[] = [];
+          const orphanFragmentRegex = /^(\d+\s*(g|kg|ml|l|gr)|salad\s*\d+\s*(g|kg|ml|l)|vị\s+\w+|không\s+đường|có\s+đường)$/i;
+
+          for (const item of validatedItems) {
+            if (mergedItems.length > 0 && orphanFragmentRegex.test(item.rawName.trim())) {
+              logger.info(`[ReceiptParserService] Merging detected orphan fragment "${item.rawName}" into previous item "${mergedItems[mergedItems.length - 1].rawName}"`);
+              const prev = mergedItems[mergedItems.length - 1];
+              prev.rawName = `${prev.rawName} ${item.rawName}`.trim();
+              if (item.productSize && !prev.productSize) {
+                prev.productSize = item.productSize;
+                prev.productSizeUnit = item.productSizeUnit;
+              }
+            } else {
+              mergedItems.push(item);
+            }
+          }
+
+          return mergedItems;
         }
       } catch (parseErr) {
         logger.warn(
@@ -594,24 +679,29 @@ export class ReceiptParserService {
         continue;
       }
 
-      // Check if next lines are wrapped continuations (e.g. no price/number, short fragment)
+      // Check if next lines are wrapped continuations (multi-line product name on Vietnamese receipts).
+      // A product name can span 2-4 lines. We stop ONLY when we detect a definite price/SL line.
+      // IMPORTANT: Do NOT stop on food-descriptor words like 'thanh trung', 'dam', 'tron',
+      // 'salad', 'k.duong' — these are sub-lines of the same product, not separate products.
       let combinedName = line;
       let j = i + 1;
-      while (j < lines.length && j <= i + 2) {
+      while (j < lines.length && j <= i + 4) {
         const nextLine = lines[j];
         const nextNorm = normalizeFoodName(nextLine);
 
-        // Stop if next line is metadata, price line, or distinct product
+        // Stop on definite price / receipt metadata line
         if (
           this._isExcludedMetadata(nextNorm) ||
-          /^[0-9,.\s\-+]+$/.test(nextLine) ||
-          this._containsFoodIndicator(nextNorm)
+          // A line that is ONLY digits, commas, spaces — it's a price/SL column line
+          /^[\d,.\s\-+]+$/.test(nextLine.trim()) ||
+          // A line that ends with a clear money amount pattern: "40,700   1   40,700"
+          /\d{1,3}(?:[,.]\d{3})+\s+\d+\s+\d{1,3}(?:[,.]\d{3})+/.test(nextLine)
         ) {
           break;
         }
 
-        // Merge fragment
-        if (nextLine.length < 30) {
+        // Merge if it looks like a product sub-line (short, no standalone price column)
+        if (nextLine.length < 40) {
           combinedName += " " + nextLine;
           j++;
         } else {

@@ -31,51 +31,88 @@ class ReceiptQuotaStatus {
   int get scansRemaining => isUnlimited ? 999999 : (scanLimit - scansUsed).clamp(0, scanLimit);
 }
 
-/// Streams real-time monthly scan usage for the current user
+/// Streams real-time monthly scan usage directly from Firestore database
 final receiptQuotaProvider = StreamProvider.autoDispose<ReceiptQuotaStatus>((ref) {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) {
+  final authUser = ref.watch(firebaseAuthProvider).currentUser;
+  if (authUser == null) {
     return Stream.value(const ReceiptQuotaStatus());
   }
 
-  // Premium users have unlimited scans
-  if (user.isPremium) {
-    return Stream.value(const ReceiptQuotaStatus(isUnlimited: true));
-  }
-
   final firestore = ref.watch(firestoreProvider);
-  final now = DateTime.now();
-  final currentPeriod =
-      '${now.year}-${now.month.toString().padLeft(2, '0')}';
+  final uid = authUser.uid;
 
+  final now = DateTime.now();
+  final currentPeriod = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+
+  // Listen directly to user document snapshot to get real-time membershipId from database
   return firestore
       .collection(FirestoreConstants.users)
-      .doc(user.id)
-      .collection(FirestoreConstants.aiUsage)
-      .doc(FirestoreConstants.aiUsageCurrentDoc)
+      .doc(uid)
       .snapshots()
-      .map((docSnapshot) {
-        if (!docSnapshot.exists) {
-          return const ReceiptQuotaStatus(scansUsed: 0, scanLimit: 5);
+      .asyncExpand((userDoc) async* {
+        if (!userDoc.exists) {
+          yield const ReceiptQuotaStatus(scansUsed: 0, scanLimit: 5);
+          return;
         }
 
-        final data = docSnapshot.data();
-        if (data == null) {
-          return const ReceiptQuotaStatus(scansUsed: 0, scanLimit: 5);
+        final userData = userDoc.data();
+        final membershipId = (userData?['membershipId'] as String?) ?? 'free';
+
+        // 1. Premium members have unlimited scans
+        if (membershipId == 'premium') {
+          yield const ReceiptQuotaStatus(isUnlimited: true);
+          return;
         }
 
-        final period = data['period'] as String?;
-        if (period != currentPeriod) {
-          // New month period has not been updated in DB yet
-          return const ReceiptQuotaStatus(scansUsed: 0, scanLimit: 5);
+        // 2. Fetch membership scan quota limit from memberships collection
+        int scanLimit = 5;
+        try {
+          final membershipDoc = await firestore
+              .collection(FirestoreConstants.memberships)
+              .doc(membershipId)
+              .get();
+          if (membershipDoc.exists) {
+            final quota = membershipDoc.data()?['receiptScanQuota'];
+            if (quota == null) {
+              // null in DB means unlimited
+              yield const ReceiptQuotaStatus(isUnlimited: true);
+              return;
+            }
+            scanLimit = (quota as num).toInt();
+          }
+        } catch (_) {
+          scanLimit = 5;
         }
 
-        final used = (data['receiptScanUsed'] as num?)?.toInt() ?? 0;
-        return ReceiptQuotaStatus(
-          scansUsed: used,
-          scanLimit: 5,
-          isUnlimited: false,
-        );
+        // 3. Listen directly to users/{uid}/ai_usage/current in Firestore
+        yield* firestore
+            .collection(FirestoreConstants.users)
+            .doc(uid)
+            .collection(FirestoreConstants.aiUsage)
+            .doc(FirestoreConstants.aiUsageCurrentDoc)
+            .snapshots()
+            .map((usageDoc) {
+              if (!usageDoc.exists) {
+                return ReceiptQuotaStatus(scansUsed: 0, scanLimit: scanLimit);
+              }
+
+              final usageData = usageDoc.data();
+              if (usageData == null) {
+                return ReceiptQuotaStatus(scansUsed: 0, scanLimit: scanLimit);
+              }
+
+              final period = usageData['period'] as String?;
+              if (period != currentPeriod) {
+                return ReceiptQuotaStatus(scansUsed: 0, scanLimit: scanLimit);
+              }
+
+              final used = (usageData['receiptScanUsed'] as num?)?.toInt() ?? 0;
+              return ReceiptQuotaStatus(
+                scansUsed: used,
+                scanLimit: scanLimit,
+                isUnlimited: false,
+              );
+            });
       });
 });
 
@@ -201,10 +238,10 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
       if (photo != null) {
         await processImage(File(photo.path));
       }
-    } catch (e) {
+    } catch (_) {
       state = state.copyWith(
         status: ScanStatus.error,
-        errorMessage: 'Không thể mở máy ảnh: $e',
+        errorMessage: 'Không thể mở máy ảnh. Vui lòng cấp quyền máy ảnh và thử lại.',
       );
     }
   }
@@ -219,10 +256,10 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
       if (image != null) {
         await processImage(File(image.path));
       }
-    } catch (e) {
+    } catch (_) {
       state = state.copyWith(
         status: ScanStatus.error,
-        errorMessage: 'Không thể chọn ảnh từ thư viện: $e',
+        errorMessage: 'Không thể chọn ảnh từ thư viện. Vui lòng thử lại.',
       );
     }
   }
@@ -270,10 +307,10 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
       );
     } on Failure catch (f) {
       state = state.copyWith(status: ScanStatus.error, errorMessage: f.message);
-    } catch (e) {
+    } catch (_) {
       state = state.copyWith(
         status: ScanStatus.error,
-        errorMessage: 'Đã xảy ra lỗi khi quét hóa đơn: $e',
+        errorMessage: 'Đã xảy ra lỗi khi quét hóa đơn. Vui lòng thử lại.',
       );
     }
   }
@@ -340,10 +377,10 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
         errorMessage: f.message,
       );
       return false;
-    } catch (e) {
+    } catch (_) {
       state = state.copyWith(
         status: ScanStatus.reviewing,
-        errorMessage: 'Không thể lưu thực phẩm: $e',
+        errorMessage: 'Không thể lưu thực phẩm. Vui lòng thử lại sau.',
       );
       return false;
     }

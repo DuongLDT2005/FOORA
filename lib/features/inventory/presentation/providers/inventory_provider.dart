@@ -205,6 +205,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
       foodId: suggestion.foodId,
       categoryId: suggestion.categoryId.isNotEmpty ? suggestion.categoryId : state.categoryId,
       unit: suggestion.defaultUnit.isNotEmpty ? suggestion.defaultUnit : state.unit,
+      photoUrl: suggestion.photoUrl,
       showSuggestions: false,
     );
     _checkSmartInventoryMatch(suggestion.name);
@@ -348,6 +349,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
           remainingPercentage: state.remainingPercentage,
           purchaseDate: state.purchaseDate,
           expirationDate: state.expirationDate,
+          photoUrl: state.photoUrl,
           updatedAt: now,
         );
         await updateUseCase(updated, householdId: householdId);
@@ -364,6 +366,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
           storageLocationId: state.storageLocationId,
           purchaseDate: state.purchaseDate,
           expirationDate: state.expirationDate,
+          photoUrl: state.photoUrl,
           createdAt: now,
           updatedAt: now,
         );
@@ -375,10 +378,10 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     } on Failure catch (f) {
       state = state.copyWith(isSubmitting: false, errorMessage: f.message);
       return false;
-    } catch (e) {
+    } catch (_) {
       state = state.copyWith(
         isSubmitting: false,
-        errorMessage: 'Không thể lưu thực phẩm. Vui lòng thử lại sau ($e)',
+        errorMessage: 'Không thể lưu thực phẩm. Vui lòng thử lại sau.',
       );
       return false;
     }

@@ -99,17 +99,17 @@ npm run build:watch
 Mở một tab Terminal khác (Terminal 3), khởi động Android Emulator (hoặc máy thật / Chrome Web) và chạy app:
 
 ```bash
-# Chạy kết nối với Local Firebase Emulators (Mặc định khi dev)
-flutter run
+# Chạy kết nối với Local Firebase Emulators (Mặc định khi dev - BẮT BUỘC cờ nạp API keys)
+flutter run --dart-define-from-file=.env.json
 
 # Chạy bản Web Admin (kết nối Local Emulators)
-flutter run -d chrome
+flutter run -d chrome --dart-define-from-file=.env.json
 
 # Chạy với môi trường Production (kết nối trực tiếp live Firebase Cloud)
-flutter run --dart-define=ENV=prod
+flutter run --dart-define-from-file=.env.json --dart-define=ENV=prod
 
 # Chạy môi trường Dev kết nối live Firebase Cloud để test Firebase thật (tắt emulator)
-flutter run --dart-define=USE_FIREBASE_EMULATOR=false
+flutter run --dart-define-from-file=.env.json --dart-define=USE_FIREBASE_EMULATOR=false
 ```
 
 ---
