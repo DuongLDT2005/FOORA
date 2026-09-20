@@ -286,6 +286,7 @@ households/{householdId}/inventory_items/{inventoryItemId}
 | `storageLocationId`   | String    |      Yes | Reference to storage location document ID (`fridge`, `freezer`)                    |
 | `purchaseDate`        | Timestamp |      Yes | Purchase date                                                                      |
 | `expirationDate`      | Timestamp |      Yes | Expiration date (calculated by rule or customized by user)                         |
+| `photoUrl`            | String    |       No | Food photo URL (from master food, or null to fallback to category icon)           |
 | `source`              | String    |      Yes | Source of inventory item: `manual` or `receipt_scan`                               |
 | `status`              | String    |      Yes | Item lifecycle status: `active`, `consumed`, `discarded`                           |
 | `createdAt`           | Timestamp |      Yes | Creation time                                                                      |
@@ -309,6 +310,9 @@ households/{householdId}/inventory_items/{inventoryItemId}
 >    - `foodId = null`, `name` do user nhập, `categoryId` do user chọn.
 >    - `expirationDate`: Tự động tính dựa theo `defaultShelfLife` của `categoryId` đó. User có thể chọn lại ngày khác tùy ý.
 >    - Sau khi lưu, món này trở thành một phần trong lịch sử của household, các lần nhập sau gõ tên sẽ tự động xuất hiện trong danh sách gợi ý!
+> 4. **Cơ chế gán ảnh thực phẩm & Fallback Icon theo Category**:
+>    - **Khi món nằm trong Master Foods (`foodId != null`)**: Cả hai luồng nhập tay (Form) và Quét hóa đơn (Receipt Scan / Cloud Function) tự động gắn URL ảnh `photoUrl` của món từ `foods/{foodId}` vào `inventory_items.photoUrl`.
+>    - **Khi món tùy biến hoặc không có ảnh (`photoUrl == null`)**: Client dùng widget dùng chung `FoodImageAvatar` để tự động render Icon đại diện của danh mục (`food_categories/{categoryId}.icon`, ví dụ `lucide-carrot`, `lucide-beef`, `lucide-apple`), đảm bảo giao diện luôn đồng bộ, đẹp mắt và không bao giờ bị vỡ ảnh.
 
 ---
 
@@ -374,6 +378,7 @@ users/{userId}/receipts/{receiptId}/items/{receiptItemId}
 | `categoryId`     | String |       No | Detected or mapped category ID                                                            |
 | `quantity`       | Number |      Yes | Quantity of the food detected from the receipt                                            |
 | `unit`           | String |      Yes | Measurement unit, e.g. `kg`, `g`, `hộp`, `gói`                                            |
+| `photoUrl`       | String |       No | URL ảnh thực phẩm (tự động lấy từ master foods nếu khớp, null nếu là món tùy biến)         |
 | `confidence`     | Number |       No | Confidence score of the food recognition/matching result (0.0 to 1.0)                     |
 
 > **Quy trình Nhận diện Hóa đơn & Tìm Shelf Life Rule (Receipt Matching Flow)**:
@@ -387,6 +392,9 @@ users/{userId}/receipts/{receiptId}/items/{receiptItemId}
 >      - Nhận diện hoặc để user chọn `categoryId`.
 >      - Áp dụng `defaultShelfLife` của `categoryId` đó để tự động gợi ý ngày hết hạn dự phòng.
 >      - Khi user bấm xác nhận nhập vào kho, món ăn sẽ tự động lưu vào lịch sử kho của gia đình (`status: 'active'`) $\rightarrow$ Phục vụ gợi ý tự động cho các lần sau!
+> 3. **Tự động gắn `photoUrl` cho món từ hóa đơn**:
+>    - Khi Gemini AI / Rule-based parser khớp món với Master Foods (`foodId != null`), `photoUrl` của món tương ứng sẽ tự động được gán vào `receipt_items` và chuyển tiếp vào `inventory_items` khi lưu theo lô (`batchAddInventoryItems`).
+>    - Nếu backend nhận món có `foodId` mà thiếu `photoUrl`, `InventoryService` tự động query từ document `foods/{foodId}` để bổ sung trước khi commit transaction vào Firestore.
 
 ---
 

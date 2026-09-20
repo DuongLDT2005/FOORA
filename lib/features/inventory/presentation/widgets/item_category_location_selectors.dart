@@ -177,25 +177,31 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _getCategoryIcon(selectedCat.icon),
-                      size: 20.r,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: 10.w),
-                    Text(
-                      selectedCat.name,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14.sp,
-                        color: AppColors.slate800,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getCategoryIcon(selectedCat.icon),
+                        size: 20.r,
+                        color: AppColors.primary,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 10.w),
+                      Flexible(
+                        child: Text(
+                          selectedCat.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
+                            color: AppColors.slate800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                SizedBox(width: 8.w),
                 Icon(
                   Icons.keyboard_arrow_down,
                   size: 20.r,
@@ -269,16 +275,20 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
                           color: isSelected ? Colors.white : AppColors.slate500,
                         ),
                         SizedBox(width: 8.w),
-                        Text(
-                          loc.name,
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w600,
-                            color: isSelected
-                                ? Colors.white
-                                : AppColors.slate700,
+                        Flexible(
+                          child: Text(
+                            loc.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.slate700,
+                            ),
                           ),
                         ),
                       ],

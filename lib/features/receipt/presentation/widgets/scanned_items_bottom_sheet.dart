@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../inventory/presentation/widgets/food_image_avatar.dart';
 import '../../domain/entities/receipt_item.dart';
 
 /// Scanned Items Preview Bottom Sheet matching Stitch design `Quét hóa đơn (Đã cập nhật List)`
@@ -122,6 +123,8 @@ class ScannedItemsBottomSheet extends StatelessWidget {
                             : Icon(LucideIcons.plus, size: 14.r),
                         label: Text(
                           'Thêm tất cả (${items.length})',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w700,
@@ -132,8 +135,8 @@ class ScannedItemsBottomSheet extends StatelessWidget {
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(
-                            horizontal: 14.w,
-                            vertical: 10.h,
+                            horizontal: 10.w,
+                            vertical: 8.h,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.r),
@@ -212,21 +215,11 @@ class _ScannedItemCard extends StatelessWidget {
             Row(
               children: [
                 // Category icon / food avatar
-                Container(
-                  width: 38.r,
-                  height: 38.r,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: AppColors.slate100),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      LucideIcons.apple,
-                      color: AppColors.primary,
-                      size: 20.r,
-                    ),
-                  ),
+                FoodImageAvatar(
+                  photoUrl: item.photoUrl,
+                  categoryId: item.categoryId,
+                  size: 38,
+                  borderRadius: 12,
                 ),
                 SizedBox(width: 10.w),
 
@@ -354,44 +347,51 @@ class _ScannedItemCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 6.w,
-                      vertical: 2.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text(
-                      '$existingQty ${alert.unit}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.slate800,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        '$existingQty ${alert.unit}',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.slate800,
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 6.w),
-                  const Text('•', style: TextStyle(color: AppColors.slate300)),
-                  SizedBox(width: 6.w),
-                  Icon(
-                    Icons.ac_unit,
-                    size: 12.r,
-                    color: AppColors.primary,
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    alert.storageLocationName.toString(),
-                    style: AppTextStyles.caption.copyWith(
-                      fontSize: 11.sp,
-                      color: AppColors.slate600,
+                    SizedBox(width: 6.w),
+                    const Text('•', style: TextStyle(color: AppColors.slate300)),
+                    SizedBox(width: 6.w),
+                    Icon(
+                      Icons.ac_unit,
+                      size: 12.r,
+                      color: AppColors.primary,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 4.w),
+                    Flexible(
+                      child: Text(
+                        alert.storageLocationName.toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption.copyWith(
+                          fontSize: 11.sp,
+                          color: AppColors.slate600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              SizedBox(width: 6.w),
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: 6.w,

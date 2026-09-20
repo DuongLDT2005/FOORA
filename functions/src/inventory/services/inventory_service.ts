@@ -147,6 +147,18 @@ export class InventoryService {
       );
     }
 
+    let resolvedPhotoUrl = input.photoUrl || null;
+    if (!resolvedPhotoUrl && input.foodId) {
+      try {
+        const foodDoc = await db.collection(Collections.FOODS).doc(input.foodId).get();
+        if (foodDoc.exists) {
+          resolvedPhotoUrl = (foodDoc.data()?.photoUrl as string) || null;
+        }
+      } catch {
+        // Non-fatal, continue with null
+      }
+    }
+
     const normalized = normalizeFoodName(input.name);
     const serverTimestamp = FieldValue.serverTimestamp();
 
@@ -186,7 +198,7 @@ export class InventoryService {
         expirationDate: Timestamp.fromDate(finalExpirationDate),
         source: input.source || "manual",
         status: "active",
-        photoUrl: input.photoUrl || null,
+        photoUrl: resolvedPhotoUrl,
         createdAt: serverTimestamp,
         updatedAt: serverTimestamp,
       });
@@ -255,11 +267,24 @@ export class InventoryService {
           );
         }
 
+        let resolvedPhotoUrl = input.photoUrl || null;
+        if (!resolvedPhotoUrl && input.foodId) {
+          try {
+            const foodDoc = await db.collection(Collections.FOODS).doc(input.foodId).get();
+            if (foodDoc.exists) {
+              resolvedPhotoUrl = (foodDoc.data()?.photoUrl as string) || null;
+            }
+          } catch {
+            // Non-fatal, continue with null
+          }
+        }
+
         return {
           input,
           purchaseDate,
           finalExpirationDate: finalExp,
           normalizedName: normalizeFoodName(input.name),
+          photoUrl: resolvedPhotoUrl,
         };
       })
     );
@@ -309,7 +334,7 @@ export class InventoryService {
           expirationDate: Timestamp.fromDate(prep.finalExpirationDate),
           source: prep.input.source || "receipt_scan",
           status: "active",
-          photoUrl: prep.input.photoUrl || null,
+          photoUrl: prep.photoUrl || null,
           createdAt: serverTimestamp,
           updatedAt: serverTimestamp,
         });

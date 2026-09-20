@@ -253,6 +253,7 @@ class AppBottomBar extends StatelessWidget {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Center(
+      heightFactor: 1.0,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 600.w),
         child: Container(

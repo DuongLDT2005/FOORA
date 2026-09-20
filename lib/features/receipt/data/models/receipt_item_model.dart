@@ -13,6 +13,7 @@ class ReceiptItemModel extends ReceiptItem {
     super.storageLocationId,
     required super.estimatedExpirationDate,
     super.confidence,
+    super.photoUrl,
     super.matchedExistingItem,
   });
 
@@ -55,6 +56,7 @@ class ReceiptItemModel extends ReceiptItem {
       storageLocationId: json['storageLocationId']?.toString() ?? 'fridge',
       estimatedExpirationDate: expDate,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0.85,
+      photoUrl: json['photoUrl']?.toString(),
       matchedExistingItem: alert,
     );
   }
@@ -76,6 +78,7 @@ class ReceiptItemModel extends ReceiptItem {
       'storageLocationId': storageLocationId,
       'estimatedExpirationDate': estimatedExpirationDate.toIso8601String(),
       'confidence': confidence,
+      'photoUrl': photoUrl,
     };
   }
 
@@ -89,6 +92,7 @@ class ReceiptItemModel extends ReceiptItem {
       'storageLocationId': storageLocationId,
       'purchaseDate': DateTime.now().toIso8601String(),
       'expirationDate': estimatedExpirationDate.toIso8601String(),
+      'photoUrl': photoUrl,
       'source': 'receipt_scan',
     };
   }

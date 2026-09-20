@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../shared/widgets/status_badge.dart';
 import '../../domain/entities/inventory_item.dart';
 
 /// Alert banner shown when duplicate/similar item is detected in inventory
@@ -27,8 +26,6 @@ class SmartInventoryAlertBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              StatusBadge.warning(),
-              SizedBox(width: 8.w),
               Text(
                 'KHO SẴN CÓ',
                 style: TextStyle(

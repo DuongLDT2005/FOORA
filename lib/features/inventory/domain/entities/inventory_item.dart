@@ -18,6 +18,7 @@ class InventoryItem {
   final String storageLocationId; // Foreign key to storage_locations/{locationId}, e.g. 'fridge', 'freezer'
   final DateTime purchaseDate;
   final DateTime expirationDate;
+  final String? photoUrl;
   final InventoryItemSource source;
   final InventoryItemStatus status;
   final DateTime createdAt;
@@ -35,6 +36,7 @@ class InventoryItem {
     required this.storageLocationId,
     required this.purchaseDate,
     required this.expirationDate,
+    this.photoUrl,
     this.source = InventoryItemSource.manual,
     this.status = InventoryItemStatus.active,
     required this.createdAt,
@@ -55,6 +57,7 @@ class InventoryItem {
     String? storageLocationId,
     DateTime? purchaseDate,
     DateTime? expirationDate,
+    String? photoUrl,
     InventoryItemSource? source,
     InventoryItemStatus? status,
     DateTime? createdAt,
@@ -72,6 +75,7 @@ class InventoryItem {
       storageLocationId: storageLocationId ?? this.storageLocationId,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       expirationDate: expirationDate ?? this.expirationDate,
+      photoUrl: photoUrl ?? this.photoUrl,
       source: source ?? this.source,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
@@ -94,6 +98,7 @@ class InventoryItem {
         other.storageLocationId == storageLocationId &&
         other.purchaseDate == purchaseDate &&
         other.expirationDate == expirationDate &&
+        other.photoUrl == photoUrl &&
         other.source == source &&
         other.status == status &&
         other.createdAt == createdAt &&
@@ -113,6 +118,7 @@ class InventoryItem {
     storageLocationId,
     purchaseDate,
     expirationDate,
+    photoUrl,
     source,
     status,
     createdAt,

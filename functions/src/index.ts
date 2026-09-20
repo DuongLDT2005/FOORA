@@ -1,3 +1,9 @@
+// Load .env file explicitly so GEMINI_API_KEY is always available,
+// even when running under firebase emulators:start locally.
+import * as dotenv from "dotenv";
+import * as path from "path";
+dotenv.config({path: path.resolve(__dirname, "../../.env")});
+
 import {setGlobalOptions} from "firebase-functions/v2";
 import {REGION} from "./config/firebase";
 

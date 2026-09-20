@@ -39,6 +39,7 @@ class ReceiptItem {
   final String storageLocationId;
   final DateTime estimatedExpirationDate;
   final double? confidence;
+  final String? photoUrl;
   final MatchedStockAlert? matchedExistingItem;
 
   const ReceiptItem({
@@ -53,6 +54,7 @@ class ReceiptItem {
     this.storageLocationId = 'fridge',
     required this.estimatedExpirationDate,
     this.confidence,
+    this.photoUrl,
     this.matchedExistingItem,
   });
 
@@ -68,6 +70,7 @@ class ReceiptItem {
     String? storageLocationId,
     DateTime? estimatedExpirationDate,
     double? confidence,
+    String? photoUrl,
     MatchedStockAlert? matchedExistingItem,
   }) {
     return ReceiptItem(
@@ -83,6 +86,7 @@ class ReceiptItem {
       estimatedExpirationDate:
           estimatedExpirationDate ?? this.estimatedExpirationDate,
       confidence: confidence ?? this.confidence,
+      photoUrl: photoUrl ?? this.photoUrl,
       matchedExistingItem: matchedExistingItem ?? this.matchedExistingItem,
     );
   }
@@ -101,7 +105,8 @@ class ReceiptItem {
         other.unit == unit &&
         other.storageLocationId == storageLocationId &&
         other.estimatedExpirationDate == estimatedExpirationDate &&
-        other.confidence == confidence;
+        other.confidence == confidence &&
+        other.photoUrl == photoUrl;
   }
 
   @override
@@ -117,5 +122,6 @@ class ReceiptItem {
     storageLocationId,
     estimatedExpirationDate,
     confidence,
+    photoUrl,
   );
 }

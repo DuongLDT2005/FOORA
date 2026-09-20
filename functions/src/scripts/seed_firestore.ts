@@ -12,8 +12,12 @@ if (!isProd) {
   if (!process.env.FIRESTORE_EMULATOR_HOST) {
     process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
   }
+  if (!process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+    process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
+  }
 } else {
   delete process.env.FIRESTORE_EMULATOR_HOST;
+  delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
 }
 
 if (!process.env.GCLOUD_PROJECT) {
@@ -43,7 +47,8 @@ if (admin.apps.length === 0) {
   if (serviceAccount) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      projectId: serviceAccount.projectId || process.env.GCLOUD_PROJECT || "foora-app",
+      projectId:
+        serviceAccount.projectId || process.env.GCLOUD_PROJECT || "foora-app",
     });
   } else {
     admin.initializeApp({
@@ -60,8 +65,16 @@ interface CategoryData {
   code: string;
   icon: string;
   defaultShelfLife?: {
-    fridge?: {minValue: number | null; maxValue: number | null; unit: string | null};
-    freezer?: {minValue: number | null; maxValue: number | null; unit: string | null};
+    fridge?: {
+      minValue: number | null;
+      maxValue: number | null;
+      unit: string | null;
+    };
+    freezer?: {
+      minValue: number | null;
+      maxValue: number | null;
+      unit: string | null;
+    };
   };
   isActive: boolean;
 }
@@ -85,11 +98,11 @@ interface SeedDataFile {
 export async function seedFirestore() {
   if (isProd) {
     console.log(
-      `🚀 [Seed] Running against REAL FIRESTORE in project: "${process.env.GCLOUD_PROJECT || "foora-app"}"`
+      `🚀 [Seed] Running against REAL FIRESTORE in project: "${process.env.GCLOUD_PROJECT || "foora-app"}"`,
     );
   } else {
     console.log(
-      `ℹ️ [Seed] Connected to Firestore Emulator at ${process.env.FIRESTORE_EMULATOR_HOST}`
+      `ℹ️ [Seed] Connected to Firestore Emulator at ${process.env.FIRESTORE_EMULATOR_HOST}`,
     );
   }
 
@@ -97,10 +110,13 @@ export async function seedFirestore() {
 
   let jsonFilePath = path.join(
     __dirname,
-    "../../src/data/seed_foods_and_categories.json"
+    "../../src/data/seed_foods_and_categories.json",
   );
   if (!fs.existsSync(jsonFilePath)) {
-    jsonFilePath = path.join(__dirname, "../data/seed_foods_and_categories.json");
+    jsonFilePath = path.join(
+      __dirname,
+      "../data/seed_foods_and_categories.json",
+    );
   }
   if (!fs.existsSync(jsonFilePath)) {
     throw new Error(`Seed data file not found at: ${jsonFilePath}`);
@@ -111,11 +127,13 @@ export async function seedFirestore() {
 
   // 1. Seed food_categories
   console.log(
-    `📦 [Seed] Seeding ${data.food_categories.length} categories (food_categories)...`
+    `📦 [Seed] Seeding ${data.food_categories.length} categories (food_categories)...`,
   );
   const catBatch = db.batch();
   for (const cat of data.food_categories) {
-    const docRef = db.collection(Collections.FOOD_CATEGORIES).doc(cat.categoryId);
+    const docRef = db
+      .collection(Collections.FOOD_CATEGORIES)
+      .doc(cat.categoryId);
     catBatch.set(
       docRef,
       {
@@ -127,7 +145,7 @@ export async function seedFirestore() {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
-      {merge: true}
+      {merge: true},
     );
   }
   await catBatch.commit();
@@ -151,14 +169,16 @@ export async function seedFirestore() {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
-      {merge: true}
+      {merge: true},
     );
   }
   await foodBatch.commit();
   console.log("✅ [Seed] Successfully seeded all foods!");
 
   // 3. Seed Master Storage Locations (fridge, freezer)
-  console.log("❄️ [Seed] Seeding Master Storage Locations (Fridge, Freezer)...");
+  console.log(
+    "❄️ [Seed] Seeding Master Storage Locations (Fridge, Freezer)...",
+  );
   const locBatch = db.batch();
   const fridgeRef = db.collection(Collections.STORAGE_LOCATIONS).doc("fridge");
   locBatch.set(
@@ -170,10 +190,12 @@ export async function seedFirestore() {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
-    {merge: true}
+    {merge: true},
   );
 
-  const freezerRef = db.collection(Collections.STORAGE_LOCATIONS).doc("freezer");
+  const freezerRef = db
+    .collection(Collections.STORAGE_LOCATIONS)
+    .doc("freezer");
   locBatch.set(
     freezerRef,
     {
@@ -183,7 +205,7 @@ export async function seedFirestore() {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
-    {merge: true}
+    {merge: true},
   );
   await locBatch.commit();
   console.log("✅ [Seed] Successfully seeded Master Storage Locations!");
@@ -205,7 +227,7 @@ export async function seedFirestore() {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
-    {merge: true}
+    {merge: true},
   );
 
   const premRef = db.collection(Collections.MEMBERSHIPS).doc("premium");
@@ -222,7 +244,7 @@ export async function seedFirestore() {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
-    {merge: true}
+    {merge: true},
   );
   await memBatch.commit();
   console.log("✅ [Seed] Successfully seeded Master Memberships!");
@@ -230,12 +252,12 @@ export async function seedFirestore() {
   // 5. Seed shelf_life_rules
   let shelfLifeRulesPath = path.join(
     __dirname,
-    "../../src/data/seed_shelf_life_rules.json"
+    "../../src/data/seed_shelf_life_rules.json",
   );
   if (!fs.existsSync(shelfLifeRulesPath)) {
     shelfLifeRulesPath = path.join(
       __dirname,
-      "../data/seed_shelf_life_rules.json"
+      "../data/seed_shelf_life_rules.json",
     );
   }
   if (fs.existsSync(shelfLifeRulesPath)) {
@@ -243,7 +265,7 @@ export async function seedFirestore() {
     const rulesData = JSON.parse(rulesRaw);
     const rulesList = rulesData.shelf_life_rules || [];
     console.log(
-      `⏱️ [Seed] Seeding ${rulesList.length} rules (shelf_life_rules)...`
+      `⏱️ [Seed] Seeding ${rulesList.length} rules (shelf_life_rules)...`,
     );
 
     const BATCH_SIZE = 400;
@@ -251,7 +273,9 @@ export async function seedFirestore() {
       const chunk = rulesList.slice(i, i + BATCH_SIZE);
       const ruleBatch = db.batch();
       for (const rule of chunk) {
-        const docRef = db.collection(Collections.SHELF_LIFE_RULES).doc(rule.ruleId);
+        const docRef = db
+          .collection(Collections.SHELF_LIFE_RULES)
+          .doc(rule.ruleId);
         ruleBatch.set(
           docRef,
           {
@@ -267,7 +291,7 @@ export async function seedFirestore() {
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           },
-          {merge: true}
+          {merge: true},
         );
       }
       await ruleBatch.commit();
@@ -281,7 +305,9 @@ export async function seedFirestore() {
   console.log("👥 [Seed] Seeding sample users (Admin, Free, Premium)...");
   await seedUsers();
 
-  console.log("🎉 [Seed] Master Data and Users seeding completed successfully!");
+  console.log(
+    "🎉 [Seed] Master Data and Users seeding completed successfully!",
+  );
 }
 
 interface SeedUserConfig {
@@ -324,9 +350,11 @@ async function seedUsers() {
     let userRecord: admin.auth.UserRecord;
     try {
       userRecord = await admin.auth().getUserByEmail(config.email);
-      console.log(`   ℹ️ Auth user already exists: ${config.email} (UID: ${userRecord.uid})`);
+      console.log(
+        `   ℹ️ Auth user already exists: ${config.email} (UID: ${userRecord.uid})`,
+      );
     } catch (error: unknown) {
-      const authError = error as {code?: string};
+      const authError = error as { code?: string };
       if (authError.code === "auth/user-not-found") {
         userRecord = await admin.auth().createUser({
           email: config.email,
@@ -334,7 +362,9 @@ async function seedUsers() {
           password: config.password,
           displayName: config.fullName,
         });
-        console.log(`   ➕ Created Auth user: ${config.email} (UID: ${userRecord.uid})`);
+        console.log(
+          `   ➕ Created Auth user: ${config.email} (UID: ${userRecord.uid})`,
+        );
       } else {
         throw error;
       }
@@ -348,7 +378,10 @@ async function seedUsers() {
       // 1. If admin previously had a household, clean it up
       const oldHouseholdId = userDoc.data()?.activeHouseholdId;
       if (oldHouseholdId) {
-        await db.collection(Collections.HOUSEHOLDS).doc(oldHouseholdId).delete();
+        await db
+          .collection(Collections.HOUSEHOLDS)
+          .doc(oldHouseholdId)
+          .delete();
       }
 
       // 2. Clean up any admin subscriptions or ai_usage
@@ -357,7 +390,9 @@ async function seedUsers() {
         .doc(Collections.AI_USAGE_CURRENT_DOC);
       await aiUsageRef.delete().catch(() => {});
 
-      const subRef = userRef.collection(Collections.SUBSCRIPTIONS).doc("active_sub");
+      const subRef = userRef
+        .collection(Collections.SUBSCRIPTIONS)
+        .doc("active_sub");
       await subRef.delete().catch(() => {});
 
       // 3. Set pure Admin user document: NO membershipId, NO activeHouseholdId
@@ -369,31 +404,52 @@ async function seedUsers() {
           membershipId: admin.firestore.FieldValue.delete(),
           activeHouseholdId: admin.firestore.FieldValue.delete(),
           isActive: true,
-          createdAt: userDoc.exists ? (userDoc.data()?.createdAt ?? serverTimestamp) : serverTimestamp,
+          createdAt: userDoc.exists ?
+            (userDoc.data()?.createdAt ?? serverTimestamp) :
+            serverTimestamp,
           updatedAt: serverTimestamp,
         },
-        {merge: true}
+        {merge: true},
       );
 
-      console.log(`   ✅ Seeded pure Admin profile for: ${config.email} (Role: admin, no membership/household/ai_usage/subscriptions)`);
+      console.log(
+        `   ✅ Seeded pure Admin profile for: ${config.email} (Role: admin, no membership/household/ai_usage/subscriptions)`,
+      );
       continue;
     }
 
     // --- Regular Member (Free / Premium) ---
     let householdId = userDoc.data()?.activeHouseholdId;
 
-    // Create or find default household
-    if (!householdId) {
-      const householdRef = db.collection(Collections.HOUSEHOLDS).doc();
+    // Check if household exists in Firestore, recreate if missing
+    let householdExists = false;
+    if (householdId) {
+      const existingHousehold = await db
+        .collection(Collections.HOUSEHOLDS)
+        .doc(householdId)
+        .get();
+      householdExists = existingHousehold.exists;
+    }
+
+    if (!householdId || !householdExists) {
+      const householdRef = householdId ?
+        db.collection(Collections.HOUSEHOLDS).doc(householdId) :
+        db.collection(Collections.HOUSEHOLDS).doc();
       householdId = householdRef.id;
-      await householdRef.set({
-        name: `Tủ lạnh của ${config.fullName}`,
-        ownerId: uid,
-        members: [uid],
-        activeItemCount: 0,
-        createdAt: serverTimestamp,
-        updatedAt: serverTimestamp,
-      });
+      await householdRef.set(
+        {
+          name: `Tủ lạnh của ${config.fullName}`,
+          ownerId: uid,
+          members: [uid],
+          activeItemCount: 0,
+          createdAt: serverTimestamp,
+          updatedAt: serverTimestamp,
+        },
+        {merge: true},
+      );
+      console.log(
+        `   🏠 Created/Restored household ${householdId} for ${config.email}`,
+      );
     }
 
     // Set or update user document
@@ -405,10 +461,12 @@ async function seedUsers() {
         membershipId: config.membershipId ?? "free",
         activeHouseholdId: householdId,
         isActive: true,
-        createdAt: userDoc.exists ? (userDoc.data()?.createdAt ?? serverTimestamp) : serverTimestamp,
+        createdAt: userDoc.exists ?
+          (userDoc.data()?.createdAt ?? serverTimestamp) :
+          serverTimestamp,
         updatedAt: serverTimestamp,
       },
-      {merge: true}
+      {merge: true},
     );
 
     // AI usage subcollection
@@ -421,12 +479,14 @@ async function seedUsers() {
         receiptScanUsed: 0,
         updatedAt: serverTimestamp,
       },
-      {merge: true}
+      {merge: true},
     );
 
     // If premium, also seed an active subscription
     if (config.membershipId === "premium") {
-      const subRef = userRef.collection(Collections.SUBSCRIPTIONS).doc("active_sub");
+      const subRef = userRef
+        .collection(Collections.SUBSCRIPTIONS)
+        .doc("active_sub");
       const startDate = new Date();
       const endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 days
 
@@ -444,14 +504,15 @@ async function seedUsers() {
           createdAt: serverTimestamp,
           updatedAt: serverTimestamp,
         },
-        {merge: true}
+        {merge: true},
       );
     }
 
-    console.log(`   ✅ Seeded Firestore profile for: ${config.email} (Role: ${config.role}, Membership: ${config.membershipId})`);
+    console.log(
+      `   ✅ Seeded Firestore profile for: ${config.email} (Role: ${config.role}, Membership: ${config.membershipId})`,
+    );
   }
 }
-
 
 // Execute if run directly via CLI
 if (require.main === module) {

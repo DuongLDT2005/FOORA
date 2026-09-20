@@ -29,6 +29,7 @@ class InventoryFormState {
   // New: Autocomplete suggestions
   final List<FoodSuggestion> suggestions;
   final bool showSuggestions;
+  final String? photoUrl;
 
   const InventoryFormState({
     required this.name,
@@ -52,6 +53,7 @@ class InventoryFormState {
     this.hasShelfLifeRule = false,
     this.suggestions = const [],
     this.showSuggestions = false,
+    this.photoUrl,
   });
 
   factory InventoryFormState.initial({
@@ -72,6 +74,7 @@ class InventoryFormState {
         remainingPercentage: itemToEdit.remainingPercentage,
         purchaseDate: itemToEdit.purchaseDate,
         expirationDate: itemToEdit.expirationDate,
+        photoUrl: itemToEdit.photoUrl,
         categories: categories,
         storageLocations: storageLocations,
         suggestions: const [],
@@ -129,6 +132,8 @@ class InventoryFormState {
     bool clearShelfLifeRule = false,
     List<FoodSuggestion>? suggestions,
     bool? showSuggestions,
+    String? photoUrl,
+    bool clearPhotoUrl = false,
   }) {
     return InventoryFormState(
       name: name ?? this.name,
@@ -154,6 +159,7 @@ class InventoryFormState {
       hasShelfLifeRule: clearShelfLifeRule ? false : (hasShelfLifeRule ?? this.hasShelfLifeRule),
       suggestions: suggestions ?? this.suggestions,
       showSuggestions: showSuggestions ?? this.showSuggestions,
+      photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
     );
   }
 }

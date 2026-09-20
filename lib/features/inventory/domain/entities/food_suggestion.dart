@@ -10,6 +10,7 @@ class FoodSuggestion {
   final String defaultUnit;
   final bool isFromMaster; // true if standard food catalog, false if custom past item
   final String? matchedAlias; // Present if matched via alias
+  final String? photoUrl;
 
   const FoodSuggestion({
     this.foodId,
@@ -18,6 +19,7 @@ class FoodSuggestion {
     required this.defaultUnit,
     this.isFromMaster = true,
     this.matchedAlias,
+    this.photoUrl,
   });
 
   @override

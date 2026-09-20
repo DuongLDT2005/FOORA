@@ -420,6 +420,7 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
                 defaultUnit: data['defaultUnit'] as String? ?? 'quả',
                 isFromMaster: true,
                 matchedAlias: matchedAlias,
+                photoUrl: data['photoUrl'] as String?,
               ),
               score: highestScore,
             ));
@@ -465,6 +466,7 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
                   categoryId: data['categoryId'] as String? ?? '',
                   defaultUnit: data['unit'] as String? ?? 'quả',
                   isFromMaster: false,
+                  photoUrl: data['photoUrl'] as String?,
                 ),
                 score: itemScore,
               ));
