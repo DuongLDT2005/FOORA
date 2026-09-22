@@ -16,6 +16,7 @@ class BottomSheetHelper {
     bool isDismissible = true,
     bool enableDrag = true,
     double? maxHeightFactor,
+    Widget? footer,
   }) {
     return showModalBottomSheet<T>(
       context: context,
@@ -26,6 +27,7 @@ class BottomSheetHelper {
       builder: (context) => AppBottomSheet(
         title: title,
         maxHeightFactor: maxHeightFactor,
+        footer: footer,
         child: child,
       ),
     );
