@@ -11,6 +11,8 @@ import '../../domain/entities/inventory_item.dart';
 import '../../domain/entities/storage_location.dart';
 import '../../domain/repositories/inventory_repository.dart';
 import '../../domain/usecases/add_inventory_item.dart';
+import '../../domain/usecases/batch_update_inventory_status_usecase.dart';
+
 import '../../domain/usecases/get_inventory_items.dart';
 import '../../domain/usecases/update_inventory_item.dart';
 import 'inventory_form_state.dart';
@@ -38,11 +40,17 @@ final addInventoryItemUseCaseProvider = Provider<AddInventoryItemUseCase>((
   return AddInventoryItemUseCase(ref.watch(inventoryRepositoryProvider));
 });
 
-final updateInventoryItemUseCaseProvider = Provider<UpdateInventoryItemUseCase>(
-  (ref) {
-    return UpdateInventoryItemUseCase(ref.watch(inventoryRepositoryProvider));
-  },
-);
+final updateInventoryItemUseCaseProvider = Provider<UpdateInventoryItemUseCase>((
+  ref,
+) {
+  return UpdateInventoryItemUseCase(ref.watch(inventoryRepositoryProvider));
+});
+
+final batchUpdateInventoryStatusUseCaseProvider = Provider<BatchUpdateInventoryStatusUseCase>((
+  ref,
+) {
+  return BatchUpdateInventoryStatusUseCase(ref.watch(inventoryRepositoryProvider));
+});
 
 final getInventoryItemsUseCaseProvider = Provider<GetInventoryItemsUseCase>((
   ref,
