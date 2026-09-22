@@ -1,3 +1,4 @@
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/food_category.dart';
@@ -57,6 +58,25 @@ class InventoryRepositoryImpl implements InventoryRepository {
       throw ServerFailure(e.message, e.code);
     } catch (_) {
       throw const ServerFailure('Không thể cập nhật thực phẩm. Vui lòng thử lại.');
+    }
+  }
+
+  @override
+  Future<void> batchUpdateInventoryStatus({
+    required String householdId,
+    required List<String> itemIds,
+    required InventoryItemStatus status,
+  }) async {
+    try {
+      await remoteDataSource.batchUpdateInventoryStatus(
+        householdId: householdId,
+        itemIds: itemIds,
+        status: status.value,
+      );
+    } on ServerException catch (e) {
+      throw ServerFailure(e.message, e.code);
+    } catch (_) {
+      throw const ServerFailure('Không thể cập nhật hàng loạt. Vui lòng thử lại.');
     }
   }
 

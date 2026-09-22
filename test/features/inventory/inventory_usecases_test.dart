@@ -40,6 +40,20 @@ class MockInventoryRepository implements InventoryRepository {
   }
 
   @override
+  Future<void> batchUpdateInventoryStatus({
+    required String householdId,
+    required List<String> itemIds,
+    required InventoryItemStatus status,
+  }) async {
+    lastHouseholdId = householdId;
+    for (var i = 0; i < items.length; i++) {
+      if (itemIds.contains(items[i].id)) {
+        items[i] = items[i].copyWith(status: status);
+      }
+    }
+  }
+
+  @override
   Stream<List<InventoryItem>> watchActiveInventoryItems(String householdId) {
     return Stream.value(
       items

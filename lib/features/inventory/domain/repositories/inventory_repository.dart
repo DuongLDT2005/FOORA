@@ -1,3 +1,4 @@
+import '../../../../core/constants/app_enums.dart';
 import '../entities/food_category.dart';
 import '../entities/food_suggestion.dart';
 import '../entities/inventory_item.dart';
@@ -14,6 +15,13 @@ abstract class InventoryRepository {
   Future<void> updateInventoryItem(
     InventoryItem item, {
     required String householdId,
+  });
+
+  /// Batch update status for multiple items in `households/{householdId}/inventory_items`
+  Future<void> batchUpdateInventoryStatus({
+    required String householdId,
+    required List<String> itemIds,
+    required InventoryItemStatus status,
   });
 
   /// Streams active inventory items for smart alert & inventory list

@@ -29,6 +29,12 @@ abstract class InventoryRemoteDataSource {
     required InventoryItemModel item,
   });
 
+  Future<void> batchUpdateInventoryStatus({
+    required String householdId,
+    required List<String> itemIds,
+    required String status,
+  });
+
   Stream<List<InventoryItemModel>> watchActiveInventoryItems(
     String householdId,
   );
@@ -146,6 +152,38 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
     } catch (e) {
       if (e is AppException) rethrow;
       throw ServerException('Lỗi khi cập nhật thực phẩm: $e');
+    }
+  }
+
+  @override
+  Future<void> batchUpdateInventoryStatus({
+    required String householdId,
+    required List<String> itemIds,
+    required String status,
+  }) async {
+    if (itemIds.isEmpty) return;
+
+    try {
+      final batch = firestore.batch();
+      final itemsRef = firestore
+          .collection(FirestoreConstants.households)
+          .doc(householdId)
+          .collection(FirestoreConstants.inventoryItems);
+
+      for (final itemId in itemIds) {
+        final docRef = itemsRef.doc(itemId);
+        batch.update(docRef, {
+          'status': status,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
+    } on FirebaseException catch (e) {
+      throw ServerException.fromFirebase(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw ServerException('Lỗi khi cập nhật hàng loạt: $e');
     }
   }
 
