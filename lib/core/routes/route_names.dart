@@ -13,6 +13,7 @@ class AppRouteNames {
 
   // Mobile Overlays & Details
   static const String itemForm = '/inventory/item-form';
+  static const String expirationManagement = '/inventory/expiration-management';
   static const String notifications = '/notifications';
   static const String profileDetail = '/profile/detail';
   static const String membership = '/membership';

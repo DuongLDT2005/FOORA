@@ -37,11 +37,7 @@ class AppErrorBanner extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              LucideIcons.shieldAlert,
-              color: AppColors.red600,
-              size: 16.r,
-            ),
+            Icon(LucideIcons.shieldAlert, color: AppColors.red600, size: 16.r),
             SizedBox(width: 10.w),
             Expanded(
               child: Text(

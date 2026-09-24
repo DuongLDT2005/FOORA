@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/features/inventory/presentation/widgets/shelf_life_rule_alert_banner.dart';
+
 import '../../helpers/test_helpers.dart';
 
 void main() {
   group('ShelfLifeRuleAlertBanner Widget Tests', () {
-    testWidgets('renders recommended storage time when rule exists', (tester) async {
+    testWidgets('renders recommended storage time when rule exists', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         makeTestableWidget(
           const ShelfLifeRuleAlertBanner(
@@ -29,7 +32,9 @@ void main() {
       expect(richTextFinder, findsOneWidget);
     });
 
-    testWidgets('renders fallback text when rule does not exist', (tester) async {
+    testWidgets('renders fallback text when rule does not exist', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         makeTestableWidget(
           const ShelfLifeRuleAlertBanner(

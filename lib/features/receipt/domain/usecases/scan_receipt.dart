@@ -8,10 +8,8 @@ class ScanReceiptUseCase {
 
   ScanReceiptUseCase(this.repository);
 
-  Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})> call({
-    required File imageFile,
-    required String householdId,
-  }) {
+  Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})>
+  call({required File imageFile, required String householdId}) {
     return repository.scanAndParseReceipt(
       imageFile: imageFile,
       householdId: householdId,
