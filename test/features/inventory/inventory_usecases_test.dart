@@ -116,7 +116,7 @@ void main() {
   late UpdateInventoryItemUseCase updateUseCase;
   late GetInventoryItemsUseCase getItemsUseCase;
 
-  final now = DateTime(2026, 9, 14, 12, 0);
+  final now = DateTime.now();
   final testItem = InventoryItem(
     id: 'item-001',
     name: 'Sữa tươi Tiệt Trùng',

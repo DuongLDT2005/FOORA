@@ -30,68 +30,65 @@ class InventoryStatsBanner extends ConsumerWidget {
       },
       child: Container(
         padding: EdgeInsets.all(14.r),
-      decoration: BoxDecoration(
-        color: AppColors.emerald50.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.emerald100),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.all(8.r),
-            decoration: BoxDecoration(
-              color: AppColors.emerald100,
-              borderRadius: BorderRadius.circular(12.r),
+        decoration: BoxDecoration(
+          color: AppColors.emerald50.withValues(alpha: 0.7),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.emerald100),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(8.r),
+              decoration: BoxDecoration(
+                color: AppColors.emerald100,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                LucideIcons.sparkles,
+                color: AppColors.emerald700,
+                size: 16.r,
+              ), // animate pulse could be added with an AnimationController
             ),
-            child: Icon(
-              LucideIcons.sparkles,
-              color: AppColors.emerald700,
-              size: 16.r,
-            ), // animate pulse could be added with an AnimationController
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Gợi ý tủ lạnh thông minh',
-                  style: TextStyle(
-                    fontFamily: 'Lexend',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12.sp,
-                    color: AppColors.emerald800,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                RichText(
-                  text: TextSpan(
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Gợi ý tủ lạnh thông minh',
                     style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 10.sp,
-                      color: AppColors.slate500,
-                      height: 1.5,
-                    ),
-                    children: _buildMessageTextSpans(
-                      expiringSoonCount,
-                      expiredCount,
+                      fontFamily: 'Lexend',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.sp,
+                      color: AppColors.emerald800,
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 4.h),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 10.sp,
+                        color: AppColors.slate500,
+                        height: 1.5,
+                      ),
+                      children: _buildMessageTextSpans(
+                        expiringSoonCount,
+                        expiredCount,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
 
-  List<TextSpan> _buildMessageTextSpans(
-    int expiringSoon,
-    int expired,
-  ) {
+  List<TextSpan> _buildMessageTextSpans(int expiringSoon, int expired) {
     List<TextSpan> spans = [const TextSpan(text: 'Tủ đang có ')];
 
     if (expiringSoon > 0) {

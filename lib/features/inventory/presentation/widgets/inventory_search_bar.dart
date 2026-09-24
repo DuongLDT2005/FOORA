@@ -50,18 +50,20 @@ class _InventorySearchBarState extends ConsumerState<InventorySearchBar> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: _isFocused ? AppColors.primary : AppColors.slate200.withOpacity(0.6),
+                color: _isFocused
+                    ? AppColors.primary
+                    : AppColors.slate200.withValues(alpha: 0.6),
               ),
               boxShadow: [
                 if (_isFocused)
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     blurRadius: 0,
                     spreadRadius: 2,
                   )
                 else
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 2,
                     offset: const Offset(0, 1),
                   ),
@@ -70,11 +72,7 @@ class _InventorySearchBarState extends ConsumerState<InventorySearchBar> {
             child: Row(
               children: [
                 SizedBox(width: 14.w),
-                Icon(
-                  LucideIcons.search,
-                  size: 16.r,
-                  color: AppColors.slate400,
-                ),
+                Icon(LucideIcons.search, size: 16.r, color: AppColors.slate400),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: TextFormField(
@@ -142,10 +140,12 @@ class _InventorySearchBarState extends ConsumerState<InventorySearchBar> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.slate200.withOpacity(0.6)),
+                border: Border.all(
+                  color: AppColors.slate200.withValues(alpha: 0.6),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 2,
                     offset: const Offset(0, 1),
                   ),

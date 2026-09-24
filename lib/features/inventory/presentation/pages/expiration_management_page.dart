@@ -105,7 +105,10 @@ class ExpirationManagementPage extends ConsumerWidget {
       color: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: state.isLoading && state.expiredItems.isEmpty && state.safeItems.isEmpty
+        child:
+            state.isLoading &&
+                state.expiredItems.isEmpty &&
+                state.safeItems.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
@@ -129,14 +132,17 @@ class ExpirationManagementPage extends ConsumerWidget {
                         GestureDetector(
                           onTap: () => context.pop(),
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 6.h,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20.r),
                               border: Border.all(color: AppColors.slate200),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
+                                  color: Colors.black.withValues(alpha: 0.02),
                                   blurRadius: 2,
                                   offset: const Offset(0, 1),
                                 ),
@@ -144,7 +150,11 @@ class ExpirationManagementPage extends ConsumerWidget {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.chevron_left, size: 16.sp, color: AppColors.slate700),
+                                Icon(
+                                  Icons.chevron_left,
+                                  size: 16.sp,
+                                  color: AppColors.slate700,
+                                ),
                                 SizedBox(width: 4.w),
                                 Text(
                                   'Tất cả kho',
@@ -161,240 +171,280 @@ class ExpirationManagementPage extends ConsumerWidget {
                       ],
                     ),
                     SizedBox(height: 24.h),
-                  // Stats Board
-                  ExpirationStatsBoard(
-                    urgentCount: state.urgentCount,
-                    spoiledCount: state.spoiledCount,
-                  ),
+                    // Stats Board
+                    ExpirationStatsBoard(
+                      urgentCount: state.urgentCount,
+                      spoiledCount: state.spoiledCount,
+                    ),
 
-                  SizedBox(height: 24.h),
+                    SizedBox(height: 24.h),
 
-                  // Sort Header
-                  Container(
-                    padding: EdgeInsets.only(bottom: 4.h),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: AppColors.slate100),
+                    // Sort Header
+                    Container(
+                      padding: EdgeInsets.only(bottom: 4.h),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: AppColors.slate100),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'DANH SÁCH ƯU TIÊN',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.slate800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.all(2.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.slate100,
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () => ref
+                                      .read(
+                                        expirationListNotifierProvider.notifier,
+                                      )
+                                      .setSortType(
+                                        ExpirationSortType.expirationDate,
+                                      ),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          state.sortType ==
+                                              ExpirationSortType.expirationDate
+                                          ? Colors.white
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      boxShadow:
+                                          state.sortType ==
+                                              ExpirationSortType.expirationDate
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.05,
+                                                ),
+                                                blurRadius: 2,
+                                                offset: const Offset(0, 1),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Text(
+                                      'Hạn dùng',
+                                      style: TextStyle(
+                                        fontSize: 9.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            state.sortType ==
+                                                ExpirationSortType
+                                                    .expirationDate
+                                            ? AppColors.primary
+                                            : AppColors.slate500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => ref
+                                      .read(
+                                        expirationListNotifierProvider.notifier,
+                                      )
+                                      .setSortType(ExpirationSortType.quantity),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          state.sortType ==
+                                              ExpirationSortType.quantity
+                                          ? Colors.white
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      boxShadow:
+                                          state.sortType ==
+                                              ExpirationSortType.quantity
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.05,
+                                                ),
+                                                blurRadius: 2,
+                                                offset: const Offset(0, 1),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Text(
+                                      'Lượng còn',
+                                      style: TextStyle(
+                                        fontSize: 9.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            state.sortType ==
+                                                ExpirationSortType.quantity
+                                            ? AppColors.primary
+                                            : AppColors.slate500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'DANH SÁCH ƯU TIÊN',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.slate800,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        Container(
-                          padding: EdgeInsets.all(2.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.slate100,
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () => ref.read(expirationListNotifierProvider.notifier).setSortType(ExpirationSortType.expirationDate),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: state.sortType == ExpirationSortType.expirationDate ? Colors.white : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6.r),
-                                    boxShadow: state.sortType == ExpirationSortType.expirationDate
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.05),
-                                              blurRadius: 2,
-                                              offset: const Offset(0, 1),
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Text(
-                                    'Hạn dùng',
-                                    style: TextStyle(
-                                      fontSize: 9.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: state.sortType == ExpirationSortType.expirationDate ? AppColors.primary : AppColors.slate500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () => ref.read(expirationListNotifierProvider.notifier).setSortType(ExpirationSortType.quantity),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: state.sortType == ExpirationSortType.quantity ? Colors.white : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6.r),
-                                    boxShadow: state.sortType == ExpirationSortType.quantity
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.05),
-                                              blurRadius: 2,
-                                              offset: const Offset(0, 1),
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Text(
-                                    'Lượng còn',
-                                    style: TextStyle(
-                                      fontSize: 9.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: state.sortType == ExpirationSortType.quantity ? AppColors.primary : AppColors.slate500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-                  // Expired Group
-                  if (state.expiredItems.isNotEmpty) ...[
-                    ExpirationGroupHeader(
-                      title: 'Đã quá hạn',
-                      color: AppColors.red600,
-                      animateDot: true,
-                      trailing: GestureDetector(
-                        onTap: () => _onDeleteAllExpired(
-                          context,
-                          ref,
-                          state.expiredItems,
-                        ),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 2.h,
+                    // Expired Group
+                    if (state.expiredItems.isNotEmpty) ...[
+                      ExpirationGroupHeader(
+                        title: 'Đã quá hạn',
+                        color: AppColors.red600,
+                        animateDot: true,
+                        trailing: GestureDetector(
+                          onTap: () => _onDeleteAllExpired(
+                            context,
+                            ref,
+                            state.expiredItems,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.red50,
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Text(
-                            'Xóa tất cả',
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.red500,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 2.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.red50,
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              'Xóa tất cả',
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.red500,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    ...state.expiredItems.map(
-                      (item) => ExpirationItemCard(
-                        item: item,
-                        categoryName: getCategoryName(item.categoryId),
-                        storageLocationName: getLocationName(
-                          item.storageLocationId,
+                      ...state.expiredItems.map(
+                        (item) => ExpirationItemCard(
+                          item: item,
+                          categoryName: getCategoryName(item.categoryId),
+                          storageLocationName: getLocationName(
+                            item.storageLocationId,
+                          ),
+                          groupType: ExpirationGroupType.expired,
+                          onSwipeDelete: () =>
+                              _onSwipeDelete(context, ref, item),
                         ),
-                        groupType: ExpirationGroupType.expired,
-                        onSwipeDelete: () => _onSwipeDelete(context, ref, item),
                       ),
-                    ),
-                    SizedBox(height: 12.h),
-                  ],
+                      SizedBox(height: 12.h),
+                    ],
 
-                  // Today Group
-                  if (state.todayItems.isNotEmpty) ...[
-                    const ExpirationGroupHeader(
-                      title: 'Hết hạn hôm nay',
-                      color: AppColors.amber600,
-                      animateDot: true,
-                    ),
-                    ...state.todayItems.map(
-                      (item) => ExpirationItemCard(
-                        item: item,
-                        categoryName: getCategoryName(item.categoryId),
-                        storageLocationName: getLocationName(
-                          item.storageLocationId,
+                    // Today Group
+                    if (state.todayItems.isNotEmpty) ...[
+                      const ExpirationGroupHeader(
+                        title: 'Hết hạn hôm nay',
+                        color: AppColors.amber600,
+                        animateDot: true,
+                      ),
+                      ...state.todayItems.map(
+                        (item) => ExpirationItemCard(
+                          item: item,
+                          categoryName: getCategoryName(item.categoryId),
+                          storageLocationName: getLocationName(
+                            item.storageLocationId,
+                          ),
+                          groupType: ExpirationGroupType.today,
+                          onSwipeDelete: () =>
+                              _onSwipeDelete(context, ref, item),
                         ),
-                        groupType: ExpirationGroupType.today,
-                        onSwipeDelete: () => _onSwipeDelete(context, ref, item),
                       ),
-                    ),
-                    SizedBox(height: 12.h),
-                  ],
+                      SizedBox(height: 12.h),
+                    ],
 
-                  // Tomorrow Group
-                  if (state.tomorrowItems.isNotEmpty) ...[
-                    const ExpirationGroupHeader(
-                      title: 'Hết hạn ngày mai',
-                      color: AppColors.amber500,
-                    ),
-                    ...state.tomorrowItems.map(
-                      (item) => ExpirationItemCard(
-                        item: item,
-                        categoryName: getCategoryName(item.categoryId),
-                        storageLocationName: getLocationName(
-                          item.storageLocationId,
+                    // Tomorrow Group
+                    if (state.tomorrowItems.isNotEmpty) ...[
+                      const ExpirationGroupHeader(
+                        title: 'Hết hạn ngày mai',
+                        color: AppColors.amber500,
+                      ),
+                      ...state.tomorrowItems.map(
+                        (item) => ExpirationItemCard(
+                          item: item,
+                          categoryName: getCategoryName(item.categoryId),
+                          storageLocationName: getLocationName(
+                            item.storageLocationId,
+                          ),
+                          groupType: ExpirationGroupType.tomorrow,
+                          onSwipeDelete: () =>
+                              _onSwipeDelete(context, ref, item),
                         ),
-                        groupType: ExpirationGroupType.tomorrow,
-                        onSwipeDelete: () => _onSwipeDelete(context, ref, item),
                       ),
-                    ),
-                    SizedBox(height: 12.h),
-                  ],
+                      SizedBox(height: 12.h),
+                    ],
 
-                  // Upcoming Group
-                  if (state.upcomingItems.isNotEmpty) ...[
-                    const ExpirationGroupHeader(
-                      title: 'Sắp hết hạn (2-3 ngày tới)',
-                      color: AppColors.amber500,
-                    ),
-                    ...state.upcomingItems.map(
-                      (item) => ExpirationItemCard(
-                        item: item,
-                        categoryName: getCategoryName(item.categoryId),
-                        storageLocationName: getLocationName(
-                          item.storageLocationId,
+                    // Upcoming Group
+                    if (state.upcomingItems.isNotEmpty) ...[
+                      const ExpirationGroupHeader(
+                        title: 'Sắp hết hạn (2-3 ngày tới)',
+                        color: AppColors.amber500,
+                      ),
+                      ...state.upcomingItems.map(
+                        (item) => ExpirationItemCard(
+                          item: item,
+                          categoryName: getCategoryName(item.categoryId),
+                          storageLocationName: getLocationName(
+                            item.storageLocationId,
+                          ),
+                          groupType: ExpirationGroupType.upcoming,
+                          onSwipeDelete: () =>
+                              _onSwipeDelete(context, ref, item),
                         ),
-                        groupType: ExpirationGroupType.upcoming,
-                        onSwipeDelete: () => _onSwipeDelete(context, ref, item),
                       ),
-                    ),
-                    SizedBox(height: 12.h),
-                  ],
+                      SizedBox(height: 12.h),
+                    ],
 
-                  // Safe Group
-                  if (state.safeItems.isNotEmpty) ...[
-                    const ExpirationGroupHeader(
-                      title: 'Còn hạn lâu dài',
-                      color: AppColors.emerald500,
-                    ),
-                    ...state.safeItems.map(
-                      (item) => ExpirationItemCard(
-                        item: item,
-                        categoryName: getCategoryName(item.categoryId),
-                        storageLocationName: getLocationName(
-                          item.storageLocationId,
+                    // Safe Group
+                    if (state.safeItems.isNotEmpty) ...[
+                      const ExpirationGroupHeader(
+                        title: 'Còn hạn lâu dài',
+                        color: AppColors.emerald500,
+                      ),
+                      ...state.safeItems.map(
+                        (item) => ExpirationItemCard(
+                          item: item,
+                          categoryName: getCategoryName(item.categoryId),
+                          storageLocationName: getLocationName(
+                            item.storageLocationId,
+                          ),
+                          groupType: ExpirationGroupType.safe,
+                          onSwipeDelete: () =>
+                              _onSwipeDelete(context, ref, item),
                         ),
-                        groupType: ExpirationGroupType.safe,
-                        onSwipeDelete: () => _onSwipeDelete(context, ref, item),
                       ),
-                    ),
-                  ],
+                    ],
 
-                  SizedBox(height: 60.h), // padding for bottom navigation
-                ],
+                    SizedBox(height: 60.h), // padding for bottom navigation
+                  ],
+                ),
               ),
-            ),
       ),
     );
   }

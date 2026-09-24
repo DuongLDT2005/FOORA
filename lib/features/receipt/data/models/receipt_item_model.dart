@@ -33,7 +33,7 @@ class ReceiptItemModel extends ReceiptItem {
         storageLocationName: m['storageLocationName']?.toString() ?? 'Ngăn mát',
         expirationDate: m['expirationDate'] != null
             ? DateTime.tryParse(m['expirationDate'].toString()) ??
-                DateTime.now()
+                  DateTime.now()
             : DateTime.now(),
         daysRemaining: (m['daysRemaining'] as num?)?.toInt() ?? 0,
       );
@@ -41,7 +41,7 @@ class ReceiptItemModel extends ReceiptItem {
 
     final expDate = json['estimatedExpirationDate'] != null
         ? DateTime.tryParse(json['estimatedExpirationDate'].toString()) ??
-            DateTime.now().add(const Duration(days: 3))
+              DateTime.now().add(const Duration(days: 3))
         : DateTime.now().add(const Duration(days: 3));
 
     return ReceiptItemModel(

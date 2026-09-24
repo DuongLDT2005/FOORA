@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../domain/entities/food_category.dart';
 import '../providers/inventory_list_provider.dart';
 import '../providers/inventory_provider.dart';
 
@@ -34,25 +33,27 @@ class CategoryFilterList extends ConsumerWidget {
                 icon: LucideIcons.layoutGrid,
                 isSelected: selectedCategoryId == 'all',
               ),
-              ...categories.where((c) => c.isActive).map(
-                (cat) => Padding(
-                  padding: EdgeInsets.only(left: 8.w),
-                  child: _buildCategoryChip(
-                    context: context,
-                    ref: ref,
-                    id: cat.id,
-                    label: cat.name,
-                    icon: _getIconData(cat.icon),
-                    isSelected: selectedCategoryId == cat.id,
+              ...categories
+                  .where((c) => c.isActive)
+                  .map(
+                    (cat) => Padding(
+                      padding: EdgeInsets.only(left: 8.w),
+                      child: _buildCategoryChip(
+                        context: context,
+                        ref: ref,
+                        id: cat.id,
+                        label: cat.name,
+                        icon: _getIconData(cat.icon),
+                        isSelected: selectedCategoryId == cat.id,
+                      ),
+                    ),
                   ),
-                ),
-              ),
             ],
           ),
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
@@ -79,16 +80,15 @@ class CategoryFilterList extends ConsumerWidget {
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.slate200,
           ),
-          boxShadow:
-              isSelected
-                  ? [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                  : [],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

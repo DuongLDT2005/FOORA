@@ -6,6 +6,7 @@ import '../../domain/entities/inventory_item.dart';
 import 'inventory_provider.dart';
 
 enum InventorySortOption { newest, closestExpiry, nameAsc, quantityDesc }
+
 enum InventoryStatusFilter { all, expiringSoon, expired, lowQuantity }
 
 class InventoryListState {
@@ -69,8 +70,8 @@ class InventoryListState {
 
 final inventoryListNotifierProvider =
     StateNotifierProvider<InventoryListNotifier, InventoryListState>((ref) {
-  return InventoryListNotifier(ref);
-});
+      return InventoryListNotifier(ref);
+    });
 
 class InventoryListNotifier extends StateNotifier<InventoryListState> {
   final Ref ref;
@@ -141,12 +142,14 @@ class InventoryListNotifier extends StateNotifier<InventoryListState> {
       if (item.status != InventoryItemStatus.active) return false;
 
       // Location
-      if (state.selectedLocationId != 'all' && item.storageLocationId != state.selectedLocationId) {
+      if (state.selectedLocationId != 'all' &&
+          item.storageLocationId != state.selectedLocationId) {
         return false;
       }
 
       // Category
-      if (state.selectedCategoryId != 'all' && item.categoryId != state.selectedCategoryId) {
+      if (state.selectedCategoryId != 'all' &&
+          item.categoryId != state.selectedCategoryId) {
         return false;
       }
 
@@ -171,7 +174,8 @@ class InventoryListNotifier extends StateNotifier<InventoryListState> {
           return false;
         }
         if (state.statusFilter == InventoryStatusFilter.lowQuantity &&
-            item.remainingPercentage > 25) { // Assuming <= 25% is low
+            item.remainingPercentage > 25) {
+          // Assuming <= 25% is low
           return false;
         }
       }
@@ -187,9 +191,10 @@ class InventoryListNotifier extends StateNotifier<InventoryListState> {
         case InventorySortOption.nameAsc:
           return a.name.compareTo(b.name);
         case InventorySortOption.quantityDesc:
-          return a.remainingPercentage.compareTo(b.remainingPercentage); // ASC: lower remaining first
+          return a.remainingPercentage.compareTo(
+            b.remainingPercentage,
+          ); // ASC: lower remaining first
         case InventorySortOption.newest:
-        default:
           return b.createdAt.compareTo(a.createdAt); // DESC: newest first
       }
     });

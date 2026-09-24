@@ -65,7 +65,9 @@ class MobileShellScaffold extends ConsumerWidget {
       if (names.length >= 2) {
         return '${names.first[0]}${names.last[0]}'.toUpperCase();
       }
-      return names.first.substring(0, names.first.length >= 2 ? 2 : 1).toUpperCase();
+      return names.first
+          .substring(0, names.first.length >= 2 ? 2 : 1)
+          .toUpperCase();
     }
     if (email != null && email.isNotEmpty) {
       return email.substring(0, email.length >= 2 ? 2 : 1).toUpperCase();
@@ -75,7 +77,8 @@ class MobileShellScaffold extends ConsumerWidget {
 }
 
 /// Sticky Header Widget for Mobile Shell
-class _MobileShellHeader extends StatelessWidget implements PreferredSizeWidget {
+class _MobileShellHeader extends StatelessWidget
+    implements PreferredSizeWidget {
   final String userInitial;
   final VoidCallback onNotificationTap;
 
@@ -205,10 +208,7 @@ class _MobileBottomNavBar extends StatelessWidget {
         color: AppColors.surface.withAlpha(245),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
         border: const Border(
-          top: BorderSide(
-            color: AppColors.slate100,
-            width: 1,
-          ),
+          top: BorderSide(color: AppColors.slate100, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -271,7 +271,9 @@ class _MobileBottomNavBar extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-        transform: isSelected ? Matrix4.diagonal3Values(1.05, 1.05, 1.0) : Matrix4.identity(),
+        transform: isSelected
+            ? Matrix4.diagonal3Values(1.05, 1.05, 1.0)
+            : Matrix4.identity(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

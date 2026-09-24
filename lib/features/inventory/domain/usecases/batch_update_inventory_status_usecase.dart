@@ -6,7 +6,11 @@ class BatchUpdateInventoryStatusUseCase {
 
   const BatchUpdateInventoryStatusUseCase(this.repository);
 
-  Future<void> call(List<String> itemIds, InventoryItemStatus status, {required String householdId}) {
+  Future<void> call(
+    List<String> itemIds,
+    InventoryItemStatus status, {
+    required String householdId,
+  }) {
     if (itemIds.isEmpty) return Future.value();
     return repository.batchUpdateInventoryStatus(
       householdId: householdId,

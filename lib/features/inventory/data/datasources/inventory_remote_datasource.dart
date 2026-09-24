@@ -51,7 +51,15 @@ abstract class InventoryRemoteDataSource {
   });
 
   /// Calculates expiration date with max rule parameters (maxValue, unit) for UI display
-  Future<({DateTime expirationDate, num? maxValue, num? minValue, String? unit, bool hasRule})>
+  Future<
+    ({
+      DateTime expirationDate,
+      num? maxValue,
+      num? minValue,
+      String? unit,
+      bool hasRule,
+    })
+  >
   calculateExpiryWithRule({
     String? foodId,
     required String categoryId,
@@ -259,7 +267,15 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   }
 
   @override
-  Future<({DateTime expirationDate, num? maxValue, num? minValue, String? unit, bool hasRule})>
+  Future<
+    ({
+      DateTime expirationDate,
+      num? maxValue,
+      num? minValue,
+      String? unit,
+      bool hasRule,
+    })
+  >
   calculateExpiryWithRule({
     String? foodId,
     required String categoryId,
@@ -312,7 +328,8 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
       }
 
       // 3. Fallback default if still not determined
-      final effectiveValue = (durationValue ?? (storageLocationId == 'freezer' ? 30 : 3)).toInt();
+      final effectiveValue =
+          (durationValue ?? (storageLocationId == 'freezer' ? 30 : 3)).toInt();
       final effectiveUnit = durationUnit ?? 'days';
 
       DateTime calculatedDate;
@@ -369,7 +386,10 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
     if (cleanQuery.isEmpty) return [];
 
     final normalizedQuery = StringUtils.normalize(cleanQuery);
-    final queryTokens = normalizedQuery.split(' ').where((t) => t.isNotEmpty).toList();
+    final queryTokens = normalizedQuery
+        .split(' ')
+        .where((t) => t.isNotEmpty)
+        .toList();
     if (queryTokens.isEmpty) return [];
 
     // Helper data structure for scoring & sorting
@@ -394,10 +414,12 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
       for (final data in _cachedMasterFoods!) {
         final docId = data['id'] as String? ?? '';
         final name = data['name'] as String? ?? '';
-        final normalizedName = (data['normalizedName'] as String? ?? '').isNotEmpty
+        final normalizedName =
+            (data['normalizedName'] as String? ?? '').isNotEmpty
             ? (data['normalizedName'] as String)
             : StringUtils.normalize(name);
-        final aliases = (data['aliases'] as List<dynamic>?)
+        final aliases =
+            (data['aliases'] as List<dynamic>?)
                 ?.map((e) => e.toString().trim())
                 .where((e) => e.isNotEmpty)
                 .toList() ??
@@ -415,11 +437,15 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
           highestScore = 70; // Contains full query
         } else {
           // Token-based matching on name (e.g. "thịt heo" matches "thịt lợn nạc heo")
-          final allTokensMatch = queryTokens.every((t) => normalizedName.contains(t));
+          final allTokensMatch = queryTokens.every(
+            (t) => normalizedName.contains(t),
+          );
           if (allTokensMatch) {
             highestScore = 55;
           } else {
-            final anyTokenMatch = queryTokens.any((t) => normalizedName.contains(t));
+            final anyTokenMatch = queryTokens.any(
+              (t) => normalizedName.contains(t),
+            );
             if (anyTokenMatch) {
               highestScore = 20;
             }
@@ -478,7 +504,8 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
         for (final doc in itemDocs.docs) {
           final data = doc.data();
           final name = data['name'] as String? ?? '';
-          final normalizedName = (data['normalizedName'] as String? ?? '').isNotEmpty
+          final normalizedName =
+              (data['normalizedName'] as String? ?? '').isNotEmpty
               ? (data['normalizedName'] as String)
               : StringUtils.normalize(name);
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_enums.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -32,7 +31,9 @@ class InventoryPage extends ConsumerWidget {
     );
     final totalWarning = expiringSoonCount + expiredCount;
 
-    final isListLoading = ref.watch(activeHouseholdInventoryStreamProvider).isLoading;
+    final isListLoading = ref
+        .watch(activeHouseholdInventoryStreamProvider)
+        .isLoading;
     final categoriesAsync = ref.watch(foodCategoriesProvider);
 
     return Container(
@@ -62,7 +63,10 @@ class InventoryPage extends ConsumerWidget {
                       context.pushNamed('expirationManagement');
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.red50,
                         borderRadius: BorderRadius.circular(20.r),
@@ -105,7 +109,7 @@ class InventoryPage extends ConsumerWidget {
                 ],
               ),
             ),
-            
+
             // Search and Location Filters
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -117,14 +121,14 @@ class InventoryPage extends ConsumerWidget {
               child: const LocationFilterTabs(),
             ),
             SizedBox(height: 16.h),
-            
+
             // Category Filter
             const CategoryFilterList(),
             SizedBox(height: 16.h),
 
             // Scrollable Content
             Expanded(
-              child: isListLoading 
+              child: isListLoading
                   ? const Center(child: CircularProgressIndicator())
                   : RefreshIndicator(
                       onRefresh: () async {
@@ -143,7 +147,7 @@ class InventoryPage extends ConsumerWidget {
                             ),
                           ),
                           SliverToBoxAdapter(child: SizedBox(height: 16.h)),
-                          
+
                           // List
                           if (filteredItems.isEmpty)
                             SliverFillRemaining(
@@ -161,77 +165,176 @@ class InventoryPage extends ConsumerWidget {
                             SliverPadding(
                               padding: EdgeInsets.symmetric(horizontal: 20.w),
                               sliver: SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    final item = filteredItems[index];
-                                    final categories = categoriesAsync.valueOrNull ?? [];
-                                    final category = categories.where((c) => c.id == item.categoryId).firstOrNull;
-                                    
-                                    return InventoryItemCard(
-                                      id: item.id,
-                                      name: item.name,
-                                      quantity: item.quantity.toString(),
-                                      unit: item.unit,
-                                      percentageRemaining: item.remainingPercentage,
-                                      imageUrl: item.photoUrl,
-                                      category: category,
-                                      storageLocationId: item.storageLocationId,
-                                      expirationDate: item.expirationDate,
-                                      onDelete: () async {
-                                        // Show dialog to consume or discard
-                                        final result = await showDialog<String>(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: const Text('Xóa thực phẩm', style: TextStyle(fontFamily: 'Lexend', fontWeight: FontWeight.bold)),
-                                            content: const Text('Bạn đã sử dụng hết hay vứt bỏ thực phẩm này?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(ctx, 'cancel'),
-                                                child: const Text('Hủy', style: TextStyle(color: AppColors.slate500)),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(ctx, 'discarded'),
-                                                child: const Text('Vứt bỏ', style: TextStyle(color: AppColors.red600)),
-                                              ),
-                                              ElevatedButton(
-                                                onPressed: () => Navigator.pop(ctx, 'consumed'),
-                                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                                                child: const Text('Đã dùng', style: TextStyle(color: Colors.white)),
-                                              ),
-                                            ],
+                                delegate: SliverChildBuilderDelegate((
+                                  context,
+                                  index,
+                                ) {
+                                  final item = filteredItems[index];
+                                  final categories =
+                                      categoriesAsync.valueOrNull ?? [];
+                                  final category = categories
+                                      .where((c) => c.id == item.categoryId)
+                                      .firstOrNull;
+
+                                  return InventoryItemCard(
+                                    id: item.id,
+                                    name: item.name,
+                                    quantity: item.quantity.toString(),
+                                    unit: item.unit,
+                                    percentageRemaining:
+                                        item.remainingPercentage,
+                                    imageUrl: item.photoUrl,
+                                    category: category,
+                                    storageLocationId: item.storageLocationId,
+                                    expirationDate: item.expirationDate,
+                                    onDelete: () async {
+                                      // Show dialog to consume or discard
+                                      final result = await showDialog<String>(
+                                        context: context,
+                                        builder: (ctx) => Dialog(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              20.r,
+                                            ),
                                           ),
+                                          backgroundColor: Colors.white,
+                                          surfaceTintColor: Colors.transparent,
+                                          insetPadding: EdgeInsets.symmetric(
+                                            horizontal: 24.w,
+                                            vertical: 24.h,
+                                          ),
+                                          child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              maxWidth: 420.w,
+                                            ),
+                                            child: Padding(
+                                              padding: EdgeInsets.all(24.r),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'Xóa thực phẩm',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Lexend',
+                                                      fontSize: 18.sp,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: AppColors.slate800,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                  SizedBox(height: 8.h),
+                                                  Text(
+                                                    'Bạn đã sử dụng hết hay vứt bỏ thực phẩm này?',
+                                                    style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      color: AppColors.slate600,
+                                                      height: 1.4,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                  SizedBox(height: 24.h),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: OutlinedButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                ctx,
+                                                                'cancel',
+                                                              ),
+                                                          child: const Text(
+                                                            'Hủy',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 8.w),
+                                                      Expanded(
+                                                        child: ElevatedButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                ctx,
+                                                                'discarded',
+                                                              ),
+                                                          style:
+                                                              ElevatedButton.styleFrom(
+                                                                backgroundColor:
+                                                                    AppColors
+                                                                        .red600,
+                                                                foregroundColor:
+                                                                    Colors
+                                                                        .white,
+                                                              ),
+                                                          child: const Text(
+                                                            'Vứt bỏ',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 8.w),
+                                                      Expanded(
+                                                        child: ElevatedButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                ctx,
+                                                                'consumed',
+                                                              ),
+                                                          style:
+                                                              ElevatedButton.styleFrom(
+                                                                backgroundColor:
+                                                                    AppColors
+                                                                        .primary,
+                                                                foregroundColor:
+                                                                    Colors
+                                                                        .white,
+                                                              ),
+                                                          child: const Text(
+                                                            'Đã dùng',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+
+                                      if (result == 'consumed' ||
+                                          result == 'discarded') {
+                                        final user = ref.read(
+                                          currentUserProvider,
                                         );
-                                        
-                                        if (result == 'consumed' || result == 'discarded') {
-                                          final user = ref.read(currentUserProvider);
-                                          if (user?.activeHouseholdId != null) {
-                                            final newStatus = result == 'consumed'
-                                                ? InventoryItemStatus.consumed
-                                                : InventoryItemStatus.discarded;
-                                            final updatedItem = item.copyWith(
-                                              status: newStatus,
-                                              updatedAt: DateTime.now(),
-                                            );
-                                            ref.read(updateInventoryItemUseCaseProvider)(
-                                              updatedItem, 
-                                              householdId: user!.activeHouseholdId!,
-                                            );
-                                          }
+                                        if (user?.activeHouseholdId != null) {
+                                          final newStatus = result == 'consumed'
+                                              ? InventoryItemStatus.consumed
+                                              : InventoryItemStatus.discarded;
+                                          final updatedItem = item.copyWith(
+                                            status: newStatus,
+                                            updatedAt: DateTime.now(),
+                                          );
+                                          ref.read(
+                                            updateInventoryItemUseCaseProvider,
+                                          )(
+                                            updatedItem,
+                                            householdId:
+                                                user!.activeHouseholdId!,
+                                          );
                                         }
-                                      },
-                                      onTap: () {
-                                        context.pushNamed(
-                                          'itemForm',
-                                          extra: item,
-                                        );
-                                      },
-                                    );
-                                  },
-                                  childCount: filteredItems.length,
-                                ),
+                                      }
+                                    },
+                                    onTap: () {
+                                      context.pushNamed(
+                                        'itemForm',
+                                        extra: item,
+                                      );
+                                    },
+                                  );
+                                }, childCount: filteredItems.length),
                               ),
                             ),
-                            
+
                           // Bottom padding for FAB
                           SliverToBoxAdapter(child: SizedBox(height: 100.h)),
                         ],

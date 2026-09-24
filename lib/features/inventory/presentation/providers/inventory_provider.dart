@@ -40,17 +40,18 @@ final addInventoryItemUseCaseProvider = Provider<AddInventoryItemUseCase>((
   return AddInventoryItemUseCase(ref.watch(inventoryRepositoryProvider));
 });
 
-final updateInventoryItemUseCaseProvider = Provider<UpdateInventoryItemUseCase>((
-  ref,
-) {
-  return UpdateInventoryItemUseCase(ref.watch(inventoryRepositoryProvider));
-});
+final updateInventoryItemUseCaseProvider = Provider<UpdateInventoryItemUseCase>(
+  (ref) {
+    return UpdateInventoryItemUseCase(ref.watch(inventoryRepositoryProvider));
+  },
+);
 
-final batchUpdateInventoryStatusUseCaseProvider = Provider<BatchUpdateInventoryStatusUseCase>((
-  ref,
-) {
-  return BatchUpdateInventoryStatusUseCase(ref.watch(inventoryRepositoryProvider));
-});
+final batchUpdateInventoryStatusUseCaseProvider =
+    Provider<BatchUpdateInventoryStatusUseCase>((ref) {
+      return BatchUpdateInventoryStatusUseCase(
+        ref.watch(inventoryRepositoryProvider),
+      );
+    });
 
 final getInventoryItemsUseCaseProvider = Provider<GetInventoryItemsUseCase>((
   ref,
@@ -194,10 +195,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
         showSuggestions: suggestions.isNotEmpty,
       );
     } else {
-      state = state.copyWith(
-        suggestions: [],
-        showSuggestions: false,
-      );
+      state = state.copyWith(suggestions: [], showSuggestions: false);
     }
   }
 
@@ -211,8 +209,12 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     state = state.copyWith(
       name: suggestion.name,
       foodId: suggestion.foodId,
-      categoryId: suggestion.categoryId.isNotEmpty ? suggestion.categoryId : state.categoryId,
-      unit: suggestion.defaultUnit.isNotEmpty ? suggestion.defaultUnit : state.unit,
+      categoryId: suggestion.categoryId.isNotEmpty
+          ? suggestion.categoryId
+          : state.categoryId,
+      unit: suggestion.defaultUnit.isNotEmpty
+          ? suggestion.defaultUnit
+          : state.unit,
       photoUrl: suggestion.photoUrl,
       showSuggestions: false,
     );

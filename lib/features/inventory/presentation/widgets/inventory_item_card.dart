@@ -67,10 +67,12 @@ class InventoryItemCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: AppColors.slate100.withOpacity(0.7)),
+              border: Border.all(
+                color: AppColors.slate100.withValues(alpha: 0.7),
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
@@ -109,7 +111,10 @@ class InventoryItemCard extends StatelessWidget {
                           ),
                           SizedBox(width: 8.w),
                           _buildStatusBadge(
-                              isExpired, isWarning, daysUntilExpiry),
+                            isExpired,
+                            isWarning,
+                            daysUntilExpiry,
+                          ),
                         ],
                       ),
                       SizedBox(height: 6.h),
@@ -149,14 +154,17 @@ class InventoryItemCard extends StatelessWidget {
                         ),
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
-                          widthFactor: (percentageRemaining / 100).clamp(0.0, 1.0),
+                          widthFactor: (percentageRemaining / 100).clamp(
+                            0.0,
+                            1.0,
+                          ),
                           child: Container(
                             decoration: BoxDecoration(
                               color: isExpired
                                   ? AppColors.red500
                                   : (isWarning
-                                      ? AppColors.amber500
-                                      : AppColors.emerald500),
+                                        ? AppColors.amber500
+                                        : AppColors.emerald500),
                               borderRadius: BorderRadius.circular(4.r),
                             ),
                           ),
@@ -231,16 +239,32 @@ class InventoryItemCard extends StatelessWidget {
           children: [
             ColorFiltered(
               colorFilter: const ColorFilter.matrix([
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0, 0, 0, 1, 0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
               ]),
               child: imageWidget,
             ),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.red900.withOpacity(0.1),
+                color: AppColors.red900.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               alignment: Alignment.center,
@@ -265,7 +289,10 @@ class InventoryItemCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(
-      bool isExpired, bool isWarning, int daysUntilExpiry) {
+    bool isExpired,
+    bool isWarning,
+    int daysUntilExpiry,
+  ) {
     Color bgColor;
     Color textColor;
     Color borderColor;
@@ -275,13 +302,17 @@ class InventoryItemCard extends StatelessWidget {
       bgColor = AppColors.red50;
       textColor = AppColors.red700;
       borderColor = AppColors.red100;
-      final daysText = daysUntilExpiry.abs() > 0 ? ' ${daysUntilExpiry.abs()} NGÀY' : '';
+      final daysText = daysUntilExpiry.abs() > 0
+          ? ' ${daysUntilExpiry.abs()} NGÀY'
+          : '';
       text = 'QUÁ HẠN$daysText';
     } else if (isWarning) {
       bgColor = AppColors.amber50;
       textColor = AppColors.amber700;
       borderColor = AppColors.amber100;
-      text = daysUntilExpiry == 0 ? 'HẾT HẠN HÔM NAY' : 'CÒN $daysUntilExpiry NGÀY';
+      text = daysUntilExpiry == 0
+          ? 'HẾT HẠN HÔM NAY'
+          : 'CÒN $daysUntilExpiry NGÀY';
     } else {
       bgColor = AppColors.emerald50;
       textColor = AppColors.emerald700;
@@ -311,11 +342,13 @@ class InventoryItemCard extends StatelessWidget {
   Widget _buildStorageBadge() {
     final isFridge = storageLocationId == 'fridge';
     final bgColor = isFridge
-        ? AppColors.emerald50.withOpacity(0.8)
+        ? AppColors.emerald50.withValues(alpha: 0.8)
         : const Color(0xFFECFEFF); // Cyan-50
-    final textColor = isFridge ? AppColors.emerald700 : const Color(0xFF0E7490); // Cyan-700
+    final textColor = isFridge
+        ? AppColors.emerald700
+        : const Color(0xFF0E7490); // Cyan-700
     final borderColor = isFridge
-        ? AppColors.emerald100.withOpacity(0.5)
+        ? AppColors.emerald100.withValues(alpha: 0.5)
         : const Color(0xFFCFFAFE); // Cyan-100
     final iconData = isFridge ? LucideIcons.thermometer : LucideIcons.snowflake;
     final label = isFridge ? 'Ngăn mát' : 'Ngăn đông';
@@ -330,7 +363,11 @@ class InventoryItemCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(iconData, size: 10.r, color: isFridge ? AppColors.emerald500 : const Color(0xFF06B6D4)),
+          Icon(
+            iconData,
+            size: 10.r,
+            color: isFridge ? AppColors.emerald500 : const Color(0xFF06B6D4),
+          ),
           SizedBox(width: 2.w),
           Text(
             label,

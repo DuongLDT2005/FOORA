@@ -88,8 +88,7 @@ class _StatCard extends StatelessWidget {
               SizedBox(width: 6.w),
               Text(
                 title.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: 'Inter',
+                style: AppTextStyles.labelSmall.copyWith(
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w700,
                   color: textColor,
@@ -101,8 +100,7 @@ class _StatCard extends StatelessWidget {
           SizedBox(height: 4.h),
           Text(
             value,
-            style: TextStyle(
-              fontFamily: 'Lexend',
+            style: AppTextStyles.headlineLarge.copyWith(
               fontSize: 30.sp,
               fontWeight: FontWeight.w900,
               color: valueColor,
@@ -112,11 +110,10 @@ class _StatCard extends StatelessWidget {
           SizedBox(height: 4.h),
           Text(
             subtitle,
-            style: TextStyle(
-              fontFamily: 'Inter',
+            style: AppTextStyles.caption.copyWith(
               fontSize: 9.sp,
               fontWeight: FontWeight.w500,
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
             ),
           ),
         ],

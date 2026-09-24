@@ -40,7 +40,7 @@ class ExpirationGroupHeader extends StatelessWidget {
               SizedBox(width: 6.w),
               Text(
                 title.toUpperCase(),
-                style: TextStyle(
+                style: AppTextStyles.labelSmall.copyWith(
                   fontFamily: 'Lexend',
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w700,
@@ -50,7 +50,7 @@ class ExpirationGroupHeader extends StatelessWidget {
               ),
             ],
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );
@@ -94,10 +94,7 @@ class _PulsingDotState extends State<_PulsingDot>
       child: Container(
         width: 6.r,
         height: 6.r,
-        decoration: BoxDecoration(
-          color: widget.color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
       ),
     );
   }

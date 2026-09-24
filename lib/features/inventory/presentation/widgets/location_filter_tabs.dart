@@ -18,9 +18,9 @@ class LocationFilterTabs extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.all(4.r),
       decoration: BoxDecoration(
-        color: AppColors.slate100.withOpacity(0.8),
+        color: AppColors.slate100.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.slate200.withOpacity(0.5)),
+        border: Border.all(color: AppColors.slate200.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -81,21 +81,19 @@ class LocationFilterTabs extends ConsumerWidget {
           decoration: BoxDecoration(
             color: isActive ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(8.r),
-            boxShadow:
-                isActive
-                    ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 2,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]
-                    : [],
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : [],
             border: Border.all(
-              color:
-                  isActive
-                      ? AppColors.slate200.withOpacity(0.5)
-                      : Colors.transparent,
+              color: isActive
+                  ? AppColors.slate200.withValues(alpha: 0.5)
+                  : Colors.transparent,
             ),
           ),
           child: Row(
@@ -114,10 +112,9 @@ class LocationFilterTabs extends ConsumerWidget {
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
-                  color:
-                      isActive
-                          ? (activeLabelColor ?? AppColors.slate800)
-                          : AppColors.slate400,
+                  color: isActive
+                      ? (activeLabelColor ?? AppColors.slate800)
+                      : AppColors.slate400,
                 ),
               ),
             ],

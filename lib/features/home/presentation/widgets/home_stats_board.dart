@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../../../core/theme/app_colors.dart';
+
+import '../../../../core/theme/app_colors.dart';
 
 class HomeStatsBoard extends StatelessWidget {
   final int totalCount;
@@ -71,7 +72,7 @@ class HomeStatsBoard extends StatelessWidget {
           border: Border.all(color: AppColors.slate100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
@@ -100,7 +101,9 @@ class HomeStatsBoard extends StatelessWidget {
                       fontFamily: 'Lexend',
                       fontSize: 24.sp,
                       fontWeight: FontWeight.w900,
-                      color: title == 'Tổng sản phẩm' ? AppColors.slate800 : color,
+                      color: title == 'Tổng sản phẩm'
+                          ? AppColors.slate800
+                          : color,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

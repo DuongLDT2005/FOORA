@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/inventory_item.dart';
@@ -90,8 +89,9 @@ class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
         today.add(item);
       } else if (startOfExpiry.isAtSameMomentAs(startOfTomorrow)) {
         tomorrow.add(item);
-      } else if (startOfExpiry.isAtSameMomentAs(startOfDayAfterTomorrow) || 
-                 (startOfExpiry.isAfter(startOfDayAfterTomorrow) && startOfExpiry.isBefore(startOfFourDaysFromNow))) {
+      } else if (startOfExpiry.isAtSameMomentAs(startOfDayAfterTomorrow) ||
+          (startOfExpiry.isAfter(startOfDayAfterTomorrow) &&
+              startOfExpiry.isBefore(startOfFourDaysFromNow))) {
         upcoming.add(item);
       } else {
         safe.add(item);
@@ -136,6 +136,14 @@ class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
     state = state.copyWith(isLoading: isLoading);
   }
 
+  void handleStreamLoading() {
+    if (!state.isLoading &&
+        state.expiredItems.isEmpty &&
+        state.safeItems.isEmpty) {
+      state = state.copyWith(isLoading: true);
+    }
+  }
+
   void setError(String error) {
     state = state.copyWith(error: error, isLoading: false);
   }
@@ -155,10 +163,14 @@ class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
       }
     }
 
-    final expired = List<InventoryItem>.from(state.expiredItems)..sort(compareItems);
-    final today = List<InventoryItem>.from(state.todayItems)..sort(compareItems);
-    final tomorrow = List<InventoryItem>.from(state.tomorrowItems)..sort(compareItems);
-    final upcoming = List<InventoryItem>.from(state.upcomingItems)..sort(compareItems);
+    final expired = List<InventoryItem>.from(state.expiredItems)
+      ..sort(compareItems);
+    final today = List<InventoryItem>.from(state.todayItems)
+      ..sort(compareItems);
+    final tomorrow = List<InventoryItem>.from(state.tomorrowItems)
+      ..sort(compareItems);
+    final upcoming = List<InventoryItem>.from(state.upcomingItems)
+      ..sort(compareItems);
     final safe = List<InventoryItem>.from(state.safeItems)..sort(compareItems);
 
     state = state.copyWith(
@@ -172,31 +184,33 @@ class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
   }
 }
 
-final expirationListNotifierProvider = StateNotifierProvider.autoDispose<ExpirationListNotifier, ExpirationListState>((ref) {
-  final notifier = ExpirationListNotifier();
-  
-  notifier.setLoading(true);
+final expirationListNotifierProvider =
+    StateNotifierProvider.autoDispose<
+      ExpirationListNotifier,
+      ExpirationListState
+    >((ref) {
+      final notifier = ExpirationListNotifier();
 
-  // Listen to the active inventory stream
-  ref.listen<AsyncValue<List<InventoryItem>>>(
-    activeHouseholdInventoryStreamProvider,
-    (previous, next) {
-      next.when(
-        data: (items) {
-          notifier.updateItems(items);
+      notifier.setLoading(true);
+
+      // Listen to the active inventory stream
+      ref.listen<AsyncValue<List<InventoryItem>>>(
+        activeHouseholdInventoryStreamProvider,
+        (previous, next) {
+          next.when(
+            data: (items) {
+              notifier.updateItems(items);
+            },
+            loading: () {
+              notifier.handleStreamLoading();
+            },
+            error: (error, stack) {
+              notifier.setError(error.toString());
+            },
+          );
         },
-        loading: () {
-          if (!notifier.state.isLoading && notifier.state.expiredItems.isEmpty && notifier.state.safeItems.isEmpty) {
-             notifier.setLoading(true);
-          }
-        },
-        error: (error, stack) {
-          notifier.setError(error.toString());
-        },
+        fireImmediately: true,
       );
-    },
-    fireImmediately: true,
-  );
 
-  return notifier;
-});
+      return notifier;
+    });

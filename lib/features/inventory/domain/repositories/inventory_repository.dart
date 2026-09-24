@@ -45,7 +45,15 @@ abstract class InventoryRepository {
   });
 
   /// Calculates estimated expiration date and returns rule values for UI alert
-  Future<({DateTime expirationDate, num? maxValue, num? minValue, String? unit, bool hasRule})>
+  Future<
+    ({
+      DateTime expirationDate,
+      num? maxValue,
+      num? minValue,
+      String? unit,
+      bool hasRule,
+    })
+  >
   calculateExpiryWithRule({
     String? foodId,
     required String categoryId,

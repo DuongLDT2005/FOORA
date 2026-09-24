@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/utils/date_formatter.dart';
-import '../../../domain/entities/inventory_item.dart';
-import '../food_image_avatar.dart'; // Maybe we need to use CachedNetworkImage or similar. But since we don't have the original FoodImageAvatar that fits rectangle, I'll use a placeholder or image widget.
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/date_formatter.dart';
+import '../../../inventory/domain/entities/inventory_item.dart';
 
 class HomeHorizontalItemCard extends StatelessWidget {
   final InventoryItem item;
@@ -17,14 +17,16 @@ class HomeHorizontalItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final daysUntilExpiry = DateFormatter.getDaysUntilExpiry(item.expirationDate);
+    final daysUntilExpiry = DateFormatter.getDaysUntilExpiry(
+      item.expirationDate,
+    );
     final isUrgent = daysUntilExpiry <= 1;
-    
+
     final badgeBgColor = isUrgent ? AppColors.red50 : AppColors.amber50;
     final badgeTextColor = isUrgent ? AppColors.red700 : AppColors.amber700;
     final badgeBorderColor = isUrgent ? AppColors.red100 : AppColors.amber100;
-    final badgeText = daysUntilExpiry == 0 
-        ? 'Hôm nay' 
+    final badgeText = daysUntilExpiry == 0
+        ? 'Hôm nay'
         : (daysUntilExpiry == 1 ? 'Ngày mai' : 'Còn $daysUntilExpiry ngày');
 
     return GestureDetector(
@@ -38,7 +40,7 @@ class HomeHorizontalItemCard extends StatelessWidget {
           border: Border.all(color: AppColors.slate100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
@@ -57,23 +59,33 @@ class HomeHorizontalItemCard extends StatelessWidget {
                 children: [
                   Container(
                     color: AppColors.slate50,
-                    child: Icon(Icons.fastfood, color: AppColors.slate200, size: 24.sp),
+                    child: Icon(
+                      Icons.fastfood,
+                      color: AppColors.slate200,
+                      size: 24.sp,
+                    ),
                   ),
                   if (item.photoUrl != null)
                     Image.network(item.photoUrl!, fit: BoxFit.cover),
-                  
+
                   // Badge
                   Positioned(
                     top: 8.h,
                     right: 8.w,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 2.h,
+                      ),
                       decoration: BoxDecoration(
                         color: badgeBgColor,
                         borderRadius: BorderRadius.circular(4.r),
                         border: Border.all(color: badgeBorderColor),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2)
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 2,
+                          ),
                         ],
                       ),
                       child: Text(
@@ -89,7 +101,7 @@ class HomeHorizontalItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Info part
             Padding(
               padding: EdgeInsets.all(10.w),
@@ -117,7 +129,10 @@ class HomeHorizontalItemCard extends StatelessWidget {
                     ),
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
-                      widthFactor: (item.remainingPercentage / 100).clamp(0.0, 1.0),
+                      widthFactor: (item.remainingPercentage / 100).clamp(
+                        0.0,
+                        1.0,
+                      ),
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.red500,

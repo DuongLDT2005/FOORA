@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../domain/entities/inventory_item.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../inventory/domain/entities/inventory_item.dart';
 
 class HomeRecentItemCard extends StatelessWidget {
   final InventoryItem item;
@@ -25,7 +26,7 @@ class HomeRecentItemCard extends StatelessWidget {
           border: Border.all(color: AppColors.slate100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
@@ -39,12 +40,18 @@ class HomeRecentItemCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.slate50,
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.slate100.withOpacity(0.5)),
+                border: Border.all(
+                  color: AppColors.slate100.withValues(alpha: 0.5),
+                ),
               ),
               clipBehavior: Clip.antiAlias,
               child: item.photoUrl != null
                   ? Image.network(item.photoUrl!, fit: BoxFit.cover)
-                  : Icon(Icons.fastfood, color: AppColors.slate200, size: 16.sp),
+                  : Icon(
+                      Icons.fastfood,
+                      color: AppColors.slate200,
+                      size: 16.sp,
+                    ),
             ),
             SizedBox(width: 10.w),
             Expanded(

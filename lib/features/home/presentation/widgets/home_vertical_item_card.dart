@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/utils/date_formatter.dart';
-import '../../../domain/entities/inventory_item.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/date_formatter.dart';
+import '../../../inventory/domain/entities/inventory_item.dart';
 
 class HomeVerticalItemCard extends StatelessWidget {
   final InventoryItem item;
@@ -16,14 +17,16 @@ class HomeVerticalItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final daysUntilExpiry = DateFormatter.getDaysUntilExpiry(item.expirationDate);
+    final daysUntilExpiry = DateFormatter.getDaysUntilExpiry(
+      item.expirationDate,
+    );
     final isUrgent = daysUntilExpiry <= 1;
-    
+
     final badgeBgColor = isUrgent ? AppColors.red50 : AppColors.amber50;
     final badgeTextColor = isUrgent ? AppColors.red700 : AppColors.amber700;
     final badgeBorderColor = isUrgent ? AppColors.red100 : AppColors.amber100;
-    final badgeText = daysUntilExpiry == 0 
-        ? 'Hôm nay' 
+    final badgeText = daysUntilExpiry == 0
+        ? 'Hôm nay'
         : (daysUntilExpiry == 1 ? 'Còn 1 ngày' : 'Còn $daysUntilExpiry ngày');
 
     return GestureDetector(
@@ -37,7 +40,7 @@ class HomeVerticalItemCard extends StatelessWidget {
           border: Border.all(color: AppColors.slate100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
@@ -59,7 +62,11 @@ class HomeVerticalItemCard extends StatelessWidget {
                     clipBehavior: Clip.antiAlias,
                     child: item.photoUrl != null
                         ? Image.network(item.photoUrl!, fit: BoxFit.cover)
-                        : Icon(Icons.fastfood, color: AppColors.slate200, size: 24.sp),
+                        : Icon(
+                            Icons.fastfood,
+                            color: AppColors.slate200,
+                            size: 24.sp,
+                          ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(

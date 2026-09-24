@@ -93,11 +93,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
             color: AppColors.slate400,
             fontWeight: FontWeight.w400,
           ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: AppColors.slate400,
-            size: 22.r,
-          ),
+          prefixIcon: Icon(Icons.search, color: AppColors.slate400, size: 22.r),
           suffixIcon: _hasText
               ? IconButton(
                   icon: Icon(

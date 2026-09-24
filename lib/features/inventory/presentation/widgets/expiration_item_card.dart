@@ -70,9 +70,12 @@ class ExpirationItemCard extends StatelessWidget {
   String _getBadgeText() {
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
-    final startOfExpiry = DateTime(item.expirationDate.year,
-        item.expirationDate.month, item.expirationDate.day);
-    
+    final startOfExpiry = DateTime(
+      item.expirationDate.year,
+      item.expirationDate.month,
+      item.expirationDate.day,
+    );
+
     switch (groupType) {
       case ExpirationGroupType.expired:
         final days = startOfToday.difference(startOfExpiry).inDays;
@@ -125,13 +128,13 @@ class ExpirationItemCard extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: groupType == ExpirationGroupType.expired 
-                ? AppColors.slate100.withOpacity(0.7) 
-                : AppColors.slate200.withOpacity(0.5),
+              color: groupType == ExpirationGroupType.expired
+                  ? AppColors.slate100.withValues(alpha: 0.7)
+                  : AppColors.slate200.withValues(alpha: 0.5),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -144,12 +147,31 @@ class ExpirationItemCard extends StatelessWidget {
               ColorFiltered(
                 colorFilter: groupType == ExpirationGroupType.expired
                     ? const ColorFilter.matrix([
-                        0.2126, 0.7152, 0.0722, 0, 0,
-                        0.2126, 0.7152, 0.0722, 0, 0,
-                        0.2126, 0.7152, 0.0722, 0, 0,
-                        0,      0,      0,      1, 0,
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
                       ])
-                    : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                    : const ColorFilter.mode(
+                        Colors.transparent,
+                        BlendMode.multiply,
+                      ),
                 child: Container(
                   width: 56.r,
                   height: 56.r,
@@ -157,9 +179,9 @@ class ExpirationItemCard extends StatelessWidget {
                     color: AppColors.slate50,
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
-                      color: groupType == ExpirationGroupType.expired 
-                        ? AppColors.red100 
-                        : AppColors.slate100,
+                      color: groupType == ExpirationGroupType.expired
+                          ? AppColors.red100
+                          : AppColors.slate100,
                     ),
                   ),
                   child: ClipRRect(
@@ -189,12 +211,13 @@ class ExpirationItemCard extends StatelessWidget {
                             style: AppTextStyles.labelSmall.copyWith(
                               fontWeight: FontWeight.w700,
                               fontSize: 11.sp,
-                              color: groupType == ExpirationGroupType.expired 
-                                ? AppColors.slate500 
-                                : AppColors.slate800,
-                              decoration: groupType == ExpirationGroupType.expired 
-                                ? TextDecoration.lineThrough 
-                                : TextDecoration.none,
+                              color: groupType == ExpirationGroupType.expired
+                                  ? AppColors.slate500
+                                  : AppColors.slate800,
+                              decoration:
+                                  groupType == ExpirationGroupType.expired
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -202,7 +225,10 @@ class ExpirationItemCard extends StatelessWidget {
                         ),
                         SizedBox(width: 8.w),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 2.h,
+                          ),
                           decoration: BoxDecoration(
                             color: _getBadgeBackgroundColor(),
                             border: Border.all(color: _getBadgeBorderColor()),
@@ -222,10 +248,15 @@ class ExpirationItemCard extends StatelessWidget {
                     ),
                     SizedBox(height: 6.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 2.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.emerald50.withOpacity(0.8),
-                        border: Border.all(color: AppColors.emerald100.withOpacity(0.5)),
+                        color: AppColors.emerald50.withValues(alpha: 0.8),
+                        border: Border.all(
+                          color: AppColors.emerald100.withValues(alpha: 0.5),
+                        ),
                         borderRadius: BorderRadius.circular(4.r),
                       ),
                       child: Row(
@@ -282,7 +313,10 @@ class ExpirationItemCard extends StatelessWidget {
                       ),
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
-                        widthFactor: (item.remainingPercentage / 100).clamp(0.0, 1.0),
+                        widthFactor: (item.remainingPercentage / 100).clamp(
+                          0.0,
+                          1.0,
+                        ),
                         child: Container(
                           decoration: BoxDecoration(
                             color: _getProgressBarColor(),
@@ -306,7 +340,13 @@ class ExpirationItemCard extends StatelessWidget {
                         ),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 4.w),
-                          child: Text('•', style: TextStyle(fontSize: 8.sp, color: AppColors.slate400)),
+                          child: Text(
+                            '•',
+                            style: TextStyle(
+                              fontSize: 8.sp,
+                              color: AppColors.slate400,
+                            ),
+                          ),
                         ),
                         Expanded(
                           child: Text(
@@ -320,7 +360,6 @@ class ExpirationItemCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-
                       ],
                     ),
                   ],
