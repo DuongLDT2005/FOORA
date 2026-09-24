@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_enums.dart';
+import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/inventory_list_provider.dart';
@@ -60,7 +61,7 @@ class InventoryPage extends ConsumerWidget {
                   // Manage expiry button
                   GestureDetector(
                     onTap: () {
-                      context.pushNamed('expirationManagement');
+                      context.push(AppRouteNames.expirationManagement);
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(
@@ -325,8 +326,8 @@ class InventoryPage extends ConsumerWidget {
                                       }
                                     },
                                     onTap: () {
-                                      context.pushNamed(
-                                        'itemForm',
+                                      context.push(
+                                        AppRouteNames.itemForm,
                                         extra: item,
                                       );
                                     },

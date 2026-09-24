@@ -155,6 +155,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+
       // Mobile Bottom Navigation Tabs (StatefulShellRoute)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -180,7 +181,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const InventoryPage(),
                 routes: [
                   GoRoute(
-                    path: AppRouteNames.expirationManagement,
+                    path: 'expiration-management',
                     name: 'expirationManagement',
                     builder: (context, state) =>
                         const ExpirationManagementPage(),

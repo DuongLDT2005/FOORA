@@ -51,7 +51,7 @@ class HomeSectionHeader extends StatelessWidget {
           if (showSeeAll)
             GestureDetector(
               onTap: () {
-                context.pushNamed(AppRouteNames.expirationManagement);
+                context.push(AppRouteNames.expirationManagement);
               },
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),

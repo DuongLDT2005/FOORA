@@ -67,7 +67,7 @@ class HomePage extends ConsumerWidget {
                       return HomeHorizontalItemCard(
                         item: useFirstItems[index],
                         onTap: () {
-                          context.pushNamed(
+                          context.push(
                             AppRouteNames.itemForm,
                             extra: useFirstItems[index],
                           );
@@ -89,7 +89,7 @@ class HomePage extends ConsumerWidget {
                   (item) => HomeVerticalItemCard(
                     item: item,
                     onTap: () {
-                      context.pushNamed(AppRouteNames.itemForm, extra: item);
+                      context.push(AppRouteNames.itemForm, extra: item);
                     },
                   ),
                 ),
@@ -118,7 +118,7 @@ class HomePage extends ConsumerWidget {
                     return HomeRecentItemCard(
                       item: recentItems[index],
                       onTap: () {
-                        context.pushNamed(
+                        context.push(
                           AppRouteNames.itemForm,
                           extra: recentItems[index],
                         );
