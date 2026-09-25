@@ -1,8 +1,5 @@
-import 'package:flutter/foundation.dart';
-
 /// Pure domain entity representing a membership plan tier (Free / Premium).
 /// Strictly mapped to memberships/{membershipId} in docs/DATABASE.md
-@immutable
 class MembershipPlan {
   final String id; // 'free' | 'premium'
   final String name;
