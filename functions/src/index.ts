@@ -18,5 +18,6 @@ export * from "./auth";
 export * from "./notification";
 export * from "./inventory";
 export * from "./receipt";
+export * from "./payment";
 
 
