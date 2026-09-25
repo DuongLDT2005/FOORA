@@ -99,5 +99,25 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if false;
     }
+
+
+    // Server-only payment lookup and idempotency collections.
+    match /payment_order_locks/{lockId} {
+      allow read, write: if false;
+    }
+
+    match /payment_references/{referenceNumber} {
+      allow read, write: if false;
+    }
+
+    match /payment_provider_transactions/{transactionId} {
+      allow read, write: if false;
+    }
+
+    // Bug Reports collection
+    match /bug_reports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if false;
+    }
   }
 }

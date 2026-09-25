@@ -156,7 +156,10 @@ enum SubscriptionStatus {
 enum PaymentStatus {
   pending('pending'),
   completed('completed'),
-  failed('failed');
+  failed('failed'),
+  cancelled('cancelled'),
+  expired('expired'),
+  requiresReview('requires_review');
 
   final String value;
   const PaymentStatus(this.value);
@@ -164,7 +167,7 @@ enum PaymentStatus {
   static PaymentStatus fromString(String? value) {
     return PaymentStatus.values.firstWhere(
       (e) => e.value == value,
-      orElse: () => PaymentStatus.completed,
+      orElse: () => PaymentStatus.pending,
     );
   }
 }

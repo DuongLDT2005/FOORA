@@ -4,12 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../firebase_options.dart';
 import '../config/app_config.dart';
 import '../constants/app_constants.dart';
+import '../utils/app_logger.dart';
 
 class FirebaseInitializer {
   FirebaseInitializer._();
@@ -29,17 +30,17 @@ class FirebaseInitializer {
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
 
       // Functions Emulator (Port 5001)
-      FirebaseFunctions.instanceFor(region: AppConstants.firebaseRegion)
-          .useFunctionsEmulator(host, 5001);
+      FirebaseFunctions.instanceFor(
+        region: AppConstants.firebaseRegion,
+      ).useFunctionsEmulator(host, 5001);
 
       // Storage Emulator (Port 9199)
-      // await FirebaseStorage.instance.useStorageEmulator(host, 9199);
+      await FirebaseStorage.instance.useStorageEmulator(host, 9199);
 
-      if (kDebugMode) {
-        print(
-          '🔥 Connected to Firebase Emulators at $host (Auth: 9099, Firestore: 8080, Functions: 5001, Storage: 9199)',
-        );
-      }
+      AppLogger.i(
+        'Connected to Firebase Emulators at $host '
+        '(Auth: 9099, Firestore: 8080, Functions: 5001, Storage: 9199).',
+      );
     }
   }
 
