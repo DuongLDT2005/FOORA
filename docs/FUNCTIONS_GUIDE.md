@@ -106,11 +106,21 @@ functions/src/
 │   │   └── membership_service.ts   # Logic kiểm tra gói, áp dụng giới hạn items & scan
 │   └── index.ts
 │
-├── payment/                        # 7. PAYMENT (IN-APP PURCHASE - GOOGLE PLAY / APP STORE)
+├── payment/                        # 7. PAYMENT (CAS QR PAY)
 │   ├── callables/
-│   │   └── verify_iap_purchase.ts  # Callable xác thực In-App Purchase Receipt/PurchaseToken
+│   │   ├── create_cas_payment_order.ts
+│   │   └── cancel_cas_payment_order.ts
+│   ├── webhooks/
+│   │   └── cas_transactions_webhook.ts
+│   ├── schedules/
+│   │   └── expire_pending_payments.ts
 │   ├── services/
-│   │   └── iap_verifier.ts         # Xác thực biên lai IAP với Store Server, ghi payments & kích hoạt subscription
+│   │   ├── cas_client.ts
+│   │   ├── cas_webhook.ts
+│   │   └── payment_service.ts
+│   ├── types/
+│   │   └── payment_types.ts
+│   ├── config.ts
 │   └── index.ts
 │
 ├── household/                      # 8. HOUSEHOLD MODULE
@@ -149,7 +159,10 @@ functions/src/
 | **`notification`** | `onNotificationCreated` | Firestore | `users/{userId}/notifications/{id}` | Snapshot document thông báo mới | Gửi tin nhắn FCM đến toàn bộ thiết bị đang active trong `users/{userId}/devices`. |
 | **`membership`** | `resetMonthlyQuotaCron` | Scheduled | `0 0 1 * *` (00:00 ngày 1) | Không có (Tự động) | Batch update reset `ai_usage/current.receiptScanUsed = 0` cho toàn bộ user Free. |
 | | `getMembershipInfo` | Callable | `onCall` | Không có | Thông tin chi tiết gói và hạn mức sử dụng. |
-| **`payment`** | `verifyIapPurchase` | Callable | `onCall` | `{ platform: 'android' \| 'ios', productId: string, purchaseToken: string, transactionId: string }` | Xác thực Store IAP -> ghi `users/{uid}/payments/{id}` -> kích hoạt `subscriptions/{id}` và set `users.membershipId = 'premium'`. |
+| **`payment`** | `createCasPaymentOrder` | Callable | `onCall` | `{ membershipId: string }` | Creates or reuses a server-priced Cas QR order. |
+| | `cancelCasPaymentOrder` | Callable | `onCall` | `{ paymentId: string }` | Cancels a pending payment. |
+| | `casTransactionsWebhook` | HTTP | `onRequest` | Signed Cas transaction | Reconciles and atomically activates Premium. |
+| | `expirePendingPayments` | Scheduled | Every 5 minutes | None | Expires overdue pending orders. |
 | **`household`** | `createHousehold` | Callable | `onCall` **[Scope Đợt Này]** | `{ name: string }` | Tạo document `households/{id}`, thêm user vào `members`, set `user.activeHouseholdId`. |
 | | `joinHousehold` | Callable | `onCall` **[Hạ Tầng Cho Sau]** | `{ householdId: string }` | Thêm user vào `households.members`, cập nhật `user.activeHouseholdId`. |
 | **`admin`** | `setUserRole` | Callable | `onCall` (Admin only) | `{ targetUid: string; role: 'admin' \| 'member' }` | Set Firebase Auth Custom Claims (`{admin: true}`) & cập nhật `users/{targetUid}.role`. |
@@ -158,54 +171,26 @@ functions/src/
 
 ---
 
-## 4. Chi Tiết Thực Thi Mẫu: In-App Purchase (IAP) & Khóa Tài Khoản Tức Thì
+## 4. Chi Tiet Thuc Thi: Cas QR Pay & Khoa Tai Khoan Tuc Thi
 
-### A. Xác thực In-App Purchase (`functions/src/payment/callables/verify_iap_purchase.ts`)
-```typescript
-import {onCall} from "firebase-functions/v2/https";
-import {REGION} from "../../config/firebase";
-import {ApiResponse} from "../../types";
-import {getAuthenticatedUser} from "../../utils/auth";
-import {handleFunctionError, throwInvalidArgument} from "../../utils/errors";
-import {IapVerifierService} from "../services/iap_verifier";
+### A. Cas QR Pay
 
-interface IapRequestPayload {
-  platform: "android" | "ios";
-  productId: string;
-  purchaseToken: string;
-  transactionId: string;
-}
+Payment exports:
 
-export const verifyIapPurchase = onCall<IapRequestPayload>(
-  {region: REGION},
-  async (request): Promise<ApiResponse<{subscriptionId: string}>> => {
-    try {
-      const user = await getAuthenticatedUser(request);
-      const {platform, productId, purchaseToken, transactionId} = request.data;
+- `createCasPaymentOrder`: authenticated callable; resolves price and duration
+  from `memberships/{membershipId}`, creates/reuses a pending order, then calls Cas.
+- `cancelCasPaymentOrder`: authenticated callable; only transitions `pending`
+  payments to `cancelled`.
+- `casTransactionsWebhook`: HTTP endpoint; verifies `X-Casso-Signature` with
+  HMAC SHA-512, reconciles amount/reference/time, and atomically activates Premium.
+- `expirePendingPayments`: scheduled function that expires overdue pending orders.
 
-      if (!platform || !productId || !purchaseToken || !transactionId) {
-        throwInvalidArgument("Thiếu thông tin giao dịch In-App Purchase.");
-      }
+Required secrets are `CAS_CLIENT_ID`, `CAS_SECRET_KEY`, `CAS_ACCESS_TOKEN`,
+and `CAS_WEBHOOK_SECRET`. Non-secret parameters are `CAS_BASE_URL`,
+`CAS_QR_PAY_PATH`, and `PAYMENT_EXPIRY_MINUTES`.
 
-      const subscriptionId = await IapVerifierService.verifyAndActivate(
-        user.uid,
-        platform,
-        productId,
-        purchaseToken,
-        transactionId
-      );
-
-      return {
-        success: true,
-        data: {subscriptionId},
-        message: "Nâng cấp Premium thành công!",
-      };
-    } catch (error) {
-      handleFunctionError(error, "verifyIapPurchase");
-    }
-  }
-);
-```
+Handlers remain thin. Provider parsing lives in `services/cas_webhook.ts`; order,
+idempotency, and entitlement transactions live in `services/payment_service.ts`.
 
 ---
 
