@@ -11,6 +11,7 @@ class Profile extends User {
     super.role = UserRole.member,
     super.membershipId = 'free',
     super.activeHouseholdId,
+    super.avatarUrl,
     super.isActive = true,
     required super.createdAt,
     required super.updatedAt,
@@ -24,9 +25,22 @@ class Profile extends User {
       role: user.role,
       membershipId: user.membershipId,
       activeHouseholdId: user.activeHouseholdId,
+      avatarUrl: user.avatarUrl,
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     );
+  }
+
+  /// Returns 1-2 letters initial for avatar fallback (e.g. 'Duong Le' -> 'DL')
+  String get initials {
+    final trimmed = fullName.trim();
+    if (trimmed.isEmpty) return 'U';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    if (parts.length == 1) {
+      return parts[0].substring(0, 1).toUpperCase();
+    }
+    return '${parts[0].substring(0, 1)}${parts[parts.length - 1].substring(0, 1)}'
+        .toUpperCase();
   }
 }
