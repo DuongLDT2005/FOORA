@@ -1,15 +1,15 @@
-import 'package:flutter/foundation.dart';
 import 'package:foora/core/constants/app_enums.dart';
 
 /// Pure domain entity representing an authenticated user account.
-@immutable
 class User {
   final String id;
   final String fullName;
   final String email;
   final UserRole role;
-  final String membershipId; // Foreign key to memberships/{membershipId}, e.g. 'free', 'premium'
+  final String
+  membershipId; // Foreign key to memberships/{membershipId}, e.g. 'free', 'premium'
   final String? activeHouseholdId;
+  final String? avatarUrl;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -21,6 +21,7 @@ class User {
     this.role = UserRole.member,
     this.membershipId = 'free',
     this.activeHouseholdId,
+    this.avatarUrl,
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,
@@ -36,6 +37,7 @@ class User {
     UserRole? role,
     String? membershipId,
     String? activeHouseholdId,
+    String? avatarUrl,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -47,6 +49,7 @@ class User {
       role: role ?? this.role,
       membershipId: membershipId ?? this.membershipId,
       activeHouseholdId: activeHouseholdId ?? this.activeHouseholdId,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -63,6 +66,7 @@ class User {
         other.role == role &&
         other.membershipId == membershipId &&
         other.activeHouseholdId == activeHouseholdId &&
+        other.avatarUrl == avatarUrl &&
         other.isActive == isActive &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
@@ -76,6 +80,7 @@ class User {
     role,
     membershipId,
     activeHouseholdId,
+    avatarUrl,
     isActive,
     createdAt,
     updatedAt,
