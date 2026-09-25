@@ -13,7 +13,8 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
   ReceiptRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})> scanAndParseReceipt({
+  Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})>
+  scanAndParseReceipt({
     required File imageFile,
     required String householdId,
   }) async {
@@ -33,7 +34,9 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
     } on ServerException catch (e) {
       throw ServerFailure(e.message);
     } catch (_) {
-      throw const ServerFailure('Đã xảy ra lỗi khi quét hóa đơn. Vui lòng thử lại.');
+      throw const ServerFailure(
+        'Đã xảy ra lỗi khi quét hóa đơn. Vui lòng thử lại.',
+      );
     }
   }
 
@@ -70,7 +73,9 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
     } on ServerException catch (e) {
       throw ServerFailure(e.message);
     } catch (_) {
-      throw const ServerFailure('Đã xảy ra lỗi khi lưu các món từ hóa đơn. Vui lòng thử lại sau.');
+      throw const ServerFailure(
+        'Đã xảy ra lỗi khi lưu các món từ hóa đơn. Vui lòng thử lại sau.',
+      );
     }
   }
 }

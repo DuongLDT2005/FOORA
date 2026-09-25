@@ -16,18 +16,29 @@ class FirebaseInitializer {
   FirebaseInitializer._();
 
   static Future<void> initialize() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      }
+    } catch (e) {
+      // Ignore duplicate-app error which can happen during Hot Restart 
+      // or if native Android auto-initialized it via google-services.json
+      if (!e.toString().contains('duplicate-app')) {
+        rethrow;
+      }
+    }
 
     if (AppConfig.instance.useFirebaseEmulator) {
       final host = _resolveEmulatorHost();
 
-      // Auth Emulator (Port 9099)
-      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+      try {
+        // Auth Emulator (Port 9099)
+        await FirebaseAuth.instance.useAuthEmulator(host, 9099);
 
-      // Firestore Emulator (Port 8080)
-      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+        // Firestore Emulator (Port 8080)
+        FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
 
       // Functions Emulator (Port 5001)
       FirebaseFunctions.instanceFor(
@@ -41,6 +52,10 @@ class FirebaseInitializer {
         'Connected to Firebase Emulators at $host '
         '(Auth: 9099, Firestore: 8080, Functions: 5001, Storage: 9199).',
       );
+    } catch (e) {
+      // Emulators can only be configured once. 
+      // Ignore errors during Hot Restart.
+    }
     }
   }
 

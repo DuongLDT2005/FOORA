@@ -17,8 +17,12 @@ class ScanViewfinderWidget extends StatelessWidget {
         // Kéo dài khung quét chiếm gần như toàn bộ màn hình
         final boxWidth = constraints.maxWidth * 0.92;
         // Bắt đầu từ dưới top controls (topSafe + 56) đến gần mép dưới (bottomSafe + 16)
-        final availableHeight = constraints.maxHeight - (topSafe + 60) - (bottomSafe + 20);
-        final boxHeight = availableHeight.clamp(200.0, constraints.maxHeight * 0.86);
+        final availableHeight =
+            constraints.maxHeight - (topSafe + 60) - (bottomSafe + 20);
+        final boxHeight = availableHeight.clamp(
+          200.0,
+          constraints.maxHeight * 0.86,
+        );
 
         return Stack(
           alignment: Alignment.center,

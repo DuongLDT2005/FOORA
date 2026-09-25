@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -28,11 +29,14 @@ class ReceiptQuotaStatus {
   });
 
   bool get isQuotaExceeded => !isUnlimited && scansUsed >= scanLimit;
-  int get scansRemaining => isUnlimited ? 999999 : (scanLimit - scansUsed).clamp(0, scanLimit);
+  int get scansRemaining =>
+      isUnlimited ? 999999 : (scanLimit - scansUsed).clamp(0, scanLimit);
 }
 
 /// Streams real-time monthly scan usage directly from Firestore database
-final receiptQuotaProvider = StreamProvider.autoDispose<ReceiptQuotaStatus>((ref) {
+final receiptQuotaProvider = StreamProvider.autoDispose<ReceiptQuotaStatus>((
+  ref,
+) {
   final authUser = ref.watch(firebaseAuthProvider).currentUser;
   if (authUser == null) {
     return Stream.value(const ReceiptQuotaStatus());
@@ -115,7 +119,6 @@ final receiptQuotaProvider = StreamProvider.autoDispose<ReceiptQuotaStatus>((ref
             });
       });
 });
-
 
 final receiptRemoteDataSourceProvider = Provider<ReceiptRemoteDataSource>((
   ref,
@@ -241,7 +244,8 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
     } catch (_) {
       state = state.copyWith(
         status: ScanStatus.error,
-        errorMessage: 'Không thể mở máy ảnh. Vui lòng cấp quyền máy ảnh và thử lại.',
+        errorMessage:
+            'Không thể mở máy ảnh. Vui lòng cấp quyền máy ảnh và thử lại.',
       );
     }
   }
@@ -293,8 +297,7 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
       if (result.items.isEmpty) {
         state = state.copyWith(
           status: ScanStatus.error,
-          errorMessage:
-              'Không tìm thấy thực phẩm nào trong hóa đơn. Vui lòng thử lại với ảnh rõ hơn.',
+          errorMessage: 'Không tìm thấy thực phẩm nào trong hóa đơn. Vui lòng thử lại với ảnh rõ hơn.',
         );
         return;
       }

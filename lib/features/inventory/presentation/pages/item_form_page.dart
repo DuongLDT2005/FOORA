@@ -156,7 +156,8 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     final selectedLoc = formState.storageLocations
         .where((loc) => loc.id == formState.storageLocationId)
         .firstOrNull;
-    final selectedLocName = selectedLoc?.name ??
+    final selectedLocName =
+        selectedLoc?.name ??
         (formState.storageLocationId == 'freezer' ? 'Ngăn đông' : 'Ngăn mát');
 
     final isFromReceiptDraft =
@@ -301,305 +302,303 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
                     onRetry: formNotifier.retryLoadMetadata,
                   ),
 
-            // 3. Quantity & Unit (2-column grid)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Quantity
-                Expanded(
-                  flex: 1,
-                  child: AppTextField(
-                    label: 'SỐ LƯỢNG',
-                    isRequired: true,
-                    controller: _quantityController,
-                    focusNode: _quantityFocusNode,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    onSubmitted: (val) {
-                      final parsed =
-                          double.tryParse(val.replaceAll(',', '.')) ?? 1;
-                      formNotifier.onQuantityChanged(parsed);
-                    },
-                    fillColor: Colors.white,
-                    borderColor: AppColors.slate100,
-                    labelStyle: AppTextStyles.inputLabel.copyWith(
-                      color: AppColors.slate600,
-                    ),
-                    textStyle: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.slate800,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                // Unit (Bottom Sheet Picker)
-                Expanded(
-                  flex: 1,
-                  child: Column(
+                  // 3. Quantity & Unit (2-column grid)
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      RichText(
-                        text: TextSpan(
-                          text: 'ĐƠN VỊ',
-                          style: AppTextStyles.inputLabel.copyWith(
+                      // Quantity
+                      Expanded(
+                        flex: 1,
+                        child: AppTextField(
+                          label: 'SỐ LƯỢNG',
+                          isRequired: true,
+                          controller: _quantityController,
+                          focusNode: _quantityFocusNode,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onSubmitted: (val) {
+                            final parsed =
+                                double.tryParse(val.replaceAll(',', '.')) ?? 1;
+                            formNotifier.onQuantityChanged(parsed);
+                          },
+                          fillColor: Colors.white,
+                          borderColor: AppColors.slate100,
+                          labelStyle: AppTextStyles.inputLabel.copyWith(
                             color: AppColors.slate600,
                           ),
-                          children: const [
-                            TextSpan(
-                              text: ' *',
-                              style: TextStyle(color: AppColors.red500),
+                          textStyle: AppTextStyles.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.slate800,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      // Unit (Bottom Sheet Picker)
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                text: 'ĐƠN VỊ',
+                                style: AppTextStyles.inputLabel.copyWith(
+                                  color: AppColors.slate600,
+                                ),
+                                children: const [
+                                  TextSpan(
+                                    text: ' *',
+                                    style: TextStyle(color: AppColors.red500),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () {
+                                BottomSheetHelper.showSelect<String>(
+                                  context,
+                                  title: 'Đơn vị tính',
+                                  isGrid: true,
+                                  selectedValue: formState.unit.isNotEmpty
+                                      ? formState.unit
+                                      : _commonUnits.first,
+                                  options: _commonUnits
+                                      .map(
+                                        (u) => SelectOption(value: u, label: u),
+                                      )
+                                      .toList(),
+                                  onSelected: formNotifier.onUnitChanged,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.slate100),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      formState.unit.isNotEmpty
+                                          ? formState.unit
+                                          : _commonUnits.first,
+                                      style: AppTextStyles.bodyMedium.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.slate800,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: AppColors.slate400,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () {
-                          BottomSheetHelper.showSelect<String>(
-                            context,
-                            title: 'Đơn vị tính',
-                            isGrid: true,
-                            selectedValue: formState.unit.isNotEmpty
-                                ? formState.unit
-                                : _commonUnits.first,
-                            options: _commonUnits
-                                .map((u) => SelectOption(value: u, label: u))
-                                .toList(),
-                            onSelected: formNotifier.onUnitChanged,
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.slate100),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                formState.unit.isNotEmpty
-                                     ? formState.unit
-                                    : _commonUnits.first,
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.slate800,
-                                ),
-                              ),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: AppColors.slate400,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
-                ),
-              ],
-            ),
 
-            const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-            // 4. Remaining Percentage (Slider)
-            AppPercentageSlider(
-              value: formState.remainingPercentage.toDouble(),
-              onChanged: formNotifier.onRemainingPercentageChanged,
-            ),
-
-            const SizedBox(height: 20),
-
-            // 5. Purchase Date (cannot be after expiration date)
-            DateFieldPickerTile(
-              label: 'NGÀY MUA',
-              date: formState.purchaseDate,
-              onTap: () {
-                _pickDate(
-                  context: context,
-                  initialDate: formState.purchaseDate,
-                  lastDate: DateTime(
-                    formState.expirationDate.year,
-                    formState.expirationDate.month,
-                    formState.expirationDate.day,
+                  // 4. Remaining Percentage (Slider)
+                  AppPercentageSlider(
+                    value: formState.remainingPercentage.toDouble(),
+                    onChanged: formNotifier.onRemainingPercentageChanged,
                   ),
-                  onPicked: formNotifier.onPurchaseDateChanged,
-                );
-              },
-            ),
 
-            const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-            // 6. Expiration Date (must be equal to or after purchase date)
-            DateFieldPickerTile(
-              label: 'HẠN SỬ DỤNG',
-              date: formState.expirationDate,
-              onTap: () {
-                _pickDate(
-                  context: context,
-                  initialDate: formState.expirationDate,
-                  firstDate: DateTime(
-                    formState.purchaseDate.year,
-                    formState.purchaseDate.month,
-                    formState.purchaseDate.day,
-                  ),
-                  onPicked: formNotifier.onExpirationDateChanged,
-                );
-              },
-            ),
-
-            // Shelf Life Rule Alert Banner (Only display when required fields are filled)
-            if (formState.name.trim().isNotEmpty &&
-                formState.categoryId.isNotEmpty &&
-                formState.storageLocationId.isNotEmpty &&
-                formState.unit.isNotEmpty &&
-                formState.quantity > 0)
-              ShelfLifeRuleAlertBanner(
-                maxValue: formState.maxStorageTime,
-                unit: formState.storageTimeUnit,
-                storageLocationName: selectedLocName,
-                hasRule: formState.hasShelfLifeRule,
-              ),
-
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-
-      // Floating Dropdown Overlay (Topmost element in Stack, covers fields below)
-      if (formState.showSuggestions && formState.suggestions.isNotEmpty)
-        Positioned(
-          top: 98, // padding top 20 + label + input
-          left: 20,
-          right: 20,
-          child: Material(
-            elevation: 8,
-            shadowColor: Colors.black.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(16),
-            color: Colors.white,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.slate200),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: formState.suggestions.take(5).map((suggestion) {
-                  final isLast =
-                      suggestion == formState.suggestions.take(5).last;
-
-                  return InkWell(
+                  // 5. Purchase Date (cannot be after expiration date)
+                  DateFieldPickerTile(
+                    label: 'NGÀY MUA',
+                    date: formState.purchaseDate,
                     onTap: () {
-                      _nameController.text = suggestion.name;
-                      _nameController.selection =
-                          TextSelection.fromPosition(
-                        TextPosition(
-                          offset: suggestion.name.length,
+                      _pickDate(
+                        context: context,
+                        initialDate: formState.purchaseDate,
+                        lastDate: DateTime(
+                          formState.expirationDate.year,
+                          formState.expirationDate.month,
+                          formState.expirationDate.day,
                         ),
+                        onPicked: formNotifier.onPurchaseDateChanged,
                       );
-                      formNotifier.onSelectSuggestion(suggestion);
                     },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        border: isLast
-                            ? null
-                            : const Border(
-                                bottom: BorderSide(
-                                  color: AppColors.slate100,
-                                ),
-                              ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            suggestion.isFromMaster
-                                ? LucideIcons.sparkles
-                                : LucideIcons.history,
-                            size: 16,
-                            color: suggestion.isFromMaster
-                                ? AppColors.primary
-                                : AppColors.slate400,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 6. Expiration Date (must be equal to or after purchase date)
+                  DateFieldPickerTile(
+                    label: 'HẠN SỬ DỤNG',
+                    date: formState.expirationDate,
+                    onTap: () {
+                      _pickDate(
+                        context: context,
+                        initialDate: formState.expirationDate,
+                        firstDate: DateTime(
+                          formState.purchaseDate.year,
+                          formState.purchaseDate.month,
+                          formState.purchaseDate.day,
+                        ),
+                        onPicked: formNotifier.onExpirationDateChanged,
+                      );
+                    },
+                  ),
+
+                  // Shelf Life Rule Alert Banner (Only display when required fields are filled)
+                  if (formState.name.trim().isNotEmpty &&
+                      formState.categoryId.isNotEmpty &&
+                      formState.storageLocationId.isNotEmpty &&
+                      formState.unit.isNotEmpty &&
+                      formState.quantity > 0)
+                    ShelfLifeRuleAlertBanner(
+                      maxValue: formState.maxStorageTime,
+                      unit: formState.storageTimeUnit,
+                      storageLocationName: selectedLocName,
+                      hasRule: formState.hasShelfLifeRule,
+                    ),
+
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+
+            // Floating Dropdown Overlay (Topmost element in Stack, covers fields below)
+            if (formState.showSuggestions && formState.suggestions.isNotEmpty)
+              Positioned(
+                top: 98, // padding top 20 + label + input
+                left: 20,
+                right: 20,
+                child: Material(
+                  elevation: 8,
+                  shadowColor: Colors.black.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.slate200),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: formState.suggestions.take(5).map((suggestion) {
+                        final isLast =
+                            suggestion == formState.suggestions.take(5).last;
+
+                        return InkWell(
+                          onTap: () {
+                            _nameController.text = suggestion.name;
+                            _nameController.selection =
+                                TextSelection.fromPosition(
+                                  TextPosition(offset: suggestion.name.length),
+                                );
+                            formNotifier.onSelectSuggestion(suggestion);
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              border: isLast
+                                  ? null
+                                  : const Border(
+                                      bottom: BorderSide(
+                                        color: AppColors.slate100,
+                                      ),
+                                    ),
+                            ),
+                            child: Row(
                               children: [
-                                Text(
-                                  suggestion.name,
-                                  style: AppTextStyles.bodyMedium
-                                      .copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.slate800,
+                                Icon(
+                                  suggestion.isFromMaster
+                                      ? LucideIcons.sparkles
+                                      : LucideIcons.history,
+                                  size: 16,
+                                  color: suggestion.isFromMaster
+                                      ? AppColors.primary
+                                      : AppColors.slate400,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        suggestion.name,
+                                        style: AppTextStyles.bodyMedium
+                                            .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.slate800,
+                                            ),
+                                      ),
+                                      if (suggestion.matchedAlias != null &&
+                                          suggestion.matchedAlias!.isNotEmpty)
+                                        Text(
+                                          'Tên khác: ${suggestion.matchedAlias}',
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: AppColors.primary,
+                                            fontSize: 11,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                if (suggestion.matchedAlias != null &&
-                                    suggestion.matchedAlias!.isNotEmpty)
-                                  Text(
-                                    'Tên khác: ${suggestion.matchedAlias}',
-                                    style: AppTextStyles.caption
-                                        .copyWith(
-                                      color: AppColors.primary,
-                                      fontSize: 11,
-                                      fontStyle: FontStyle.italic,
+                                if (suggestion.defaultUnit.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.slate50,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: AppColors.slate100,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      suggestion.defaultUnit,
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: AppColors.slate500,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ),
                               ],
                             ),
                           ),
-                          if (suggestion.defaultUnit.isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.slate50,
-                                borderRadius:
-                                    BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.slate100,
-                                ),
-                              ),
-                              child: Text(
-                                suggestion.defaultUnit,
-                                style: AppTextStyles.caption
-                                    .copyWith(
-                                  color: AppColors.slate500,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                        );
+                      }).toList(),
                     ),
-                  );
-                }).toList(),
+                  ),
+                ),
               ),
-            ),
-          ),
+          ],
         ),
-    ],
-  ),
-),
-);
-}
+      ),
+    );
+  }
 }

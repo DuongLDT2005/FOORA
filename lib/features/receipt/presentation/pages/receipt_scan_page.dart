@@ -398,7 +398,9 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         ),
-        child: Center(child: Icon(icon, color: color, size: 18.r)),
+        child: Center(
+          child: Icon(icon, color: color, size: 18.r),
+        ),
       ),
     );
   }

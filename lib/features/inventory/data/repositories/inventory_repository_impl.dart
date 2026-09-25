@@ -1,3 +1,4 @@
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/food_category.dart';
@@ -38,7 +39,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       }
       throw ServerFailure(e.message, e.code);
     } catch (_) {
-      throw const ServerFailure('Không thể thêm thực phẩm vào tủ lạnh. Vui lòng thử lại.');
+      throw const ServerFailure(
+        'Không thể thêm thực phẩm vào tủ lạnh. Vui lòng thử lại.',
+      );
     }
   }
 
@@ -56,7 +59,30 @@ class InventoryRepositoryImpl implements InventoryRepository {
     } on ServerException catch (e) {
       throw ServerFailure(e.message, e.code);
     } catch (_) {
-      throw const ServerFailure('Không thể cập nhật thực phẩm. Vui lòng thử lại.');
+      throw const ServerFailure(
+        'Không thể cập nhật thực phẩm. Vui lòng thử lại.',
+      );
+    }
+  }
+
+  @override
+  Future<void> batchUpdateInventoryStatus({
+    required String householdId,
+    required List<String> itemIds,
+    required InventoryItemStatus status,
+  }) async {
+    try {
+      await remoteDataSource.batchUpdateInventoryStatus(
+        householdId: householdId,
+        itemIds: itemIds,
+        status: status.value,
+      );
+    } on ServerException catch (e) {
+      throw ServerFailure(e.message, e.code);
+    } catch (_) {
+      throw const ServerFailure(
+        'Không thể cập nhật hàng loạt. Vui lòng thử lại.',
+      );
     }
   }
 
@@ -72,7 +98,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
     } on ServerException catch (e) {
       throw ServerFailure(e.message, e.code);
     } catch (_) {
-      throw const ServerFailure('Không thể tải danh mục thực phẩm. Vui lòng thử lại.');
+      throw const ServerFailure(
+        'Không thể tải danh mục thực phẩm. Vui lòng thử lại.',
+      );
     }
   }
 
@@ -83,7 +111,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
     } on ServerException catch (e) {
       throw ServerFailure(e.message, e.code);
     } catch (_) {
-      throw const ServerFailure('Không thể tải vị trí bảo quản. Vui lòng thử lại.');
+      throw const ServerFailure(
+        'Không thể tải vị trí bảo quản. Vui lòng thử lại.',
+      );
     }
   }
 
@@ -108,7 +138,15 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
-  Future<({DateTime expirationDate, num? maxValue, num? minValue, String? unit, bool hasRule})>
+  Future<
+    ({
+      DateTime expirationDate,
+      num? maxValue,
+      num? minValue,
+      String? unit,
+      bool hasRule,
+    })
+  >
   calculateExpiryWithRule({
     String? foodId,
     required String categoryId,

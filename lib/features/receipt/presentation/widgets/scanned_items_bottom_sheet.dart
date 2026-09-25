@@ -64,7 +64,10 @@ class ScannedItemsBottomSheet extends StatelessWidget {
 
                 // Header summary bar
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 8.h,
+                  ),
                   child: Row(
                     children: [
                       Container(
@@ -116,8 +119,9 @@ class ScannedItemsBottomSheet extends StatelessWidget {
                                 height: 14.r,
                                 child: const CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : Icon(LucideIcons.plus, size: 14.r),
@@ -161,7 +165,8 @@ class ScannedItemsBottomSheet extends StatelessWidget {
                     ),
                     shrinkWrap: true,
                     itemCount: items.length,
-                    separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: 12.h),
                     itemBuilder: (context, index) {
                       final item = items[index];
                       return _ScannedItemCard(
@@ -250,10 +255,7 @@ class _ScannedItemCard extends StatelessWidget {
 
                 // Quantity badge
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8.w,
-                    vertical: 4.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: AppColors.primarySurface,
                     borderRadius: BorderRadius.circular(8.r),
@@ -369,13 +371,12 @@ class _ScannedItemCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 6.w),
-                    const Text('•', style: TextStyle(color: AppColors.slate300)),
-                    SizedBox(width: 6.w),
-                    Icon(
-                      Icons.ac_unit,
-                      size: 12.r,
-                      color: AppColors.primary,
+                    const Text(
+                      '•',
+                      style: TextStyle(color: AppColors.slate300),
                     ),
+                    SizedBox(width: 6.w),
+                    Icon(Icons.ac_unit, size: 12.r, color: AppColors.primary),
                     SizedBox(width: 4.w),
                     Flexible(
                       child: Text(
@@ -393,10 +394,7 @@ class _ScannedItemCard extends StatelessWidget {
               ),
               SizedBox(width: 6.w),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 6.w,
-                  vertical: 2.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                 decoration: BoxDecoration(
                   color: AppColors.amber100,
                   borderRadius: BorderRadius.circular(6.r),

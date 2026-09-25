@@ -8,7 +8,10 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/widgets/auth_shell_scaffold.dart';
 import '../../features/inventory/domain/entities/inventory_item.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/inventory/presentation/pages/inventory_page.dart';
 import '../../features/inventory/presentation/pages/item_form_page.dart';
+import '../../features/inventory/presentation/pages/expiration_management_page.dart';
 import '../../features/notification/presentation/pages/notification_page.dart';
 import '../../features/payment/presentation/pages/payment_history_page.dart';
 import '../../features/payment/presentation/pages/payment_page.dart';
@@ -203,6 +206,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+
       // Mobile Bottom Navigation Tabs (StatefulShellRoute)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -215,9 +219,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRouteNames.home,
                 name: 'home',
-                builder: (context, state) => const _PlaceholderScreen(
-                  title: 'Home Tab (Overview & Expiring Soon)',
-                ),
+                builder: (context, state) => const HomePage(),
               ),
             ],
           ),
@@ -227,9 +229,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRouteNames.inventory,
                 name: 'inventory',
-                builder: (context, state) => const _PlaceholderScreen(
-                  title: 'Inventory Tab (Fridge / Freezer)',
-                ),
+                builder: (context, state) => const InventoryPage(),
+                routes: [
+                  GoRoute(
+                    path: 'expiration-management',
+                    name: 'expirationManagement',
+                    builder: (context, state) =>
+                        const ExpirationManagementPage(),
+                  ),
+                ],
               ),
             ],
           ),
