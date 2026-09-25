@@ -15,8 +15,20 @@ class AppRouteNames {
   static const String itemForm = '/inventory/item-form';
   static const String notifications = '/notifications';
   static const String profileDetail = '/profile/detail';
+  static const String notificationSettings = '/profile/notification-settings';
+  static const String myMembership = '/profile/my-membership';
+  static const String privacySettings = '/profile/privacy-settings';
+  static const String helpCenter = '/profile/help-center';
+  static const String contactUs = '/profile/contact';
+  static const String reportBug = '/profile/report-bug';
   static const String membership = '/membership';
   static const String paymentHistory = '/payment-history';
+  static const String paymentQr = '/payment/:paymentId';
+  static const String paymentResult = '/payment/:paymentId/result';
+
+  static String paymentQrPath(String paymentId) => '/payment/$paymentId';
+  static String paymentResultPath(String paymentId) =>
+      '/payment/$paymentId/result';
 
   // --- Web Admin Routes ---
   static const String adminLogin = '/admin/login';

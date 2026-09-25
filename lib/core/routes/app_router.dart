@@ -9,6 +9,19 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/widgets/auth_shell_scaffold.dart';
 import '../../features/inventory/domain/entities/inventory_item.dart';
 import '../../features/inventory/presentation/pages/item_form_page.dart';
+import '../../features/notification/presentation/pages/notification_page.dart';
+import '../../features/payment/presentation/pages/payment_history_page.dart';
+import '../../features/payment/presentation/pages/payment_page.dart';
+import '../../features/payment/presentation/pages/payment_qr_page.dart';
+import '../../features/payment/presentation/pages/payment_result_page.dart';
+import '../../features/profile/presentation/pages/contact_us_page.dart';
+import '../../features/profile/presentation/pages/edit_profile_page.dart';
+import '../../features/profile/presentation/pages/help_center_page.dart';
+import '../../features/profile/presentation/pages/my_membership_page.dart';
+import '../../features/profile/presentation/pages/notification_settings_page.dart';
+import '../../features/profile/presentation/pages/privacy_settings_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/report_bug_page.dart';
 import '../../features/receipt/presentation/pages/receipt_scan_page.dart';
 import '../../shared/layouts/mobile_shell_scaffold.dart';
 import '../firebase/auth_session_providers.dart';
@@ -122,26 +135,64 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRouteNames.notifications,
         name: 'notifications',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Notifications (FEFO Warnings)'),
+        builder: (context, state) => const NotificationPage(),
       ),
       GoRoute(
         path: AppRouteNames.profileDetail,
         name: 'profileDetail',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Profile Detail (Edit Profile)'),
+        builder: (context, state) => const EditProfilePage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.notificationSettings,
+        name: 'notificationSettings',
+        builder: (context, state) => const NotificationSettingsPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.myMembership,
+        name: 'myMembership',
+        builder: (context, state) => const MyMembershipPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.privacySettings,
+        name: 'privacySettings',
+        builder: (context, state) => const PrivacySettingsPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.helpCenter,
+        name: 'helpCenter',
+        builder: (context, state) => const HelpCenterPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.contactUs,
+        name: 'contactUs',
+        builder: (context, state) => const ContactUsPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.reportBug,
+        name: 'reportBug',
+        builder: (context, state) => const ReportBugPage(),
       ),
       GoRoute(
         path: AppRouteNames.membership,
         name: 'membership',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Membership (Free / Premium)'),
+        builder: (context, state) => const PaymentPage(),
       ),
       GoRoute(
         path: AppRouteNames.paymentHistory,
         name: 'paymentHistory',
+        builder: (context, state) => const PaymentHistoryPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.paymentResult,
+        name: 'paymentResult',
         builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Payment History'),
+            PaymentResultPage(paymentId: state.pathParameters['paymentId']!),
+      ),
+      GoRoute(
+        path: AppRouteNames.paymentQr,
+        name: 'paymentQr',
+        builder: (context, state) =>
+            PaymentQrPage(paymentId: state.pathParameters['paymentId']!),
       ),
       GoRoute(
         path: AppRouteNames.itemForm,
@@ -198,9 +249,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRouteNames.profile,
                 name: 'profile',
-                builder: (context, state) => const _PlaceholderScreen(
-                  title: 'Profile Tab (Account & Settings)',
-                ),
+                builder: (context, state) => const ProfilePage(),
               ),
             ],
           ),
@@ -443,8 +492,9 @@ class _PlaceholderScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Đang đăng nhập: $userEmail',
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: Colors.grey[600]),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
               ],
               const SizedBox(height: 24),
