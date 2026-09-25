@@ -235,7 +235,7 @@ export async function seedFirestore() {
     premRef,
     {
       name: "Premium",
-      price: 49000,
+      price: 29000,
       currency: "VND",
       durationDays: 30,
       foodLimit: null, // Unlimited items
@@ -390,10 +390,11 @@ async function seedUsers() {
         .doc(Collections.AI_USAGE_CURRENT_DOC);
       await aiUsageRef.delete().catch(() => {});
 
-      const subRef = userRef
-        .collection(Collections.SUBSCRIPTIONS)
-        .doc("active_sub");
-      await subRef.delete().catch(() => {});
+      const subscriptionsRef = userRef.collection(Collections.SUBSCRIPTIONS);
+      await Promise.all([
+        subscriptionsRef.doc("active_sub").delete().catch(() => {}),
+        subscriptionsRef.doc("payos_premium").delete().catch(() => {}),
+      ]);
 
       // 3. Set pure Admin user document: NO membershipId, NO activeHouseholdId
       await userRef.set(
@@ -482,30 +483,33 @@ async function seedUsers() {
       {merge: true},
     );
 
-    // If premium, also seed an active subscription
-    if (config.membershipId === "premium") {
-      const subRef = userRef
-        .collection(Collections.SUBSCRIPTIONS)
-        .doc("active_sub");
-      const startDate = new Date();
-      const endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 days
+    const subscriptionsRef = userRef.collection(Collections.SUBSCRIPTIONS);
+    const legacySubRef = subscriptionsRef.doc("active_sub");
+    const casSubRef = subscriptionsRef.doc("payos_premium");
 
-      await subRef.set(
+    // Keep seeded entitlements aligned with the payOS subscription schema.
+    await legacySubRef.delete().catch(() => {});
+    if (config.membershipId === "premium") {
+      const startDate = new Date();
+      const endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      await casSubRef.set(
         {
           membershipId: "premium",
+          provider: "payos",
           status: "active",
           startDate: admin.firestore.Timestamp.fromDate(startDate),
           endDate: admin.firestore.Timestamp.fromDate(endDate),
-          autoRenew: true,
+          autoRenew: false,
           cancelAtPeriodEnd: false,
-          platform: "google_play",
-          productId: "foora_premium_monthly",
-          purchaseToken: `seed_token_${uid}`,
+          lastPaymentId: "seed_payment",
           createdAt: serverTimestamp,
           updatedAt: serverTimestamp,
         },
         {merge: true},
       );
+    } else {
+      await casSubRef.delete().catch(() => {});
     }
 
     console.log(
