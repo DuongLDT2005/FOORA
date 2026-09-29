@@ -23,7 +23,7 @@ class FirebaseInitializer {
         );
       }
     } catch (e) {
-      // Ignore duplicate-app error which can happen during Hot Restart 
+      // Ignore duplicate-app error which can happen during Hot Restart
       // or if native Android auto-initialized it via google-services.json
       if (!e.toString().contains('duplicate-app')) {
         rethrow;
@@ -33,29 +33,41 @@ class FirebaseInitializer {
     if (AppConfig.instance.useFirebaseEmulator) {
       final host = _resolveEmulatorHost();
 
-      try {
-        // Auth Emulator (Port 9099)
-        await FirebaseAuth.instance.useAuthEmulator(host, 9099);
-
-        // Firestore Emulator (Port 8080)
+      await _configureEmulator(
+        'Auth',
+        () => FirebaseAuth.instance.useAuthEmulator(host, 9099),
+      );
+      await _configureEmulator('Firestore', () async {
         FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
-
-      // Functions Emulator (Port 5001)
-      FirebaseFunctions.instanceFor(
-        region: AppConstants.firebaseRegion,
-      ).useFunctionsEmulator(host, 5001);
-
-      // Storage Emulator (Port 9199)
-      await FirebaseStorage.instance.useStorageEmulator(host, 9199);
+      });
+      await _configureEmulator('Functions', () async {
+        FirebaseFunctions.instanceFor(
+          region: AppConstants.firebaseRegion,
+        ).useFunctionsEmulator(host, 5001);
+      });
+      await _configureEmulator(
+        'Storage',
+        () => FirebaseStorage.instance.useStorageEmulator(host, 9199),
+      );
 
       AppLogger.i(
         'Connected to Firebase Emulators at $host '
         '(Auth: 9099, Firestore: 8080, Functions: 5001, Storage: 9199).',
       );
-    } catch (e) {
-      // Emulators can only be configured once. 
-      // Ignore errors during Hot Restart.
     }
+  }
+
+  static Future<void> _configureEmulator(
+    String service,
+    Future<void> Function() configure,
+  ) async {
+    try {
+      await configure();
+    } catch (error, stackTrace) {
+      // A hot restart can configure an existing native Firebase instance twice.
+      // Keep configuring the remaining services and make unexpected mismatches
+      // visible instead of silently leaving only part of Firebase on emulators.
+      AppLogger.e('Could not configure $service emulator.', error, stackTrace);
     }
   }
 
