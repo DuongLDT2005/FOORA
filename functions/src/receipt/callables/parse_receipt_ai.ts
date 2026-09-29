@@ -40,8 +40,19 @@ export const parseReceiptAi = onCall<Partial<ParseReceiptPayload>>(
       const user = await getAuthenticatedUser(request);
       const {ocrText, householdId, imageBase64, mimeType} = request.data || {};
 
-      if (!ocrText || typeof ocrText !== "string" || !ocrText.trim()) {
-        throwInvalidArgument("Nội dung quét hóa đơn (ocrText) không được để trống.");
+      const normalizedOcrText =
+        typeof ocrText === "string" ? ocrText.trim() : "";
+      const normalizedImageBase64 =
+        typeof imageBase64 === "string" && imageBase64.trim() ?
+          imageBase64 :
+          undefined;
+      const normalizedMimeType =
+        typeof mimeType === "string" && mimeType.trim() ? mimeType : undefined;
+
+      if (!normalizedOcrText && !normalizedImageBase64) {
+        throwInvalidArgument(
+          "Phải cung cấp văn bản OCR hoặc ảnh hóa đơn."
+        );
       }
 
       if (!householdId || typeof householdId !== "string") {
@@ -49,7 +60,7 @@ export const parseReceiptAi = onCall<Partial<ParseReceiptPayload>>(
       }
 
       logger.info(
-        `[parseReceiptAi] User ${user.uid} parsing receipt for household ${householdId} (hasImage: ${!!imageBase64})`
+        `[parseReceiptAi] User ${user.uid} parsing receipt for household ${householdId} (hasImage: ${!!normalizedImageBase64})`
       );
 
       // 1. Quota verification (Free: 5/month, Premium: unlimited)
@@ -60,10 +71,10 @@ export const parseReceiptAi = onCall<Partial<ParseReceiptPayload>>(
 
       // 2. AI Parsing & Stock enrichment
       const enrichedItems = await ReceiptParserService.parseAndEnrich(
-        ocrText,
+        normalizedOcrText,
         householdId,
-        imageBase64,
-        mimeType
+        normalizedImageBase64,
+        normalizedMimeType
       );
 
       // 3. Create receipt draft record in users/{userId}/receipts/{receiptId}
@@ -79,7 +90,7 @@ export const parseReceiptAi = onCall<Partial<ParseReceiptPayload>>(
         householdId,
         imageUrl: null,
         status: "processing",
-        ocrText,
+        ocrText: normalizedOcrText,
         processedBy: process.env.GEMINI_API_KEY ? "gemini-3.6-flash" : "rule-based",
         totalItemsDetected: enrichedItems.length,
         createdAt: serverTimestamp,

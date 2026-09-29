@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/features/receipt/domain/entities/receipt_item.dart';
@@ -8,7 +8,9 @@ import 'package:foora/features/receipt/domain/usecases/scan_receipt.dart';
 import 'package:foora/features/receipt/presentation/providers/receipt_scan_provider.dart';
 
 class MockReceiptRepository implements ReceiptRepository {
-  File? lastScannedFile;
+  Uint8List? lastScannedBytes;
+  String? lastImagePath;
+  String? lastMimeType;
   String? lastHouseholdId;
   List<ReceiptItem>? lastBatchItems;
   String? lastBatchReceiptId;
@@ -21,10 +23,14 @@ class MockReceiptRepository implements ReceiptRepository {
   @override
   Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})>
   scanAndParseReceipt({
-    required File imageFile,
+    required Uint8List imageBytes,
+    required String imagePath,
+    required String mimeType,
     required String householdId,
   }) async {
-    lastScannedFile = imageFile;
+    lastScannedBytes = imageBytes;
+    lastImagePath = imagePath;
+    lastMimeType = mimeType;
     lastHouseholdId = householdId;
     return (
       receiptId: mockReceiptId,
@@ -100,14 +106,18 @@ void main() {
       'ScanReceiptUseCase delegates to repository with correct parameters',
       () async {
         mockRepository.mockItemsToReturn = [sampleItem1, sampleItem2];
-        final fakeFile = File('dummy_receipt.jpg');
+        final fakeBytes = Uint8List.fromList([1, 2, 3]);
 
         final result = await scanReceiptUseCase(
-          imageFile: fakeFile,
+          imageBytes: fakeBytes,
+          imagePath: 'dummy_receipt.jpg',
+          mimeType: 'image/jpeg',
           householdId: 'house-789',
         );
 
-        expect(mockRepository.lastScannedFile?.path, equals(fakeFile.path));
+        expect(mockRepository.lastScannedBytes, equals(fakeBytes));
+        expect(mockRepository.lastImagePath, equals('dummy_receipt.jpg'));
+        expect(mockRepository.lastMimeType, equals('image/jpeg'));
         expect(mockRepository.lastHouseholdId, equals('house-789'));
         expect(result.receiptId, equals('rec-123'));
         expect(result.items.length, equals(2));

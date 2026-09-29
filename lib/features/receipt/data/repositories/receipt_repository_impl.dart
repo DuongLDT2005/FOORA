@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/receipt_item.dart';
@@ -15,21 +17,27 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
   @override
   Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})>
   scanAndParseReceipt({
-    required File imageFile,
+    required Uint8List imageBytes,
+    required String imagePath,
+    required String mimeType,
     required String householdId,
   }) async {
     try {
-      final ocrText = await remoteDataSource.extractOcrText(imageFile);
-      if (ocrText.trim().isEmpty) {
-        throw const ServerException(
-          'Không tìm thấy chữ trên hóa đơn. Vui lòng chụp rõ nét hơn hoặc chọn góc đủ sáng.',
-        );
+      var ocrText = '';
+      if (!kIsWeb && imagePath.isNotEmpty) {
+        try {
+          ocrText = await remoteDataSource.extractOcrText(File(imagePath));
+        } on ServerException {
+          // Gemini can still read the original image if on-device OCR fails.
+          ocrText = '';
+        }
       }
 
       return await remoteDataSource.parseReceiptAi(
         ocrText: ocrText,
         householdId: householdId,
-        imageFile: imageFile,
+        imageBytes: imageBytes,
+        mimeType: mimeType,
       );
     } on ServerException catch (e) {
       throw ServerFailure(e.message);

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -157,7 +157,7 @@ enum ScanStatus {
 class ReceiptScanState {
   final String? receiptId;
   final ScanStatus status;
-  final File? capturedImage;
+  final Uint8List? capturedImageBytes;
   final List<ReceiptItem> parsedItems;
   final int? scansRemaining;
   final String? errorMessage;
@@ -167,7 +167,7 @@ class ReceiptScanState {
   const ReceiptScanState({
     this.receiptId,
     this.status = ScanStatus.idle,
-    this.capturedImage,
+    this.capturedImageBytes,
     this.parsedItems = const [],
     this.scansRemaining,
     this.errorMessage,
@@ -178,7 +178,8 @@ class ReceiptScanState {
   ReceiptScanState copyWith({
     String? receiptId,
     ScanStatus? status,
-    File? capturedImage,
+    Uint8List? capturedImageBytes,
+    bool clearCapturedImage = false,
     List<ReceiptItem>? parsedItems,
     int? scansRemaining,
     String? errorMessage,
@@ -188,7 +189,9 @@ class ReceiptScanState {
     return ReceiptScanState(
       receiptId: receiptId ?? this.receiptId,
       status: status ?? this.status,
-      capturedImage: capturedImage ?? this.capturedImage,
+      capturedImageBytes: clearCapturedImage
+          ? null
+          : capturedImageBytes ?? this.capturedImageBytes,
       parsedItems: parsedItems ?? this.parsedItems,
       scansRemaining: scansRemaining ?? this.scansRemaining,
       errorMessage: errorMessage,
@@ -236,10 +239,12 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
     try {
       final photo = await _picker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 90,
+        imageQuality: 85,
+        maxWidth: 2048,
+        maxHeight: 2048,
       );
       if (photo != null) {
-        await processImage(File(photo.path));
+        await _processPickedImage(photo);
       }
     } catch (_) {
       state = state.copyWith(
@@ -255,10 +260,12 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
     try {
       final image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 90,
+        imageQuality: 85,
+        maxWidth: 2048,
+        maxHeight: 2048,
       );
       if (image != null) {
-        await processImage(File(image.path));
+        await _processPickedImage(image);
       }
     } catch (_) {
       state = state.copyWith(
@@ -268,8 +275,35 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
     }
   }
 
-  /// Processes the image through OCR and backend Gemini parser
-  Future<void> processImage(File imageFile) async {
+  Future<void> _processPickedImage(XFile image) async {
+    final imageBytes = await image.readAsBytes();
+    if (imageBytes.isEmpty) {
+      throw StateError('Selected receipt image is empty.');
+    }
+
+    await processImage(
+      imageBytes: imageBytes,
+      imagePath: image.path,
+      mimeType: image.mimeType ?? _mimeTypeFromName(image.name),
+    );
+  }
+
+  String _mimeTypeFromName(String name) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.endsWith('.png')) return 'image/png';
+    if (lowerName.endsWith('.webp')) return 'image/webp';
+    if (lowerName.endsWith('.heic') || lowerName.endsWith('.heif')) {
+      return 'image/heic';
+    }
+    return 'image/jpeg';
+  }
+
+  /// Processes the image through OCR and backend Gemini parser.
+  Future<void> processImage({
+    required Uint8List imageBytes,
+    required String imagePath,
+    required String mimeType,
+  }) async {
     final user = ref.read(currentUserProvider);
     final householdId = user?.activeHouseholdId;
 
@@ -284,20 +318,23 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
 
     state = state.copyWith(
       status: ScanStatus.processing,
-      capturedImage: imageFile,
+      capturedImageBytes: imageBytes,
       errorMessage: null,
     );
 
     try {
       final result = await scanUseCase(
-        imageFile: imageFile,
+        imageBytes: imageBytes,
+        imagePath: imagePath,
+        mimeType: mimeType,
         householdId: householdId,
       );
 
       if (result.items.isEmpty) {
         state = state.copyWith(
           status: ScanStatus.error,
-          errorMessage: 'Không tìm thấy thực phẩm nào trong hóa đơn. Vui lòng thử lại với ảnh rõ hơn.',
+          errorMessage:
+              'Không tìm thấy thực phẩm nào trong hóa đơn. Vui lòng thử lại với ảnh rõ hơn.',
         );
         return;
       }
@@ -327,7 +364,7 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
         state = state.copyWith(
           status: ScanStatus.idle,
           parsedItems: [],
-          capturedImage: null,
+          clearCapturedImage: true,
         );
       } else {
         state = state.copyWith(parsedItems: updatedList);

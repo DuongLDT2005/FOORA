@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
@@ -11,10 +13,14 @@ abstract class ReceiptRemoteDataSource {
   Future<String> extractOcrText(File imageFile);
 
   /// Calls Cloud Function parseReceiptAi to parse items and check smart inventory
-  Future<({String? receiptId, List<ReceiptItemModel> items, int? scansRemaining})> parseReceiptAi({
+  Future<
+    ({String? receiptId, List<ReceiptItemModel> items, int? scansRemaining})
+  >
+  parseReceiptAi({
     required String ocrText,
     required String householdId,
-    File? imageFile,
+    required Uint8List imageBytes,
+    required String mimeType,
   });
 
   /// Calls Cloud Function batchAddInventoryItems to save all items into household inventory
@@ -48,10 +54,14 @@ class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
   }
 
   @override
-  Future<({String? receiptId, List<ReceiptItemModel> items, int? scansRemaining})> parseReceiptAi({
+  Future<
+    ({String? receiptId, List<ReceiptItemModel> items, int? scansRemaining})
+  >
+  parseReceiptAi({
     required String ocrText,
     required String householdId,
-    File? imageFile,
+    required Uint8List imageBytes,
+    required String mimeType,
   }) async {
     try {
       final callable = functions.httpsCallable(
@@ -59,26 +69,13 @@ class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
         options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
       );
 
-      String? imageBase64;
-      String? mimeType;
-      if (imageFile != null && await imageFile.exists()) {
-        final bytes = await imageFile.readAsBytes();
-        imageBase64 = base64Encode(bytes);
-        final pathLower = imageFile.path.toLowerCase();
-        if (pathLower.endsWith('.png')) {
-          mimeType = 'image/png';
-        } else if (pathLower.endsWith('.webp')) {
-          mimeType = 'image/webp';
-        } else {
-          mimeType = 'image/jpeg';
-        }
-      }
+      final imageBase64 = base64Encode(imageBytes);
 
       final response = await callable.call<Map<String, dynamic>>({
         'ocrText': ocrText,
         'householdId': householdId,
-        'imageBase64': ?imageBase64,
-        'mimeType': ?mimeType,
+        'imageBase64': imageBase64,
+        'mimeType': mimeType,
       });
 
       final resData = response.data;
@@ -93,15 +90,18 @@ class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
       final rawItems = (data['items'] as List<dynamic>?) ?? [];
       final scansRemaining = (data['scansRemaining'] as num?)?.toInt();
 
-      final items =
-          rawItems
-              .map(
-                (item) =>
-                    ReceiptItemModel.fromBackendJson(item as Map<String, dynamic>),
-              )
-              .toList();
+      final items = rawItems
+          .map(
+            (item) =>
+                ReceiptItemModel.fromBackendJson(item as Map<String, dynamic>),
+          )
+          .toList();
 
-      return (receiptId: receiptId, items: items, scansRemaining: scansRemaining);
+      return (
+        receiptId: receiptId,
+        items: items,
+        scansRemaining: scansRemaining,
+      );
     } on FirebaseFunctionsException catch (fe) {
       throw ServerException(fe.message ?? 'Lỗi máy chủ khi phân tích hóa đơn.');
     } catch (e) {
