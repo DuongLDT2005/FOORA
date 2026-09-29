@@ -9,6 +9,7 @@ import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_header.dart';
+import '../../../../shared/helpers/toast_helper.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
@@ -26,8 +27,6 @@ class MyMembershipPage extends ConsumerStatefulWidget {
 }
 
 class _MyMembershipPageState extends ConsumerState<MyMembershipPage> {
-  static const bool _autoRenew = false;
-
   void _handleBack() {
     if (context.canPop()) {
       context.pop();
@@ -147,8 +146,13 @@ class _MyMembershipPageState extends ConsumerState<MyMembershipPage> {
     required Profile profile,
     required MembershipPlan plan,
   }) {
-    final startDate = profile.updatedAt;
-    final renewalDate = startDate.add(Duration(days: plan.durationDays ?? 30));
+    final subscriptionAsync = ref.watch(premiumSubscriptionProvider);
+    final subscription = subscriptionAsync.valueOrNull;
+    final isUpdating = ref.watch(autoRenewUpdateControllerProvider).isLoading;
+    final startDate = subscription?.startDate ?? profile.updatedAt;
+    final renewalDate =
+        subscription?.endDate ??
+        startDate.add(Duration(days: plan.durationDays ?? 30));
 
     return SubpageLayout(
       header: AppHeader.membership(onBack: _handleBack, isPremium: true),
@@ -167,8 +171,11 @@ class _MyMembershipPageState extends ConsumerState<MyMembershipPage> {
             _PackageInfoCard(
               startDate: startDate,
               renewalDate: renewalDate,
-              autoRenew: _autoRenew,
-              onAutoRenewChanged: null,
+              autoRenew: subscription?.autoRenew ?? false,
+              isUpdating: isUpdating,
+              onAutoRenewChanged: subscription == null || isUpdating
+                  ? null
+                  : _updateAutoRenew,
             ),
             SizedBox(height: 24.h),
             const _SectionLabel('QUYỀN LỢI PREMIUM'),
@@ -177,6 +184,27 @@ class _MyMembershipPageState extends ConsumerState<MyMembershipPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _updateAutoRenew(bool enabled) async {
+    final success = await ref
+      .read(autoRenewUpdateControllerProvider.notifier)
+      .updateAutoRenew(enabled);
+    if (!mounted) return;
+    if (success) {
+      ToastHelper.show(
+        context,
+        enabled
+            ? 'Đã bật tự động chuẩn bị kỳ gia hạn.'
+            : 'Đã tắt tự động gia hạn.',
+      );
+      return;
+    }
+    final error = ref.read(autoRenewUpdateControllerProvider).error;
+    ToastHelper.show(
+      context,
+      error?.toString() ?? 'Không thể cập nhật tự động gia hạn.',
     );
   }
 
@@ -466,12 +494,14 @@ class _PackageInfoCard extends StatelessWidget {
     required this.startDate,
     required this.renewalDate,
     required this.autoRenew,
+    required this.isUpdating,
     required this.onAutoRenewChanged,
   });
 
   final DateTime startDate;
   final DateTime renewalDate;
   final bool autoRenew;
+  final bool isUpdating;
   final ValueChanged<bool>? onAutoRenewChanged;
 
   @override
@@ -528,6 +558,20 @@ class _PackageInfoCard extends StatelessWidget {
                   onChanged: onAutoRenewChanged,
                 ),
               ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              isUpdating
+                  ? 'Đang cập nhật...'
+                  : 'FOORA sẽ tạo mã thanh toán trước khi gói hết hạn. '
+                        'Bạn vẫn cần xác nhận thanh toán qua ngân hàng.',
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: 11.sp,
+                height: 1.4,
+                color: AppColors.slate400,
+              ),
             ),
           ),
         ],
