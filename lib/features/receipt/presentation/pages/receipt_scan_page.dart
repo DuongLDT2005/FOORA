@@ -59,13 +59,14 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
         children: [
           // 1. Camera / Mock Viewfinder Layer
           Positioned.fill(
-            child: scanState.capturedImage != null
+            child: scanState.capturedImageBytes != null
                 ? Container(
                     color: Colors.black,
                     alignment: Alignment.center,
-                    child: Image.file(
-                      scanState.capturedImage!,
-                      fit: BoxFit.contain, // Hiển thị trọn vẹn ảnh, tự co theo chiều lớn hơn (ngang hoặc dọc) không bị cắt
+                    child: Image.memory(
+                      scanState.capturedImageBytes!,
+                      fit: BoxFit
+                          .contain, // Hiển thị trọn vẹn ảnh, tự co theo chiều lớn hơn (ngang hoặc dọc) không bị cắt
                     ),
                   )
                 : Container(
@@ -170,7 +171,7 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
                 _buildCircleIconButton(
                   icon: LucideIcons.x,
                   onTap: () {
-                    if (isReviewing || scanState.capturedImage != null) {
+                    if (isReviewing || scanState.capturedImageBytes != null) {
                       scanNotifier.reset();
                     } else {
                       context.go(AppRouteNames.home);
@@ -398,7 +399,9 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         ),
-        child: Center(child: Icon(icon, color: color, size: 18.r)),
+        child: Center(
+          child: Icon(icon, color: color, size: 18.r),
+        ),
       ),
     );
   }

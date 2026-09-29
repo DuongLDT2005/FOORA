@@ -88,7 +88,7 @@ class AppSelectBottomSheet<T> extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.25),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
-                      )
+                      ),
                     ]
                   : null,
             ),
@@ -154,8 +154,12 @@ class AppSelectBottomSheet<T> extends StatelessWidget {
                       Text(
                         opt.label,
                         style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                          color: isSelected ? AppColors.primary : AppColors.slate800,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.slate800,
                           fontSize: 14.sp,
                         ),
                       ),
@@ -180,17 +184,15 @@ class AppSelectBottomSheet<T> extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.slate300,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.slate300,
                       width: 2,
                     ),
                     color: isSelected ? AppColors.primary : Colors.transparent,
                   ),
                   child: isSelected
-                      ? Icon(
-                          Icons.check,
-                          size: 14.r,
-                          color: Colors.white,
-                        )
+                      ? Icon(Icons.check, size: 14.r, color: Colors.white)
                       : null,
                 ),
               ],

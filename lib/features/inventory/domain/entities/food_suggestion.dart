@@ -8,7 +8,8 @@ class FoodSuggestion {
   final String name;
   final String categoryId;
   final String defaultUnit;
-  final bool isFromMaster; // true if standard food catalog, false if custom past item
+  final bool
+  isFromMaster; // true if standard food catalog, false if custom past item
   final String? matchedAlias; // Present if matched via alias
   final String? photoUrl;
 

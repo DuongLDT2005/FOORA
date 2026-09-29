@@ -9,6 +9,7 @@ class FirestoreConstants {
   static const String foodCategories = 'food_categories';
   static const String storageLocations = 'storage_locations';
   static const String shelfLifeRules = 'shelf_life_rules';
+  static const String bugReports = 'bug_reports';
 
   // Users Subcollections
   static const String subscriptions = 'subscriptions';

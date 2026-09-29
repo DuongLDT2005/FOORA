@@ -63,3 +63,4 @@ skills-lock.json
 
 # Firebase Generated Options (Ignored to avoid secret detection)
 lib/firebase_options.dart
+.env.local.json

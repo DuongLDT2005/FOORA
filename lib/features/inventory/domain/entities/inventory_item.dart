@@ -15,7 +15,8 @@ class InventoryItem {
   final double quantity;
   final String unit;
   final int remainingPercentage; // 0 to 100
-  final String storageLocationId; // Foreign key to storage_locations/{locationId}, e.g. 'fridge', 'freezer'
+  final String
+  storageLocationId; // Foreign key to storage_locations/{locationId}, e.g. 'fridge', 'freezer'
   final DateTime purchaseDate;
   final DateTime expirationDate;
   final String? photoUrl;

@@ -8,6 +8,7 @@ import 'package:foora/shared/components/app_shimmer.dart';
 import 'package:foora/shared/extensions/context_extensions.dart';
 import 'package:foora/shared/extensions/string_extensions.dart';
 import 'package:foora/shared/helpers/debouncer.dart';
+
 import '../helpers/test_helpers.dart';
 
 void main() {

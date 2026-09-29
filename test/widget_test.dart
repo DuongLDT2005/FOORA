@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/core/config/app_config.dart';
 import 'package:foora/core/config/environment.dart';
 import 'package:foora/core/routes/app_router.dart';
+import 'package:foora/features/notification/presentation/widgets/notification_open_listener.dart';
 import 'package:foora/main.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,7 +31,15 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [routerProvider.overrideWithValue(testRouter)],
+        overrides: [
+          routerProvider.overrideWithValue(testRouter),
+          pushOpenSourceProvider.overrideWithValue(
+            PushOpenSource(
+              getInitialMessage: () async => null,
+              onMessageOpenedApp: const Stream.empty(),
+            ),
+          ),
+        ],
         child: const MyApp(),
       ),
     );

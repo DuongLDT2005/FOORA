@@ -49,7 +49,11 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
             ),
           ),
           SizedBox(height: 6.h),
-          AppShimmer.box(width: double.infinity, height: 48.h, borderRadius: 16.r),
+          AppShimmer.box(
+            width: double.infinity,
+            height: 48.h,
+            borderRadius: 16.r,
+          ),
           SizedBox(height: 16.h),
           Text(
             'VỊ TRÍ BẢO QUẢN *',
@@ -61,7 +65,11 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
             ),
           ),
           SizedBox(height: 6.h),
-          AppShimmer.box(width: double.infinity, height: 48.h, borderRadius: 16.r),
+          AppShimmer.box(
+            width: double.infinity,
+            height: 48.h,
+            borderRadius: 16.r,
+          ),
           SizedBox(height: 16.h),
         ],
       );

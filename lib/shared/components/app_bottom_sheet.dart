@@ -11,6 +11,7 @@ class AppBottomSheet extends StatelessWidget {
   final Widget child;
   final VoidCallback? onClose;
   final double? maxHeightFactor;
+  final Widget? footer;
 
   const AppBottomSheet({
     super.key,
@@ -18,6 +19,7 @@ class AppBottomSheet extends StatelessWidget {
     required this.child,
     this.onClose,
     this.maxHeightFactor,
+    this.footer,
   });
 
   @override
@@ -84,7 +86,9 @@ class AppBottomSheet extends StatelessWidget {
               Flexible(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+                    bottom: (footer == null
+                        ? MediaQuery.of(context).viewInsets.bottom + 20.h
+                        : 8.h),
                     left: 20.w,
                     right: 20.w,
                     top: 8.h,
@@ -92,6 +96,15 @@ class AppBottomSheet extends StatelessWidget {
                   child: child,
                 ),
               ),
+              if (footer != null)
+                Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 16.h,
+                    left: 20.w,
+                    right: 20.w,
+                  ),
+                  child: footer!,
+                ),
             ],
           ),
         ),

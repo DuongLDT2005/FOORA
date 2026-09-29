@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_enums.dart';
 import '../../../../core/constants/firestore_constants.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../models/app_notification_model.dart';
 import '../models/device_model.dart';
 
@@ -69,18 +70,14 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       );
 
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
-        if (kDebugMode) {
-          print('⚠️ [NotificationDataSource] Notification permission denied.');
-        }
+        AppLogger.w('Notification permission denied.');
         return;
       }
 
       // 2. Fetch current FCM token
       final fcmToken = await messaging.getToken();
       if (fcmToken == null || fcmToken.isEmpty) {
-        if (kDebugMode) {
-          print('⚠️ [NotificationDataSource] FCM token is null or empty.');
-        }
+        AppLogger.w('FCM token is null or empty.');
         return;
       }
 
@@ -105,11 +102,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
           .doc(deviceId)
           .set(deviceModel.toFirestore(), SetOptions(merge: true));
 
-      if (kDebugMode) {
-        print(
-          '✅ [NotificationDataSource] Registered device $deviceId for user $userId',
-        );
-      }
+      AppLogger.i('Registered device $deviceId for user $userId.');
 
       // 4. Auto-update token on refresh
       _tokenRefreshSubscription?.cancel();
@@ -126,11 +119,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
                 'updatedAt': FieldValue.serverTimestamp(),
               })
               .catchError((e) {
-                if (kDebugMode) {
-                  print(
-                    '❌ [NotificationDataSource] Token refresh update failed: $e',
-                  );
-                }
+                AppLogger.e('Token refresh update failed.', e);
               });
         }
       });
@@ -165,11 +154,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
         });
       }
 
-      if (kDebugMode) {
-        print(
-          '🔒 [NotificationDataSource] Unregistered device $deviceId for user $userId',
-        );
-      }
+      AppLogger.i('Unregistered device $deviceId for user $userId.');
     } on FirebaseException catch (e) {
       throw ServerException.fromFirebase(e);
     } catch (e) {

@@ -86,7 +86,9 @@ class AuthException extends AppException {
         );
       default:
         return AuthException(
-          e.message != null && !e.message!.contains('Exception') && !e.message!.contains('com.google')
+          e.message != null &&
+                  !e.message!.contains('Exception') &&
+                  !e.message!.contains('com.google')
               ? e.message!
               : 'Đăng nhập/xác thực thất bại. Vui lòng thử lại.',
           e.code,

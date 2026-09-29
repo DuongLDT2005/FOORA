@@ -31,9 +31,14 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
-      // Notifications Subcollection: user can read and update (mark as read)
+      // Notifications are created by Cloud Functions. Owners may only mark read.
       match /notifications/{notificationId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow create, delete: if false;
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['isRead'])
+          && request.resource.data.isRead is bool;
       }
 
       // Subscriptions Subcollection
@@ -98,6 +103,26 @@ service cloud.firestore {
     match /shelf_life_rules/{ruleId} {
       allow read: if isAuthenticated();
       allow write: if false;
+    }
+
+
+    // Server-only payment lookup and idempotency collections.
+    match /payment_order_locks/{lockId} {
+      allow read, write: if false;
+    }
+
+    match /payment_references/{referenceNumber} {
+      allow read, write: if false;
+    }
+
+    match /payment_provider_transactions/{transactionId} {
+      allow read, write: if false;
+    }
+
+    // Bug Reports collection
+    match /bug_reports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if false;
     }
   }
 }

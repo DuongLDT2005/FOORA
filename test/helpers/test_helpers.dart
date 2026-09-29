@@ -6,10 +6,6 @@ Widget makeTestableWidget(Widget child, {Size size = const Size(390, 844)}) {
     designSize: size,
     minTextAdapt: true,
     splitScreenMode: true,
-    builder: (context, _) => MaterialApp(
-      home: Scaffold(
-        body: child,
-      ),
-    ),
+    builder: (context, _) => MaterialApp(home: Scaffold(body: child)),
   );
 }

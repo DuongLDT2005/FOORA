@@ -234,8 +234,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final currentUid = state.user?.id;
       if (currentUid != null && currentUid.isNotEmpty) {
-        await unregisterDeviceUseCase(userId: currentUid)
-            .catchError((_) => null);
+        await unregisterDeviceUseCase(
+          userId: currentUid,
+        ).catchError((_) => null);
       }
       await logoutUseCase();
       state = const AuthState();

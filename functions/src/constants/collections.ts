@@ -12,6 +12,9 @@ export const Collections = {
   FOOD_CATEGORIES: "food_categories",
   STORAGE_LOCATIONS: "storage_locations",
   SHELF_LIFE_RULES: "shelf_life_rules",
+  PAYMENT_REFERENCES: "payment_references",
+  PAYMENT_ORDER_LOCKS: "payment_order_locks",
+  PAYMENT_PROVIDER_TRANSACTIONS: "payment_provider_transactions",
 
   // Users Subcollections (users/{userId}/...)
   SUBSCRIPTIONS: "subscriptions",

@@ -17,6 +17,16 @@ export type NotificationType =
 
 export type SubscriptionStatus = "active" | "cancelled" | "expired";
 
+export type PaymentStatus =
+  | "pending"
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "expired"
+  | "requires_review";
+
+export type PaymentProvider = "cas";
+
 export type StorageLocationCode = "FRIDGE" | "FREEZER";
 
 export type InventoryItemSource = "manual" | "receipt_scan";

@@ -153,10 +153,18 @@ class InventoryFormState {
       categories: categories ?? this.categories,
       storageLocations: storageLocations ?? this.storageLocations,
       isLoadingMetadata: isLoadingMetadata ?? this.isLoadingMetadata,
-      maxStorageTime: clearShelfLifeRule ? null : (maxStorageTime ?? this.maxStorageTime),
-      minStorageTime: clearShelfLifeRule ? null : (minStorageTime ?? this.minStorageTime),
-      storageTimeUnit: clearShelfLifeRule ? null : (storageTimeUnit ?? this.storageTimeUnit),
-      hasShelfLifeRule: clearShelfLifeRule ? false : (hasShelfLifeRule ?? this.hasShelfLifeRule),
+      maxStorageTime: clearShelfLifeRule
+          ? null
+          : (maxStorageTime ?? this.maxStorageTime),
+      minStorageTime: clearShelfLifeRule
+          ? null
+          : (minStorageTime ?? this.minStorageTime),
+      storageTimeUnit: clearShelfLifeRule
+          ? null
+          : (storageTimeUnit ?? this.storageTimeUnit),
+      hasShelfLifeRule: clearShelfLifeRule
+          ? false
+          : (hasShelfLifeRule ?? this.hasShelfLifeRule),
       suggestions: suggestions ?? this.suggestions,
       showSuggestions: showSuggestions ?? this.showSuggestions,
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),

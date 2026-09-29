@@ -121,3 +121,66 @@ class AppFloatingActionButton extends StatelessWidget {
     );
   }
 }
+
+// --- AppButton Unified Facade ---
+class AppButton {
+  AppButton._();
+
+  static Widget primary({
+    required String label,
+    VoidCallback? onPressed,
+    bool isLoading = false,
+    IconData? icon,
+  }) {
+    if (icon != null) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: isLoading ? null : onPressed,
+          icon: isLoading
+              ? SizedBox(
+                  width: 18.r,
+                  height: 18.r,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Icon(icon, size: 18.r),
+          label: Text(label),
+        ),
+      );
+    }
+    return PrimaryButton(
+      text: label,
+      onPressed: onPressed,
+      isLoading: isLoading,
+    );
+  }
+
+  static Widget secondary({
+    required String label,
+    VoidCallback? onPressed,
+    IconData? icon,
+  }) {
+    if (icon != null) {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 18.r),
+          label: Text(label),
+        ),
+      );
+    }
+    return SecondaryButton(text: label, onPressed: onPressed);
+  }
+
+  static Widget danger({
+    required String label,
+    VoidCallback? onPressed,
+    IconData? icon,
+  }) {
+    return DangerButton(text: label, onPressed: onPressed, icon: icon);
+  }
+}

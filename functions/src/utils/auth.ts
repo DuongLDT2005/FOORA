@@ -28,12 +28,26 @@ export async function getAuthenticatedUser(
     throwPermissionDenied("Tài khoản của bạn đã bị vô hiệu hóa.");
   }
 
+  let membershipId = data?.membershipId || "free";
+  if (membershipId !== "free") {
+    const activeSubscriptions = await userDoc.ref
+      .collection(Collections.SUBSCRIPTIONS)
+      .where("status", "==", "active")
+      .limit(10)
+      .get();
+    const active = activeSubscriptions.docs.find((subscription) => {
+      const endDate = subscription.data().endDate;
+      return endDate?.toMillis?.() > Date.now();
+    });
+    membershipId = active?.data().membershipId || "free";
+  }
+
   return {
     uid,
     email: data?.email || request.auth.token.email || "",
     role: data?.role || "member",
     activeHouseholdId: data?.activeHouseholdId,
-    membershipId: data?.membershipId || "free",
+    membershipId,
     isActive,
   };
 }

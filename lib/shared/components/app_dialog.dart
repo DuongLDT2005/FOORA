@@ -89,7 +89,8 @@ class AppDialog extends StatelessWidget {
                     Expanded(
                       child: SecondaryButton(
                         text: cancelText!,
-                        onPressed: onCancel ?? () => Navigator.of(context).pop(),
+                        onPressed:
+                            onCancel ?? () => Navigator.of(context).pop(),
                       ),
                     ),
                     SizedBox(width: 12.w),
@@ -98,11 +99,13 @@ class AppDialog extends StatelessWidget {
                     child: isDestructive
                         ? DangerButton(
                             text: confirmText,
-                            onPressed: onConfirm ?? () => Navigator.of(context).pop(),
+                            onPressed:
+                                onConfirm ?? () => Navigator.of(context).pop(),
                           )
                         : PrimaryButton(
                             text: confirmText,
-                            onPressed: onConfirm ?? () => Navigator.of(context).pop(),
+                            onPressed:
+                                onConfirm ?? () => Navigator.of(context).pop(),
                           ),
                   ),
                 ],

@@ -12,6 +12,7 @@ class AppTextField extends StatelessWidget {
   final bool isRequired;
   final TextInputType keyboardType;
   final bool obscureText;
+  final int maxLines;
   final String? Function(String?)? validator;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
@@ -36,6 +37,7 @@ class AppTextField extends StatelessWidget {
     this.isRequired = false,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
+    this.maxLines = 1,
     this.validator,
     this.prefixIcon,
     this.suffixIcon,
@@ -92,6 +94,7 @@ class AppTextField extends StatelessWidget {
           focusNode: focusNode,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          maxLines: maxLines,
           validator: validator,
           enabled: enabled,
           textInputAction: textInputAction,

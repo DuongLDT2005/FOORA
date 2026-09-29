@@ -9,6 +9,7 @@ import '../../core/firebase/firebase_providers.dart';
 import '../../core/routes/route_names.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../features/notification/presentation/providers/notification_provider.dart';
 import '../widgets/app_button.dart';
 
 /// Shell Scaffold for Mobile Tabs (Home, Inventory, Scan, Profile)
@@ -22,6 +23,9 @@ class MobileShellScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(firebaseAuthProvider).currentUser;
     final currentIndex = navigationShell.currentIndex;
+    final unreadCount = user == null
+        ? 0
+        : ref.watch(unreadNotificationCountProvider(user.uid));
     final isScanTab = currentIndex == 2;
 
     return Scaffold(
@@ -30,6 +34,7 @@ class MobileShellScaffold extends ConsumerWidget {
           ? null
           : _MobileShellHeader(
               userInitial: _getUserInitial(user?.displayName, user?.email),
+              unreadCount: unreadCount,
               onNotificationTap: () {
                 context.push(AppRouteNames.notifications);
               },
@@ -65,7 +70,9 @@ class MobileShellScaffold extends ConsumerWidget {
       if (names.length >= 2) {
         return '${names.first[0]}${names.last[0]}'.toUpperCase();
       }
-      return names.first.substring(0, names.first.length >= 2 ? 2 : 1).toUpperCase();
+      return names.first
+          .substring(0, names.first.length >= 2 ? 2 : 1)
+          .toUpperCase();
     }
     if (email != null && email.isNotEmpty) {
       return email.substring(0, email.length >= 2 ? 2 : 1).toUpperCase();
@@ -75,12 +82,15 @@ class MobileShellScaffold extends ConsumerWidget {
 }
 
 /// Sticky Header Widget for Mobile Shell
-class _MobileShellHeader extends StatelessWidget implements PreferredSizeWidget {
+class _MobileShellHeader extends StatelessWidget
+    implements PreferredSizeWidget {
   final String userInitial;
+  final int unreadCount;
   final VoidCallback onNotificationTap;
 
   const _MobileShellHeader({
     required this.userInitial,
+    required this.unreadCount,
     required this.onNotificationTap,
   });
 
@@ -99,7 +109,7 @@ class _MobileShellHeader extends StatelessWidget implements PreferredSizeWidget 
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -108,8 +118,8 @@ class _MobileShellHeader extends StatelessWidget implements PreferredSizeWidget 
               Row(
                 children: [
                   Container(
-                    width: 38.r,
-                    height: 38.r,
+                    width: 42.r,
+                    height: 42.r,
                     decoration: BoxDecoration(
                       color: AppColors.emerald100,
                       shape: BoxShape.circle,
@@ -139,7 +149,7 @@ class _MobileShellHeader extends StatelessWidget implements PreferredSizeWidget 
                   Text(
                     'FOORA',
                     style: GoogleFonts.lexend(
-                      fontSize: 22.sp,
+                      fontSize: 23.sp,
                       fontWeight: FontWeight.w900,
                       color: AppColors.primary,
                       letterSpacing: -0.5,
@@ -158,21 +168,32 @@ class _MobileShellHeader extends StatelessWidget implements PreferredSizeWidget 
                       size: 22.r,
                       color: AppColors.slate500,
                     ),
-                    Positioned(
-                      top: -2.h,
-                      right: -2.w,
-                      child: Container(
-                        padding: EdgeInsets.all(3.r),
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: BoxConstraints(
-                          minWidth: 8.r,
-                          minHeight: 8.r,
+                    if (unreadCount > 0)
+                      Positioned(
+                        top: -7.h,
+                        right: -8.w,
+                        child: Container(
+                          constraints: BoxConstraints(
+                            minWidth: 18.r,
+                            minHeight: 18.r,
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 4.w),
+                          decoration: const BoxDecoration(
+                            color: AppColors.red500,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            unreadCount > 99 ? '99+' : '$unreadCount',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                              height: 1,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
                 tooltip: 'Thông báo',
@@ -205,10 +226,7 @@ class _MobileBottomNavBar extends StatelessWidget {
         color: AppColors.surface.withAlpha(245),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
         border: const Border(
-          top: BorderSide(
-            color: AppColors.slate100,
-            width: 1,
-          ),
+          top: BorderSide(color: AppColors.slate100, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -271,7 +289,9 @@ class _MobileBottomNavBar extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-        transform: isSelected ? Matrix4.diagonal3Values(1.05, 1.05, 1.0) : Matrix4.identity(),
+        transform: isSelected
+            ? Matrix4.diagonal3Values(1.05, 1.05, 1.0)
+            : Matrix4.identity(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -11,6 +11,8 @@ import '../../domain/entities/inventory_item.dart';
 import '../../domain/entities/storage_location.dart';
 import '../../domain/repositories/inventory_repository.dart';
 import '../../domain/usecases/add_inventory_item.dart';
+import '../../domain/usecases/batch_update_inventory_status_usecase.dart';
+
 import '../../domain/usecases/get_inventory_items.dart';
 import '../../domain/usecases/update_inventory_item.dart';
 import 'inventory_form_state.dart';
@@ -43,6 +45,13 @@ final updateInventoryItemUseCaseProvider = Provider<UpdateInventoryItemUseCase>(
     return UpdateInventoryItemUseCase(ref.watch(inventoryRepositoryProvider));
   },
 );
+
+final batchUpdateInventoryStatusUseCaseProvider =
+    Provider<BatchUpdateInventoryStatusUseCase>((ref) {
+      return BatchUpdateInventoryStatusUseCase(
+        ref.watch(inventoryRepositoryProvider),
+      );
+    });
 
 final getInventoryItemsUseCaseProvider = Provider<GetInventoryItemsUseCase>((
   ref,
@@ -186,10 +195,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
         showSuggestions: suggestions.isNotEmpty,
       );
     } else {
-      state = state.copyWith(
-        suggestions: [],
-        showSuggestions: false,
-      );
+      state = state.copyWith(suggestions: [], showSuggestions: false);
     }
   }
 
@@ -203,8 +209,12 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     state = state.copyWith(
       name: suggestion.name,
       foodId: suggestion.foodId,
-      categoryId: suggestion.categoryId.isNotEmpty ? suggestion.categoryId : state.categoryId,
-      unit: suggestion.defaultUnit.isNotEmpty ? suggestion.defaultUnit : state.unit,
+      categoryId: suggestion.categoryId.isNotEmpty
+          ? suggestion.categoryId
+          : state.categoryId,
+      unit: suggestion.defaultUnit.isNotEmpty
+          ? suggestion.defaultUnit
+          : state.unit,
       photoUrl: suggestion.photoUrl,
       showSuggestions: false,
     );

@@ -15,11 +15,7 @@ class AppBottomBar extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
 
-  const AppBottomBar({
-    super.key,
-    required this.child,
-    this.padding,
-  });
+  const AppBottomBar({super.key, required this.child, this.padding});
 
   /// Variant 1: Form Action Bar (Used for `item-form`, `profile-detail`)
   /// Consists of 2 buttons:
@@ -89,7 +85,9 @@ class AppBottomBar extends StatelessWidget {
                         height: 22.r,
                         child: const CircularProgressIndicator(
                           strokeWidth: 2.4,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : Row(
@@ -150,8 +148,9 @@ class AppBottomBar extends StatelessWidget {
                         height: 22.r,
                         child: const CircularProgressIndicator(
                           strokeWidth: 2.4,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(AppColors.slate600),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.slate600,
+                          ),
                         ),
                       )
                     : Text(
@@ -228,8 +227,9 @@ class AppBottomBar extends StatelessWidget {
                               height: 22.r,
                               child: const CircularProgressIndicator(
                                 strokeWidth: 2.4,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : Text(
@@ -276,12 +276,7 @@ class AppBottomBar extends StatelessWidget {
             top: 14.h,
             bottom: bottomInset > 0 ? bottomInset + 4.h : 16.h,
           ),
-          child: SafeArea(
-            top: false,
-            left: false,
-            right: false,
-            child: child,
-          ),
+          child: SafeArea(top: false, left: false, right: false, child: child),
         ),
       ),
     );

@@ -59,9 +59,7 @@ class SubpageLayout extends StatelessWidget {
   }) {
     return SubpageLayout(
       key: key,
-      header: AppHeader.profileDetail(
-        onBack: onBack ?? onCancel,
-      ),
+      header: AppHeader.profileDetail(onBack: onBack ?? onCancel),
       bottomBar: AppBottomBar.form(
         onCancel: onCancel ?? onBack,
         onSubmit: onSubmit,
@@ -84,10 +82,7 @@ class SubpageLayout extends StatelessWidget {
   }) {
     return SubpageLayout(
       key: key,
-      header: AppHeader.membership(
-        isPremium: isPremium,
-        onBack: onBack,
-      ),
+      header: AppHeader.membership(isPremium: isPremium, onBack: onBack),
       bottomBar: AppBottomBar.membership(
         isPremium: isPremium,
         onUpgrade: onUpgrade,
@@ -125,9 +120,7 @@ class SubpageLayout extends StatelessWidget {
   }) {
     return SubpageLayout(
       key: key,
-      header: AppHeader.paymentHistory(
-        onBack: onBack,
-      ),
+      header: AppHeader.paymentHistory(onBack: onBack),
       body: body,
     );
   }

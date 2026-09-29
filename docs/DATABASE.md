@@ -460,19 +460,21 @@ users/{userId}/ai_usage/current
 users/{userId}/subscriptions/{subscriptionId}
 ```
 
-| Field               | Type      | Required | Description                                                   |
-| ------------------- | --------- | -------: | ------------------------------------------------------------- |
-| `membershipId`      | String    |      Yes | Reference to the membership document ID                       |
-| `status`            | String    |      Yes | Subscription status, e.g. `active`, `cancelled`, `expired`    |
-| `startDate`         | Timestamp |      Yes | Subscription start date                                       |
-| `endDate`           | Timestamp |      Yes | Current subscription expiration date                          |
-| `autoRenew`         | Boolean   |      Yes | Whether the subscription is set to renew automatically        |
-| `cancelAtPeriodEnd` | Boolean   |      Yes | Whether subscription will cancel at current billing cycle end |
-| `platform`          | String    |      Yes | Purchase platform: `android` or `ios`                         |
-| `productId`         | String    |      Yes | Store product ID                                              |
-| `purchaseToken`     | String    |       No | Purchase token/transaction reference when applicable          |
-| `createdAt`         | Timestamp |      Yes | Subscription creation time                                    |
-| `updatedAt`         | Timestamp |      Yes | Last update time                                              |
+| Field | Type | Required | Description |
+| --- | --- | ---: | --- |
+| `membershipId` | String | Yes | Reference to the membership document ID |
+| `provider` | String | Yes | Payment provider; `payos` for QR payment |
+| `status` | String | Yes | `active`, `cancelled`, or `expired` |
+| `startDate` | Timestamp | Yes | Initial entitlement start |
+| `endDate` | Timestamp | Yes | Current entitlement expiration |
+| `autoRenew` | Boolean | Yes | Always `false` for payOS |
+| `cancelAtPeriodEnd` | Boolean | Yes | Whether access ends at the current period |
+| `lastPaymentId` | String | Yes | Most recent payment that extended entitlement |
+| `createdAt` | Timestamp | Yes | Creation time |
+| `updatedAt` | Timestamp | Yes | Last update time |
+
+The active subscription is the source of truth for Premium entitlement.
+`users.membershipId` is a backend-maintained cache only.
 
 ---
 
@@ -484,17 +486,50 @@ users/{userId}/subscriptions/{subscriptionId}
 users/{userId}/payments/{paymentId}
 ```
 
-| Field            | Type      | Required | Description                           |
-| ---------------- | --------- | -------: | ------------------------------------- |
-| `subscriptionId` | String    |      Yes | Reference to the related subscription |
-| `membershipId`   | String    |      Yes | Purchased membership ID               |
-| `amount`         | Number    |      Yes | Transaction amount                    |
-| `currency`       | String    |      Yes | Currency code                         |
-| `platform`       | String    |      Yes | `android` or `ios`                    |
-| `productId`      | String    |      Yes | Store product ID                      |
-| `transactionId`  | String    |      Yes | Transaction ID from the store         |
-| `status`         | String    |      Yes | Payment status                        |
-| `createdAt`      | Timestamp |      Yes | Payment time                          |
+| Field | Type | Required | Description |
+| --- | --- | ---: | --- |
+| `membershipId` | String | Yes | Purchased membership ID |
+| `subscriptionId` | String | No | Subscription activated by a completed payment |
+| `provider` | String | Yes | `payos` |
+| `providerRequestId` | String | No | payOS payment link ID |
+| `providerTransactionId` | String | No | Unique incoming bank transaction ID |
+| `referenceNumber` | String | Yes | Unique opaque FOORA payment reference |
+| `amount` | Number | Yes | Server-resolved amount |
+| `currency` | String | Yes | `VND` |
+| `status` | String | Yes | `pending`, `completed`, `failed`, `cancelled`, `expired`, or `requires_review` |
+| `qrCode` | String | No | QR payload returned by Cas |
+| `virtualAccountNumber` | String | No | Destination virtual account |
+| `description` | String | Yes | Required transfer description |
+| `durationDays` | Number | Yes | Server snapshot used for activation |
+| `expiresAt` | Timestamp | Yes | Payment deadline |
+| `paidAt` | Timestamp | No | Bank transaction time |
+| `cancelledAt` | Timestamp | No | Cancellation time |
+| `reviewReason` | String | No | Reason manual review is required |
+| `createdAt` | Timestamp | Yes | Creation time |
+| `updatedAt` | Timestamp | Yes | Last update time |
+
+Clients may read only their own payment documents. All writes are backend-only.
+
+## 17.1 Collection: payment_order_locks
+
+**Path:** `payment_order_locks/{lockId}`
+
+Server-only lock used to serialize create-order requests per user and membership.
+Firestore Rules deny all client reads and writes.
+
+## 17.2 Collection: payment_references
+
+**Path:** `payment_references/{referenceNumber}`
+
+Server-only lookup mapping a payOS order code to `userId` and `paymentId`.
+Firestore Rules deny all client reads and writes.
+
+## 17.3 Collection: payment_provider_transactions
+
+**Path:** `payment_provider_transactions/{providerTransactionId}`
+
+Server-only idempotency ledger. The provider transaction ID is the document ID so
+one bank transaction cannot activate more than one payment.
 
 ---
 

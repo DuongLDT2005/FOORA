@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/features/receipt/domain/entities/receipt_item.dart';
 import 'package:foora/features/receipt/domain/repositories/receipt_repository.dart';
@@ -7,7 +8,9 @@ import 'package:foora/features/receipt/domain/usecases/scan_receipt.dart';
 import 'package:foora/features/receipt/presentation/providers/receipt_scan_provider.dart';
 
 class MockReceiptRepository implements ReceiptRepository {
-  File? lastScannedFile;
+  Uint8List? lastScannedBytes;
+  String? lastImagePath;
+  String? lastMimeType;
   String? lastHouseholdId;
   List<ReceiptItem>? lastBatchItems;
   String? lastBatchReceiptId;
@@ -18,11 +21,16 @@ class MockReceiptRepository implements ReceiptRepository {
   int mockSavedCount = 2;
 
   @override
-  Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})> scanAndParseReceipt({
-    required File imageFile,
+  Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})>
+  scanAndParseReceipt({
+    required Uint8List imageBytes,
+    required String imagePath,
+    required String mimeType,
     required String householdId,
   }) async {
-    lastScannedFile = imageFile;
+    lastScannedBytes = imageBytes;
+    lastImagePath = imagePath;
+    lastMimeType = mimeType;
     lastHouseholdId = householdId;
     return (
       receiptId: mockReceiptId,
@@ -94,37 +102,47 @@ void main() {
   });
 
   group('Receipt Domain UseCases Tests', () {
-    test('ScanReceiptUseCase delegates to repository with correct parameters', () async {
-      mockRepository.mockItemsToReturn = [sampleItem1, sampleItem2];
-      final fakeFile = File('dummy_receipt.jpg');
+    test(
+      'ScanReceiptUseCase delegates to repository with correct parameters',
+      () async {
+        mockRepository.mockItemsToReturn = [sampleItem1, sampleItem2];
+        final fakeBytes = Uint8List.fromList([1, 2, 3]);
 
-      final result = await scanReceiptUseCase(
-        imageFile: fakeFile,
-        householdId: 'house-789',
-      );
+        final result = await scanReceiptUseCase(
+          imageBytes: fakeBytes,
+          imagePath: 'dummy_receipt.jpg',
+          mimeType: 'image/jpeg',
+          householdId: 'house-789',
+        );
 
-      expect(mockRepository.lastScannedFile?.path, equals(fakeFile.path));
-      expect(mockRepository.lastHouseholdId, equals('house-789'));
-      expect(result.receiptId, equals('rec-123'));
-      expect(result.items.length, equals(2));
-      expect(result.scansRemaining, equals(4));
-      expect(result.items.first.name, equals('Thịt bò Úc'));
-    });
+        expect(mockRepository.lastScannedBytes, equals(fakeBytes));
+        expect(mockRepository.lastImagePath, equals('dummy_receipt.jpg'));
+        expect(mockRepository.lastMimeType, equals('image/jpeg'));
+        expect(mockRepository.lastHouseholdId, equals('house-789'));
+        expect(result.receiptId, equals('rec-123'));
+        expect(result.items.length, equals(2));
+        expect(result.scansRemaining, equals(4));
+        expect(result.items.first.name, equals('Thịt bò Úc'));
+      },
+    );
 
-    test('ConfirmReceiptItemsUseCase adds recognized items to household inventory', () async {
-      mockRepository.mockSavedCount = 2;
+    test(
+      'ConfirmReceiptItemsUseCase adds recognized items to household inventory',
+      () async {
+        mockRepository.mockSavedCount = 2;
 
-      final count = await confirmReceiptItemsUseCase(
-        householdId: 'house-789',
-        items: [sampleItem1, sampleItem2],
-        receiptId: 'rec-123',
-      );
+        final count = await confirmReceiptItemsUseCase(
+          householdId: 'house-789',
+          items: [sampleItem1, sampleItem2],
+          receiptId: 'rec-123',
+        );
 
-      expect(count, equals(2));
-      expect(mockRepository.lastHouseholdId, equals('house-789'));
-      expect(mockRepository.lastBatchItems?.length, equals(2));
-      expect(mockRepository.lastBatchReceiptId, equals('rec-123'));
-    });
+        expect(count, equals(2));
+        expect(mockRepository.lastHouseholdId, equals('house-789'));
+        expect(mockRepository.lastBatchItems?.length, equals(2));
+        expect(mockRepository.lastBatchReceiptId, equals('rec-123'));
+      },
+    );
   });
 
   group('Receipt Entities & Alert Tests', () {
@@ -180,7 +198,11 @@ void main() {
     });
 
     test('unlimited premium quota', () {
-      const quota = ReceiptQuotaStatus(scansUsed: 20, scanLimit: 5, isUnlimited: true);
+      const quota = ReceiptQuotaStatus(
+        scansUsed: 20,
+        scanLimit: 5,
+        isUnlimited: true,
+      );
       expect(quota.isQuotaExceeded, isFalse);
       expect(quota.scansRemaining, greaterThan(1000));
     });

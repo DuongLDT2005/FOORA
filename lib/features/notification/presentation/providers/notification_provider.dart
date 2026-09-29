@@ -11,6 +11,13 @@ import '../../domain/usecases/mark_notification_as_read.dart';
 import '../../domain/usecases/register_device.dart';
 import '../../domain/usecases/unregister_device.dart';
 
+final currentNotificationUserIdProvider = StreamProvider<String?>((ref) {
+  return ref
+      .watch(firebaseAuthProvider)
+      .authStateChanges()
+      .map((user) => user?.uid);
+});
+
 // --- Data Layer Providers ---
 
 final notificationRemoteDataSourceProvider =
@@ -75,3 +82,27 @@ final unreadNotificationCountProvider = Provider.family<int, String>((
     orElse: () => 0,
   );
 });
+
+class NotificationActionNotifier extends StateNotifier<AsyncValue<void>> {
+  final NotificationRepository _repository;
+
+  NotificationActionNotifier(this._repository) : super(const AsyncData(null));
+
+  Future<void> markAsRead(String userId, String notificationId) async {
+    await _repository.markAsRead(
+      userId: userId,
+      notificationId: notificationId,
+    );
+  }
+
+  Future<void> markAllAsRead(String userId) async {
+    await _repository.markAllAsRead(userId: userId);
+  }
+}
+
+final notificationNotifierProvider =
+    StateNotifierProvider<NotificationActionNotifier, AsyncValue<void>>((ref) {
+      return NotificationActionNotifier(
+        ref.watch(notificationRepositoryProvider),
+      );
+    });

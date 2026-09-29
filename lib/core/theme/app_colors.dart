@@ -56,13 +56,18 @@ class AppColors {
   static const Color emerald100 = Color(0xFFD1FAE5);
   static const Color emerald200 = Color(0xFFA7F3D0);
   static const Color emerald500 = Color(0xFF10B981);
+  static const Color emerald600 = Color(0xFF059669);
+  static const Color emerald700 = Color(0xFF047857);
   static const Color emerald800 = Color(0xFF065F46);
   static const Color emerald900 = Color(0xFF064E3B);
 
   // Red & Warning Light Tones
   static const Color red50 = Color(0xFFFEF2F2);
   static const Color red100 = Color(0xFFFEE2E2);
+  static const Color red500 = Color(0xFFEF4444);
   static const Color red600 = Color(0xFFDC2626);
+  static const Color red700 = Color(0xFFB91C1C);
+  static const Color red900 = Color(0xFF7F1D1D);
 
   // Amber & Warning Light Tones
   static const Color amber50 = Color(0xFFFFFBEB);
@@ -72,7 +77,6 @@ class AppColors {
   static const Color amber600 = Color(0xFFD97706);
   static const Color amber700 = Color(0xFFB45309);
   static const Color amber800 = Color(0xFF92400E);
-  static const Color red500 = Color(0xFFEF4444);
   static const Color blue500 = Color(0xFF3B82F6);
 
   // Surface helper
