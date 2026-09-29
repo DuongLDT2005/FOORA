@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_enums.dart';
+import '../../../../core/errors/exceptions.dart';
 import '../../../../core/firebase/firebase_providers.dart';
 import '../../data/datasources/payment_remote_datasource.dart';
 import '../../data/repositories/payment_repository_impl.dart';
@@ -116,7 +117,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
     } catch (error) {
       state = PaymentFlowState(
         phase: PaymentFlowPhase.failed,
-        message: 'Không thể xử lý giao dịch. Vui lòng thử lại.',
+        message: _messageFor(error),
         retryable: true,
       );
       return null;
@@ -133,7 +134,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
         state = PaymentFlowState(
           phase: PaymentFlowPhase.failed,
           payment: state.payment,
-          message: 'Không thể xử lý giao dịch. Vui lòng thử lại.',
+          message: _messageFor(error),
           retryable: true,
         );
       },
@@ -149,7 +150,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
       state = PaymentFlowState(
         phase: PaymentFlowPhase.failed,
         payment: payment,
-        message: 'Không thể xử lý giao dịch. Vui lòng thử lại.',
+        message: _messageFor(error),
         retryable: true,
       );
     }
@@ -171,6 +172,13 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
           : null,
       retryable: payment.status == PaymentStatus.failed,
     );
+  }
+
+  String _messageFor(Object error) {
+    if (error is AppException && error.message.trim().isNotEmpty) {
+      return error.message;
+    }
+    return 'Không thể xử lý giao dịch. Vui lòng thử lại.';
   }
 
   @override

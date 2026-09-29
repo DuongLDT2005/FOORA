@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/core/constants/app_enums.dart';
+import 'package:foora/core/errors/exceptions.dart';
 import 'package:foora/features/payment/data/models/payment_transaction_model.dart';
 import 'package:foora/features/payment/domain/entities/payment_transaction.dart';
 import 'package:foora/features/payment/domain/repositories/payment_repository.dart';
@@ -67,6 +68,28 @@ void main() {
       await repository.dispose();
     },
   );
+
+  test('controller preserves an actionable backend error message', () async {
+    final repository = _FakePaymentRepository()
+      ..createError = const ServerException(
+        'Dịch vụ thanh toán đang tạm gián đoạn.',
+        'unavailable',
+      );
+    final controller = PaymentController(
+      CreatePaymentIntent(repository),
+      WatchPayment(repository),
+      CancelPendingPayment(repository),
+    );
+
+    final created = await controller.createOrder('premium');
+
+    expect(created, isNull);
+    expect(controller.state.phase, PaymentFlowPhase.failed);
+    expect(controller.state.message, 'Dịch vụ thanh toán đang tạm gián đoạn.');
+    expect(controller.state.retryable, isTrue);
+    controller.dispose();
+    await repository.dispose();
+  });
 }
 
 PaymentTransaction _payment({PaymentStatus status = PaymentStatus.pending}) {
@@ -84,6 +107,7 @@ PaymentTransaction _payment({PaymentStatus status = PaymentStatus.pending}) {
 
 class _FakePaymentRepository implements PaymentRepository {
   final _controller = StreamController<PaymentTransaction>.broadcast();
+  Object? createError;
 
   void emit(PaymentTransaction payment) => _controller.add(payment);
 
@@ -94,6 +118,8 @@ class _FakePaymentRepository implements PaymentRepository {
 
   @override
   Future<PaymentTransaction> createPaymentOrder(String membershipId) async {
+    final error = createError;
+    if (error != null) throw error;
     return _payment();
   }
 

@@ -1,5 +1,6 @@
 import {PayOS} from "@payos/node";
 import {HttpsError} from "firebase-functions/v2/https";
+import * as logger from "firebase-functions/logger";
 import {
   payosApiKey,
   payosBaseUrl,
@@ -69,6 +70,11 @@ export class PayosClient implements PaymentProviderClient {
       };
     } catch (error) {
       if (error instanceof HttpsError) throw error;
+      logger.error("payOS payment creation failed", {
+        error,
+        orderCode,
+        amount: input.amount,
+      });
       throw new HttpsError("unavailable", "payOS payment creation failed.");
     }
   }

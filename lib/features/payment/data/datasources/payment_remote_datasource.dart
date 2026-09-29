@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:foora/core/constants/firestore_constants.dart';
 
+import '../../../../core/errors/exceptions.dart';
 import '../models/payment_transaction_model.dart';
 
 abstract class PaymentRemoteDataSource {
@@ -36,18 +37,30 @@ class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
   Future<PaymentTransactionModel> createPaymentOrder(
     String membershipId,
   ) async {
-    final result = await _functions.httpsCallable('createCasPaymentOrder').call(
-      <String, dynamic>{'membershipId': membershipId},
-    );
-    final envelope = Map<String, dynamic>.from(result.data as Map);
-    if (envelope['success'] != true || envelope['data'] is! Map) {
-      throw StateError(
-        envelope['error'] as String? ?? 'Cannot create payment.',
+    try {
+      final callable = _functions.httpsCallable(
+        'createCasPaymentOrder',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
       );
+      final result = await callable.call(<String, dynamic>{
+        'membershipId': membershipId,
+      });
+      final envelope = Map<String, dynamic>.from(result.data as Map);
+      if (envelope['success'] != true || envelope['data'] is! Map) {
+        throw ServerException(
+          envelope['error'] as String? ?? 'Không thể tạo giao dịch thanh toán.',
+        );
+      }
+      return PaymentTransactionModel.fromJson(
+        Map<String, dynamic>.from(envelope['data'] as Map),
+      );
+    } on FirebaseFunctionsException catch (error) {
+      throw _mapFunctionsException(error);
+    } on AppException {
+      rethrow;
+    } catch (error) {
+      throw ServerException('Không thể tạo giao dịch thanh toán: $error');
     }
-    return PaymentTransactionModel.fromJson(
-      Map<String, dynamic>.from(envelope['data'] as Map),
-    );
   }
 
   @override
@@ -73,14 +86,52 @@ class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
 
   @override
   Future<void> cancelPendingPayment(String paymentId) async {
-    final result = await _functions.httpsCallable('cancelCasPaymentOrder').call(
-      <String, dynamic>{'paymentId': paymentId},
-    );
-    final envelope = Map<String, dynamic>.from(result.data as Map);
-    if (envelope['success'] != true) {
-      throw StateError(
-        envelope['error'] as String? ?? 'Cannot cancel payment.',
-      );
+    try {
+      final result = await _functions
+          .httpsCallable('cancelCasPaymentOrder')
+          .call(<String, dynamic>{'paymentId': paymentId});
+      final envelope = Map<String, dynamic>.from(result.data as Map);
+      if (envelope['success'] != true) {
+        throw ServerException(
+          envelope['error'] as String? ?? 'Không thể hủy giao dịch.',
+        );
+      }
+    } on FirebaseFunctionsException catch (error) {
+      throw _mapFunctionsException(error);
+    } on AppException {
+      rethrow;
+    } catch (error) {
+      throw ServerException('Không thể hủy giao dịch: $error');
     }
+  }
+
+  ServerException _mapFunctionsException(FirebaseFunctionsException error) {
+    final fallback = switch (error.code) {
+      'unauthenticated' =>
+        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+      'permission-denied' => 'Bạn không có quyền thực hiện giao dịch này.',
+      'not-found' => 'Không tìm thấy gói thành viên.',
+      'failed-precondition' => 'Gói thành viên hiện chưa thể được thanh toán.',
+      'unavailable' || 'deadline-exceeded' =>
+        'Dịch vụ thanh toán đang tạm gián đoạn. Vui lòng thử lại.',
+      'aborted' =>
+        'Giao dịch đang được khởi tạo. Vui lòng thử lại sau ít giây.',
+      _ => 'Không thể xử lý giao dịch. Vui lòng thử lại.',
+    };
+    final providerMessage = error.message?.trim();
+    final canShowProviderMessage = {
+      'invalid-argument',
+      'permission-denied',
+      'not-found',
+      'failed-precondition',
+    }.contains(error.code);
+    return ServerException(
+      canShowProviderMessage &&
+              providerMessage != null &&
+              providerMessage.isNotEmpty
+          ? providerMessage
+          : fallback,
+      error.code,
+    );
   }
 }

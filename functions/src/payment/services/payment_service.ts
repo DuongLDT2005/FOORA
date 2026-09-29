@@ -13,6 +13,8 @@ import {
 } from "../types/payment_types";
 
 const PROVIDER = "payos";
+const REUSED_ORDER_POLL_INTERVAL_MS = 250;
+const REUSED_ORDER_MAX_ATTEMPTS = 120;
 
 function createReferenceNumber(): string {
   const value = randomBytes(6).readUIntBE(0, 6) % 900000000000;
@@ -116,15 +118,27 @@ export class PaymentService {
 
     if (setup.reused && setup.data !== null) {
       let reusedData = setup.data;
-      for (let attempt = 0; attempt < 8 && !reusedData.qrCode; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
+      for (
+        let attempt = 0;
+        attempt < REUSED_ORDER_MAX_ATTEMPTS && !reusedData.qrCode;
+        attempt++
+      ) {
+        if (reusedData.status === "failed") {
+          throw new HttpsError(
+            "unavailable",
+            "The previous payment order could not be created. Please retry."
+          );
+        }
+        await new Promise((resolve) =>
+          setTimeout(resolve, REUSED_ORDER_POLL_INTERVAL_MS)
+        );
         reusedData = (await payments.doc(setup.paymentId).get()).data() ??
           reusedData;
       }
       if (!reusedData.qrCode) {
         throw new HttpsError(
-          "aborted",
-          "The existing payment order is still being prepared."
+          "deadline-exceeded",
+          "The payment provider took too long to create the QR code. Please retry."
         );
       }
       return this.toOrderResult(setup.paymentId, reusedData);
