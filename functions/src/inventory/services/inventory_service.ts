@@ -174,7 +174,15 @@ export class InventoryService {
         throwPermissionDenied("Bạn không có quyền thêm món vào gia đình này.");
       }
 
-      const currentActiveCount = (householdData.activeItemCount as number) || 0;
+      // activeItemCount is a denormalized display value maintained by a trigger.
+      // Count source documents so a delayed trigger cannot reject a valid add.
+      const currentActiveCount = foodLimit === null ?
+        ((householdData.activeItemCount as number) || 0) :
+        (await transaction.get(
+          householdRef.collection(Collections.INVENTORY_ITEMS)
+            .where("status", "==", "active")
+            .limit(foodLimit + 1)
+        )).size;
 
       // Check foodLimit restriction for Free accounts
       if (foodLimit !== null && currentActiveCount >= foodLimit) {
@@ -203,9 +211,9 @@ export class InventoryService {
         updatedAt: serverTimestamp,
       });
 
-      // Atomically increment activeItemCount on household doc
+      // Repair a stale counter while adding the new item atomically.
       transaction.update(householdRef, {
-        activeItemCount: FieldValue.increment(1),
+        activeItemCount: currentActiveCount + 1,
         updatedAt: serverTimestamp,
       });
     });
@@ -304,7 +312,13 @@ export class InventoryService {
         throwPermissionDenied("Bạn không có quyền thêm món vào gia đình này.");
       }
 
-      const currentActiveCount = (householdData.activeItemCount as number) || 0;
+      const currentActiveCount = foodLimit === null ?
+        ((householdData.activeItemCount as number) || 0) :
+        (await transaction.get(
+          householdRef.collection(Collections.INVENTORY_ITEMS)
+            .where("status", "==", "active")
+            .limit(foodLimit + 1)
+        )).size;
       const newTotal = currentActiveCount + items.length;
 
       // Check foodLimit restriction for Free accounts
@@ -340,9 +354,9 @@ export class InventoryService {
         });
       }
 
-      // Atomically increment activeItemCount by items.length
+      // Repair a stale counter while adding the batch atomically.
       transaction.update(householdRef, {
-        activeItemCount: FieldValue.increment(items.length),
+        activeItemCount: currentActiveCount + items.length,
         updatedAt: serverTimestamp,
       });
     });

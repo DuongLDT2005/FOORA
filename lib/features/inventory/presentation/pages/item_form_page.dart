@@ -220,21 +220,30 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
 
         final success = await formNotifier.submit();
         if (success && context.mounted) {
-          ToastHelper.show(
-            context,
-            isEditing
-                ? 'Đã cập nhật thực phẩm thành công!'
-                : 'Đã thêm thực phẩm vào tủ lạnh!',
+          if (isEditing) {
+            ToastHelper.show(context, 'Đã cập nhật thực phẩm thành công!');
+          } else {
+            await DialogHelper.showInfoDialog(
+              context,
+              title: 'Đã lưu thành công',
+              message: 'Thực phẩm đã được lưu thành công vào kho.',
+              buttonText: 'OK',
+              icon: LucideIcons.circleCheck,
+            );
+          }
+          if (!context.mounted) return;
+          final latestState = ref.read(
+            inventoryFormNotifierProvider(widget.itemToEdit),
           );
           final updatedItem = widget.itemToEdit?.copyWith(
-            name: formState.name.trim(),
-            categoryId: formState.categoryId,
-            storageLocationId: formState.storageLocationId,
-            quantity: formState.quantity,
-            unit: formState.unit,
-            remainingPercentage: formState.remainingPercentage,
-            purchaseDate: formState.purchaseDate,
-            expirationDate: formState.expirationDate,
+            name: latestState.name.trim(),
+            categoryId: latestState.categoryId,
+            storageLocationId: latestState.storageLocationId,
+            quantity: latestState.quantity,
+            unit: latestState.unit,
+            remainingPercentage: latestState.remainingPercentage,
+            purchaseDate: latestState.purchaseDate,
+            expirationDate: latestState.expirationDate,
           );
           context.pop<InventoryItem?>(updatedItem);
         }
