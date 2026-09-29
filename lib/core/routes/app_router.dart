@@ -206,7 +206,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-
       // Mobile Bottom Navigation Tabs (StatefulShellRoute)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

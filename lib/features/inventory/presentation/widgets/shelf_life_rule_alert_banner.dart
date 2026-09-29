@@ -39,7 +39,9 @@ class ShelfLifeRuleAlertBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     if (hasRule && maxValue != null) {
       final unitStr = _formatUnit(unit);
-      final valueStr = maxValue! % 1 == 0 ? maxValue!.toInt().toString() : maxValue.toString();
+      final valueStr = maxValue! % 1 == 0
+          ? maxValue!.toInt().toString()
+          : maxValue.toString();
 
       return Container(
         margin: EdgeInsets.only(top: 8.h),

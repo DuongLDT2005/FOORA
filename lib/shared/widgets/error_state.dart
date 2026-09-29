@@ -68,7 +68,8 @@ class ErrorStateWidget extends StatelessWidget {
   const ErrorStateWidget({
     super.key,
     this.title = 'Đã xảy ra lỗi',
-    this.message = 'Không thể tải dữ liệu vào lúc này. Vui lòng kiểm tra lại kết nối và thử lại.',
+    this.message =
+        'Không thể tải dữ liệu vào lúc này. Vui lòng kiểm tra lại kết nối và thử lại.',
     this.onRetry,
     this.retryText = 'Thử lại',
     this.icon = Icons.error_outline,

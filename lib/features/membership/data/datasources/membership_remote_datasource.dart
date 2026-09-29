@@ -72,14 +72,13 @@ class MembershipRemoteDataSourceImpl implements MembershipRemoteDataSource {
   @override
   Future<void> updateAutoRenew(bool enabled) async {
     try {
-      final result = await functions
-          .httpsCallable('updateAutoRenew')
-          .call(<String, dynamic>{'enabled': enabled});
+      final result = await functions.httpsCallable('updateAutoRenew').call(
+        <String, dynamic>{'enabled': enabled},
+      );
       final envelope = Map<String, dynamic>.from(result.data as Map);
       if (envelope['success'] != true) {
         throw ServerException(
-          envelope['error'] as String? ??
-              'Không thể cập nhật tự động gia hạn.',
+          envelope['error'] as String? ?? 'Không thể cập nhật tự động gia hạn.',
         );
       }
     } on FirebaseFunctionsException catch (error) {

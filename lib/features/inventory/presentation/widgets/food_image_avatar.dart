@@ -75,11 +75,7 @@ class FoodImageAvatar extends ConsumerWidget {
 
     Widget fallbackIconWidget() {
       return Center(
-        child: Icon(
-          iconData,
-          color: effectiveIconColor,
-          size: (size * 0.52).r,
-        ),
+        child: Icon(iconData, color: effectiveIconColor, size: (size * 0.52).r),
       );
     }
 
@@ -101,7 +97,8 @@ class FoodImageAvatar extends ConsumerWidget {
                 width: size.r,
                 height: size.r,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => fallbackIconWidget(),
+                errorBuilder: (context, error, stackTrace) =>
+                    fallbackIconWidget(),
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
                   return fallbackIconWidget();

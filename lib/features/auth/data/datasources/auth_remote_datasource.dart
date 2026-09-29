@@ -141,13 +141,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await fbUser.updateDisplayName(fullName);
 
       // Save fullName into Firestore user document using merge: true
-      await firestore
-          .collection(FirestoreConstants.users)
-          .doc(fbUser.uid)
-          .set({
-            'fullName': fullName,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+      await firestore.collection(FirestoreConstants.users).doc(fbUser.uid).set({
+        'fullName': fullName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       // Also update default household name if user doc already has activeHouseholdId
       final userSnapshot = await firestore
@@ -163,7 +160,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             .update({
               'name': 'Tủ lạnh của $fullName',
               'updatedAt': FieldValue.serverTimestamp(),
-            }).catchError((_) => null);
+            })
+            .catchError((_) => null);
       }
 
       final now = DateTime.now();
@@ -208,8 +206,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
 
-      final resolvedName =
-          fbUser.displayName ?? googleUser.displayName ?? '';
+      final resolvedName = fbUser.displayName ?? googleUser.displayName ?? '';
 
       // Save fullName into Firestore user document using merge: true
       if (resolvedName.isNotEmpty) {
@@ -234,7 +231,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
               .update({
                 'name': 'Tủ lạnh của $resolvedName',
                 'updatedAt': FieldValue.serverTimestamp(),
-              }).catchError((_) => null);
+              })
+              .catchError((_) => null);
         }
       }
 

@@ -8,9 +8,9 @@ extension StringExtensions on String {
   /// Capitalize every word in the string (e.g. 'thịt bò tươi' -> 'Thịt Bò Tươi')
   String toTitleCase() {
     if (isEmpty) return this;
-    return split(' ')
-        .map((word) => word.isNotEmpty ? word.capitalize() : '')
-        .join(' ');
+    return split(
+      ' ',
+    ).map((word) => word.isNotEmpty ? word.capitalize() : '').join(' ');
   }
 
   /// Obscure email for privacy (e.g. 'duongldt2005@gmail.com' -> 'd***5@gmail.com')

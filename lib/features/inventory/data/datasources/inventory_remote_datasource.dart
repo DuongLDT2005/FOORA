@@ -125,7 +125,8 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'resource-exhausted') {
         throw ServerException(
-          e.message ?? 'Gói tài khoản đã đạt giới hạn thực phẩm. Vui lòng nâng cấp Premium.',
+          e.message ??
+              'Gói tài khoản đã đạt giới hạn thực phẩm. Vui lòng nâng cấp Premium.',
           e.code,
         );
       }

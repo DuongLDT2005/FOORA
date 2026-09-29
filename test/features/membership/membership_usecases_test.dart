@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/features/membership/domain/entities/membership_plan.dart';
+import 'package:foora/features/membership/domain/entities/subscription.dart';
 import 'package:foora/features/membership/domain/repositories/membership_repository.dart';
 import 'package:foora/features/membership/domain/usecases/get_membership_plans.dart';
 
@@ -14,6 +15,12 @@ class _FakeMembershipRepository implements MembershipRepository {
     requestedMembershipId = membershipId;
     return plan;
   }
+
+  @override
+  Stream<Subscription?> watchPremiumSubscription() => const Stream.empty();
+
+  @override
+  Future<void> updateAutoRenew(bool enabled) async {}
 }
 
 void main() {

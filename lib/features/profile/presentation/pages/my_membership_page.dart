@@ -189,8 +189,8 @@ class _MyMembershipPageState extends ConsumerState<MyMembershipPage> {
 
   Future<void> _updateAutoRenew(bool enabled) async {
     final success = await ref
-      .read(autoRenewUpdateControllerProvider.notifier)
-      .updateAutoRenew(enabled);
+        .read(autoRenewUpdateControllerProvider.notifier)
+        .updateAutoRenew(enabled);
     if (!mounted) return;
     if (success) {
       ToastHelper.show(

@@ -38,7 +38,8 @@ class LocationFilterTabs extends ConsumerWidget {
             ref: ref,
             id: 'fridge',
             label: 'Ngăn mát',
-            icon: LucideIcons.thermometer, // using thermometer since LucideIcons doesn't have refrigerator directly without checking
+            icon: LucideIcons
+                .thermometer, // using thermometer since LucideIcons doesn't have refrigerator directly without checking
             isActive: selectedLocationId == 'fridge',
             activeColor: AppColors.emerald500,
             activeLabelColor: AppColors.emerald800,
