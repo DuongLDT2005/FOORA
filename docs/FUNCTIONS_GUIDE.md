@@ -43,6 +43,7 @@ Tài liệu này cung cấp bản thiết kế cấu trúc chi tiết của **t�
 2. **Nghiệp vụ nằm ở Service (Fat Services)**: Mọi xử lý Firestore, AI, IAP validation đều phải được đóng gói thành các class hoặc hàm service riêng biệt trong thư mục `services/`.
 3. **Bắt buộc `handleFunctionError` trả về `never`**: Mọi helper ném lỗi và hàm bắt lỗi nội bộ đều phải trả về `never` để TypeScript hiểu luồng thực thi chấm dứt ngay tại đó.
 4. **Không bao giờ hardcode**: Mọi tên collection, status, role đều phải import từ `constants/collections.ts` và `types/index.ts`.
+5. **Quyền gói lấy từ subscription**: Mọi kiểm tra gói/hạn mức (`foodLimit`, `receiptScanQuota`) dùng `MembershipService.resolveMembershipId` + `MembershipService.getLimits`; không đọc `users.membershipId` (chỉ là cache) và không có giá trị fallback cứng — thiếu cấu hình `memberships` sẽ trả lỗi `failed-precondition`.
 
 ---
 
@@ -103,10 +104,11 @@ functions/src/
 │   ├── callables/
 │   │   └── get_membership_info.ts  # Callable lấy thông tin gói thành viên hiện tại
 │   ├── services/
-│   │   └── membership_service.ts   # Logic kiểm tra gói, áp dụng giới hạn items & scan
+│   │   ├── entitlement.ts          # Rule thuần: subscription active -> gói hiệu lực (unit-test được)
+│   │   └── membership_service.ts   # Entitlement resolver dùng chung, đọc giới hạn từ memberships, đồng bộ cache users.membershipId
 │   └── index.ts
 │
-├── payment/                        # 7. PAYMENT (CAS QR PAY)
+├── payment/                        # 7. PAYMENT (payOS QR; export names keep the legacy `Cas` prefix)
 │   ├── callables/
 │   │   ├── create_cas_payment_order.ts
 │   │   └── cancel_cas_payment_order.ts
@@ -115,8 +117,8 @@ functions/src/
 │   ├── schedules/
 │   │   └── expire_pending_payments.ts
 │   ├── services/
-│   │   ├── cas_client.ts
-│   │   ├── cas_webhook.ts
+│   │   ├── payos_client.ts
+│   │   ├── payos_webhook.ts
 │   │   └── payment_service.ts
 │   ├── types/
 │   │   └── payment_types.ts
@@ -150,7 +152,8 @@ functions/src/
 | Module | Tên Function | Loại Trigger | Path / Schedule | Đầu Vào (Input) | Đầu Ra (Output) / Hành Động |
 | :--- | :--- | :---: | :--- | :--- | :--- |
 | **`auth`** | `onUserCreated` | Auth Trigger | `firebaseAuth.user().onCreate` | `UserRecord` (uid, email, displayName) | Khởi tạo `users/{uid}` (gán `role: 'member'`, `membershipId: 'free'`, `isActive: true` bằng `merge: true`, client cập nhật `fullName`), tự động tạo `households` mặc định ("Tủ lạnh của {name}") với `activeItemCount: 0` và khởi tạo `ai_usage/current`. |
-| **`inventory`** | `addInventoryItem` | Callable | `onCall` | `{ householdId, name, categoryId, quantity, unit, storageLocationId, ... }` | Chạy Firestore Transaction kiểm tra `foodLimit` của Membership (`Free: 30`, `Premium: null`), tính hạn dùng và tăng `activeItemCount` lên 1. |
+| **`inventory`** | `addInventoryItem` | Callable | `onCall` | `{ householdId, name, categoryId, quantity, unit, storageLocationId, ... }` | Chạy Firestore Transaction kiểm tra `foodLimit` đọc từ `memberships/{membershipId}` (seed: `Free: 30`, `Premium: null`), tính hạn dùng và tăng `activeItemCount` lên 1. Đây là đường duy nhất để client tạo `inventory_items` (Rules chặn create trực tiếp). |
+| | `batchAddInventoryItems` | Callable | `onCall` | `{ householdId, items[], receiptId? }` | Thêm nhiều món từ hóa đơn trong một transaction, kiểm tra `foodLimit` và tăng `activeItemCount`. |
 | | `onInventoryItemMutation` | Firestore | `households/{householdId}/inventory_items/{itemId}` | Snapshot document update/delete | Lắng nghe `onUpdate` & `onDelete` (không bắt `onCreate` để tránh double count) đồng bộ `activeItemCount` khi đổi trạng thái sang `consumed`/`discarded`. |
 | | `checkExpiryDailyCron` | Scheduled | `0 7 * * *` (07:00 VN) | Không có (Tự động) | Quét các item sắp hết hạn (<= 3 ngày) / hết hạn (< 0 ngày) -> ghi `notifications`. |
 | **`receipt`** | `parseReceiptAi` | Callable | `onCall` | `{ ocrText: string; householdId: string }` | Trích xuất JSON danh sách thực phẩm (`name`, `quantity`, `unit`, `storageLocationId`). |
@@ -159,9 +162,9 @@ functions/src/
 | **`notification`** | `onNotificationCreated` | Firestore | `users/{userId}/notifications/{id}` | Snapshot document thông báo mới | Gửi tin nhắn FCM đến toàn bộ thiết bị đang active trong `users/{userId}/devices`. |
 | **`membership`** | `resetMonthlyQuotaCron` | Scheduled | `0 0 1 * *` (00:00 ngày 1) | Không có (Tự động) | Batch update reset `ai_usage/current.receiptScanUsed = 0` cho toàn bộ user Free. |
 | | `getMembershipInfo` | Callable | `onCall` | Không có | Thông tin chi tiết gói và hạn mức sử dụng. |
-| **`payment`** | `createCasPaymentOrder` | Callable | `onCall` | `{ membershipId: string }` | Creates or reuses a server-priced Cas QR order. |
+| **`payment`** | `createCasPaymentOrder` | Callable | `onCall` | `{ membershipId: string }` | Creates or reuses a server-priced payOS QR order. |
 | | `cancelCasPaymentOrder` | Callable | `onCall` | `{ paymentId: string }` | Cancels a pending payment. |
-| | `casTransactionsWebhook` | HTTP | `onRequest` | Signed Cas transaction | Reconciles and atomically activates Premium. |
+| | `casTransactionsWebhook` | HTTP | `onRequest` | Signed payOS webhook | Verifies the payOS checksum, reconciles and atomically activates Premium. |
 | | `expirePendingPayments` | Scheduled | Every 5 minutes | None | Expires overdue pending orders. |
 | **`household`** | `createHousehold` | Callable | `onCall` **[Scope Đợt Này]** | `{ name: string }` | Tạo document `households/{id}`, thêm user vào `members`, set `user.activeHouseholdId`. |
 | | `joinHousehold` | Callable | `onCall` **[Hạ Tầng Cho Sau]** | `{ householdId: string }` | Thêm user vào `households.members`, cập nhật `user.activeHouseholdId`. |
@@ -171,26 +174,30 @@ functions/src/
 
 ---
 
-## 4. Chi Tiet Thuc Thi: Cas QR Pay & Khoa Tai Khoan Tuc Thi
+## 4. Chi Tiet Thuc Thi: payOS QR & Khoa Tai Khoan Tuc Thi
 
-### A. Cas QR Pay
+### A. payOS QR
+
+The provider is **payOS**; the export names keep the historical `Cas` prefix
+for routing compatibility (see `docs/PAYMENT_TEST_GUIDE.md`).
 
 Payment exports:
 
 - `createCasPaymentOrder`: authenticated callable; resolves price and duration
-  from `memberships/{membershipId}`, creates/reuses a pending order, then calls Cas.
+  from `memberships/{membershipId}`, creates/reuses a pending order, then calls payOS.
 - `cancelCasPaymentOrder`: authenticated callable; only transitions `pending`
   payments to `cancelled`.
-- `casTransactionsWebhook`: HTTP endpoint; verifies `X-Casso-Signature` with
-  HMAC SHA-512, reconciles amount/reference/time, and atomically activates Premium.
+- `casTransactionsWebhook`: HTTP endpoint; verifies the payOS signature with
+  `PAYOS_CHECKSUM_KEY`, reconciles amount/reference/time, and atomically activates Premium.
 - `expirePendingPayments`: scheduled function that expires overdue pending orders.
 
-Required secrets are `CAS_CLIENT_ID`, `CAS_SECRET_KEY`, `CAS_ACCESS_TOKEN`,
-and `CAS_WEBHOOK_SECRET`. Non-secret parameters are `CAS_BASE_URL`,
-`CAS_QR_PAY_PATH`, and `PAYMENT_EXPIRY_MINUTES`.
+Required secrets are `PAYOS_CLIENT_ID`, `PAYOS_API_KEY` and `PAYOS_CHECKSUM_KEY`.
+Non-secret parameters are `PAYOS_BASE_URL`, `PAYOS_RETURN_URL`,
+`PAYOS_CANCEL_URL` and `PAYMENT_EXPIRY_MINUTES`.
 
-Handlers remain thin. Provider parsing lives in `services/cas_webhook.ts`; order,
+Handlers remain thin. Provider parsing lives in `services/payos_webhook.ts`; order,
 idempotency, and entitlement transactions live in `services/payment_service.ts`.
+Subscriptions are created with `autoRenew: false`; there is no auto-renew callable.
 
 ---
 

@@ -11,19 +11,29 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function isHouseholdMember(householdId) {
+      return isAuthenticated()
+        && request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.members;
+    }
+
     // Users collection & Subcollections
     match /users/{userId} {
       allow read: if isOwner(userId);
-      // Allow user creation by owner (or cloud function admin)
-      allow create: if isOwner(userId);
-      // User can update profile fields (e.g. fullName, avatarUrl), but cannot modify system-protected fields
+      // The onUserCreated trigger (Admin SDK) owns the system fields. The owner
+      // may only pre-create the profile part if the trigger has not run yet.
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['fullName', 'updatedAt']);
+      // Owner may update profile fields only. `email` may be synced solely to
+      // the verified address carried by the Firebase Auth token.
       allow update: if isOwner(userId)
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'role',
-          'membershipId',
-          'isActive',
-          'activeHouseholdId'
-        ]));
+        && changedKeys().hasOnly(['fullName', 'avatarUrl', 'email', 'updatedAt'])
+        && (!changedKeys().hasAny(['email'])
+          || (request.auth.token.email_verified == true
+            && request.resource.data.email == request.auth.token.email));
       allow delete: if false; // Users can only be deleted via Firebase Auth account deletion trigger
 
       // Devices Subcollection: only device owner can register/update/delete their device
@@ -71,11 +81,36 @@ service cloud.firestore {
 
     // Households collection & Subcollections
     match /households/{householdId} {
-      allow read, write: if isAuthenticated() && request.auth.uid in resource.data.members;
-      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.members;
+      // Households are created by Cloud Functions; members, owner and the
+      // activeItemCount counter are backend-managed.
+      allow create, delete: if false;
+      allow update: if isAuthenticated()
+        && request.auth.uid in resource.data.members
+        && changedKeys().hasOnly(['name', 'updatedAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100;
 
       match /inventory_items/{itemId} {
-        allow read, write: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.members;
+        allow read: if isHouseholdMember(householdId);
+        // New items go through addInventoryItem / batchAddInventoryItems so
+        // the membership foodLimit is enforced server-side.
+        allow create, delete: if false;
+        allow update: if isHouseholdMember(householdId)
+          && changedKeys().hasOnly([
+            'foodId', 'name', 'normalizedName', 'categoryId', 'quantity',
+            'unit', 'remainingPercentage', 'storageLocationId', 'purchaseDate',
+            'expirationDate', 'photoUrl', 'status', 'updatedAt'
+          ])
+          && request.resource.data.status in ['active', 'consumed', 'discarded']
+          // Re-activating a consumed/discarded item would bypass foodLimit.
+          && !(resource.data.status != 'active' && request.resource.data.status == 'active')
+          && request.resource.data.quantity is number
+          && request.resource.data.quantity >= 0
+          && request.resource.data.remainingPercentage is number
+          && request.resource.data.remainingPercentage >= 0
+          && request.resource.data.remainingPercentage <= 100;
       }
     }
 
@@ -121,7 +156,8 @@ service cloud.firestore {
 
     // Bug Reports collection
     match /bug_reports/{reportId} {
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
       allow read, update, delete: if false;
     }
   }

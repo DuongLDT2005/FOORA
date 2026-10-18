@@ -3,6 +3,7 @@ import 'package:foora/core/constants/app_enums.dart';
 
 import '../../domain/entities/payment_transaction.dart';
 
+/// Data model for a payment transaction document (amount, status, QR info, expiry).
 class PaymentTransactionModel extends PaymentTransaction {
   const PaymentTransactionModel({
     required super.id,
@@ -29,6 +30,7 @@ class PaymentTransactionModel extends PaymentTransaction {
     super.transactionId,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory PaymentTransactionModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> document,
   ) {
@@ -38,6 +40,7 @@ class PaymentTransactionModel extends PaymentTransaction {
     );
   }
 
+  /// Builds a model from a raw map (Firestore data or callable response).
   factory PaymentTransactionModel.fromJson(
     Map<String, dynamic> json, {
     String? id,
@@ -76,6 +79,7 @@ class PaymentTransactionModel extends PaymentTransaction {
     );
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -103,6 +107,7 @@ class PaymentTransactionModel extends PaymentTransaction {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; returns null otherwise.
   static DateTime? _parseDateTime(dynamic value) {
     if (value is Timestamp) return value.toDate();
     if (value is String) return DateTime.tryParse(value);

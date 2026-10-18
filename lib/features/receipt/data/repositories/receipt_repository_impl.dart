@@ -9,11 +9,14 @@ import '../../domain/repositories/receipt_repository.dart';
 import '../datasources/receipt_remote_datasource.dart';
 import '../models/receipt_item_model.dart';
 
+/// Implementation of [ReceiptRepository] combining OCR and AI parsing.
 class ReceiptRepositoryImpl implements ReceiptRepository {
   final ReceiptRemoteDataSource remoteDataSource;
 
   ReceiptRepositoryImpl({required this.remoteDataSource});
 
+  /// Scans a receipt image: tries on-device OCR first, then sends the text
+  /// (and image) to the AI parser. Returns the parsed items and remaining quota.
   @override
   Future<({String? receiptId, List<ReceiptItem> items, int? scansRemaining})>
   scanAndParseReceipt({
@@ -48,6 +51,7 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
     }
   }
 
+  /// Saves the reviewed receipt items into the household inventory.
   @override
   Future<int> batchAddReceiptItems({
     required String householdId,
@@ -85,5 +89,15 @@ class ReceiptRepositoryImpl implements ReceiptRepository {
         'Đã xảy ra lỗi khi lưu các món từ hóa đơn. Vui lòng thử lại sau.',
       );
     }
+  }
+
+  @override
+  Stream<int> watchMonthlyScanUsage({required String period}) {
+    return remoteDataSource.watchMonthlyScanUsage(period: period).handleError((
+      Object error,
+    ) {
+      if (error is AppException) throw Failure.fromException(error);
+      throw const ServerFailure('Không thể tải hạn mức quét hóa đơn.');
+    });
   }
 }

@@ -7,6 +7,7 @@ import '../../core/theme/app_text_styles.dart';
 import 'app_button.dart';
 
 // --- AppErrorBanner ---
+/// Inline red banner showing an error message.
 class AppErrorBanner extends StatelessWidget {
   final String? message;
   final EdgeInsetsGeometry? margin;
@@ -58,6 +59,7 @@ class AppErrorBanner extends StatelessWidget {
 }
 
 // --- ErrorStateWidget ---
+/// Full-area error state with message and a retry button.
 class ErrorStateWidget extends StatelessWidget {
   final String title;
   final String message;

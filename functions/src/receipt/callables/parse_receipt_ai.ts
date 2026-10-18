@@ -12,6 +12,11 @@ import {
   EnrichedParsedItem,
 } from "../services/receipt_parser";
 
+import {defineSecret} from "firebase-functions/params";
+
+export const geminiApiKey = defineSecret("GEMINI_API_KEY");
+export const openrouterApiKey = defineSecret("OPENROUTER_API_KEY");
+
 interface ParseReceiptPayload {
   ocrText: string;
   householdId: string;
@@ -28,12 +33,14 @@ interface ParseReceiptResult {
 /**
  * Callable Function: parseReceiptAi
  * Accepts raw OCR text from client, verifies monthly scan quota,
- * extracts food items via Gemini AI, and enriches with smart inventory checks.
+ * extracts food items via Gemini AI or OpenRouter AI, and enriches with smart inventory checks.
  */
 export const parseReceiptAi = onCall<Partial<ParseReceiptPayload>>(
   {
     region: REGION,
     maxInstances: 10,
+    timeoutSeconds: 120,
+    secrets: [geminiApiKey, openrouterApiKey],
   },
   async (request): Promise<ApiResponse<ParseReceiptResult>> => {
     try {

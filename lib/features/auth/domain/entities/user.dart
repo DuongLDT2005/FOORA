@@ -28,7 +28,10 @@ class User {
   });
 
   bool get isAdmin => role == UserRole.admin;
-  bool get isPremium => membershipId == 'premium';
+
+  /// Display-only hint from the backend-maintained `membershipId` cache.
+  /// Entitlement checks must use the active subscription instead.
+  bool get isPremium => membershipId == MembershipTier.premium.value;
 
   User copyWith({
     String? id,

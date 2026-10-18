@@ -25,7 +25,7 @@ export type PaymentStatus =
   | "expired"
   | "requires_review";
 
-export type PaymentProvider = "cas";
+export type PaymentProvider = "payos";
 
 export type StorageLocationCode = "FRIDGE" | "FREEZER";
 

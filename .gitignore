@@ -50,6 +50,8 @@ app.*.map.json
 # Secrets and Environment Variables
 .env
 .env.json
+.env.*.json
+!.env*.example.json
 *.secret
 
 # Flutter legacy / temporary files

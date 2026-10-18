@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routes/route_names.dart';
 
+/// Section title on the Home screen with an optional "see all" action.
 class HomeSectionHeader extends StatelessWidget {
   final String title;
   final Color barColor;

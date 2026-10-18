@@ -11,6 +11,7 @@ import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 
+/// "Liên hệ" screen: support channels plus a direct feedback form.
 class ContactUsPage extends StatefulWidget {
   const ContactUsPage({super.key});
 
@@ -31,6 +32,8 @@ class _ContactUsPageState extends State<ContactUsPage> {
     super.dispose();
   }
 
+  /// Validates the form and shows a confirmation.
+  /// NOTE: sending is simulated (short delay) - not yet connected to a backend.
   Future<void> _handleSendMessage() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -184,6 +187,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
     );
   }
 
+  /// Row for one contact channel (email, hotline, ...).
   Widget _buildChannelTile({
     required IconData icon,
     required String title,

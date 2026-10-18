@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing a message in AI Assistant chat session.
 @immutable
@@ -25,7 +26,10 @@ class AiChatMessage {
         other.content == content &&
         other.isUser == isUser &&
         other.timestamp == timestamp &&
-        listEquals(other.suggestedRecipes, suggestedRecipes);
+        const ListEquality<dynamic>().equals(
+          other.suggestedRecipes,
+          suggestedRecipes,
+        );
   }
 
   @override

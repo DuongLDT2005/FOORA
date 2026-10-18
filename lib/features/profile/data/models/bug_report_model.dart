@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/entities/bug_report.dart';
 
+/// Data model for a user-submitted bug report (`bug_reports/{id}`).
 class BugReportModel extends BugReport {
   const BugReportModel({
     required super.id,
@@ -15,6 +16,7 @@ class BugReportModel extends BugReport {
     required super.createdAt,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory BugReportModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -22,6 +24,7 @@ class BugReportModel extends BugReport {
     return BugReportModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a model from a raw map.
   factory BugReportModel.fromJson(Map<String, dynamic> json, {String? id}) {
     return BugReportModel(
       id: id ?? json['id'] as String? ?? '',
@@ -36,6 +39,7 @@ class BugReportModel extends BugReport {
     );
   }
 
+  /// Wraps a domain [BugReport] for serialization.
   factory BugReportModel.fromEntity(BugReport entity) {
     return BugReportModel(
       id: entity.id,
@@ -50,6 +54,7 @@ class BugReportModel extends BugReport {
     );
   }
 
+  /// Serializes to a Firestore map.
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -63,6 +68,7 @@ class BugReportModel extends BugReport {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; falls back to now.
   static DateTime _parseDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

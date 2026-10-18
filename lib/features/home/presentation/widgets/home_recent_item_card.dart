@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
 
+/// Compact card for the "Vừa thêm gần đây" (recently added) section on Home.
 class HomeRecentItemCard extends StatelessWidget {
   final InventoryItem item;
   final VoidCallback onTap;

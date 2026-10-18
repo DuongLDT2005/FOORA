@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/firebase/firebase_providers.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/loading_widget.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/home_provider.dart';
 import '../widgets/home_greeting_header.dart';
 import '../widgets/home_horizontal_item_card.dart';
@@ -19,21 +22,36 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(firebaseAuthProvider).currentUser;
-    final displayName = user?.displayName ?? 'Khách';
+    final user = ref.watch(currentUserProvider);
+    final fullName = user?.fullName ?? '';
+    final displayName = fullName.isEmpty ? 'Khách' : fullName;
     final firstName = displayName.split(' ').last;
 
-    // Watch home domain dashboard state directly from home module provider
     final dashboardAsync = ref.watch(homeDashboardStreamProvider);
     final dashboardData = dashboardAsync.valueOrNull;
 
-    final totalCount = dashboardData?.totalCount ?? 0;
-    final expiringSoonCount = dashboardData?.expiringSoonCount ?? 0;
-    final expiredCount = dashboardData?.expiredCount ?? 0;
+    if (dashboardData == null) {
+      return Container(
+        color: AppColors.background,
+        child: SafeArea(
+          bottom: false,
+          child: dashboardAsync.hasError
+              ? ErrorStateWidget(
+                  message: 'Không thể tải dữ liệu trang chủ.',
+                  onRetry: () => ref.invalidate(homeDashboardStreamProvider),
+                )
+              : const LoadingWidget(message: 'Đang tải tủ lạnh của bạn...'),
+        ),
+      );
+    }
 
-    final useFirstItems = dashboardData?.useFirstItems ?? [];
-    final expiringSoonItems = dashboardData?.expiringSoonItems ?? [];
-    final recentItems = dashboardData?.recentItems ?? [];
+    final totalCount = dashboardData.totalCount;
+    final expiringSoonCount = dashboardData.expiringSoonCount;
+    final expiredCount = dashboardData.expiredCount;
+
+    final useFirstItems = dashboardData.useFirstItems;
+    final expiringSoonItems = dashboardData.expiringSoonItems;
+    final recentItems = dashboardData.recentItems;
 
     return Container(
       color: AppColors.background,
@@ -51,6 +69,16 @@ class HomePage extends ConsumerWidget {
                 expiringSoonCount: expiringSoonCount,
                 expiredCount: expiredCount,
               ),
+
+              if (totalCount == 0)
+                Padding(
+                  padding: EdgeInsets.only(top: 32.h),
+                  child: const EmptyStateWidget(
+                    title: 'Tủ lạnh đang trống',
+                    subtitle:
+                        'Thêm thực phẩm thủ công hoặc quét hóa đơn để bắt đầu theo dõi hạn dùng.',
+                  ),
+                ),
 
               // 2. Use First (Horizontal Scroll)
               if (useFirstItems.isNotEmpty) ...[

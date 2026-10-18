@@ -81,6 +81,7 @@ final currentProfileStreamProvider = StreamProvider<Profile?>((ref) {
 
 // --- Form & Action State Notifiers ---
 
+/// UI state for edit-profile and account actions (loading, messages, avatar).
 class EditProfileState {
   final bool isLoading;
   final bool isSuccess;
@@ -96,6 +97,7 @@ class EditProfileState {
     this.selectedAvatarLocalPath,
   });
 
+  /// Returns a copy with the given fields replaced.
   EditProfileState copyWith({
     bool? isLoading,
     bool? isSuccess,
@@ -118,15 +120,18 @@ class EditProfileState {
   }
 }
 
+/// Handles saving the profile, changing email/password and deleting the account.
 class EditProfileNotifier extends StateNotifier<EditProfileState> {
   final Ref _ref;
 
   EditProfileNotifier(this._ref) : super(const EditProfileState());
 
+  /// Stores the locally picked avatar path (uploaded on save).
   void setAvatarLocalPath(String? path) {
     state = state.copyWith(selectedAvatarLocalPath: path);
   }
 
+  /// Clears success / error messages.
   void clearMessages() {
     state = state.copyWith(
       clearError: true,
@@ -135,6 +140,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     );
   }
 
+  /// Uploads the new avatar if needed, then saves profile fields.
   Future<bool> saveProfile({
     required String userId,
     required String fullName,
@@ -175,6 +181,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     }
   }
 
+  /// Changes the email; returns `true` on success.
   Future<bool> updateEmail({
     required String newEmail,
     required String currentPassword,
@@ -204,6 +211,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     }
   }
 
+  /// Changes the password; returns `true` on success.
   Future<bool> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -233,6 +241,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     }
   }
 
+  /// Deletes the account; returns `true` on success.
   Future<bool> deleteAccount({String? password}) async {
     state = state.copyWith(
       isLoading: true,
@@ -265,6 +274,7 @@ final editProfileNotifierProvider =
 
 // --- Bug Report Notifier ---
 
+/// UI state of the bug-report form.
 class BugReportState {
   final bool isLoading;
   final bool isSuccess;
@@ -280,6 +290,7 @@ class BugReportState {
     this.selectedScreenshotPath,
   });
 
+  /// Returns a copy with the given fields replaced.
   BugReportState copyWith({
     bool? isLoading,
     bool? isSuccess,
@@ -302,19 +313,23 @@ class BugReportState {
   }
 }
 
+/// Submits bug reports (with optional screenshot).
 class BugReportNotifier extends StateNotifier<BugReportState> {
   final Ref _ref;
 
   BugReportNotifier(this._ref) : super(const BugReportState());
 
+  /// Attaches or removes the screenshot.
   void setScreenshot(String? path) {
     state = state.copyWith(selectedScreenshotPath: path);
   }
 
+  /// Resets the form state.
   void reset() {
     state = const BugReportState();
   }
 
+  /// Sends the report; returns `true` on success.
   Future<bool> submitReport({
     required String userId,
     required String userEmail,

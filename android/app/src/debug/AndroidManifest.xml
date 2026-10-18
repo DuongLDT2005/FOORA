@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Plain HTTP to the local Firebase emulators (10.0.2.2) is only needed
+         while developing; release APKs talk to Firebase over HTTPS. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

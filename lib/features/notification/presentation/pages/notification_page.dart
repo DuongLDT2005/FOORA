@@ -17,9 +17,9 @@ import '../../domain/entities/app_notification.dart';
 import '../providers/notification_provider.dart';
 import '../widgets/notification_tile.dart';
 
-/// Notice inbox. Layout stays on the existing Stitch-mapped shell:
-/// [AppHeader.notifications], [SubpageLayout], and [NotificationTile].
-/// Stitch MCP had no API key in this environment, so no extra screen was added.
+/// Notification inbox screen built from [AppHeader.notifications],
+/// [SubpageLayout] and [NotificationTile]. Tapping a notification marks it
+/// read and opens the related food item.
 class NotificationPage extends ConsumerStatefulWidget {
   const NotificationPage({super.key});
 
@@ -69,6 +69,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
     );
   }
 
+  /// Builds the notification list for [userId] (loading / empty / data states).
   Widget _buildInbox(String userId) {
     final notificationsAsync = ref.watch(
       userNotificationsStreamProvider(userId),
@@ -114,6 +115,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
     );
   }
 
+  /// Common page frame (header + body) used by every state.
   Widget _shell({
     required Widget body,
     int unreadCount = 0,
@@ -129,6 +131,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
     );
   }
 
+  /// Marks every notification as read.
   Future<void> _markAllAsRead(String userId) async {
     await ref.read(notificationNotifierProvider.notifier).markAllAsRead(userId);
     if (!mounted) {
@@ -137,6 +140,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
     ToastHelper.show(context, 'Đã đánh dấu tất cả là đã đọc.');
   }
 
+  /// Marks the notification as read, then opens the related food item (if any).
   Future<void> _onTileTap(String userId, AppNotification item) async {
     if (!item.isRead) {
       await ref
@@ -165,6 +169,8 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
   }
 }
 
+/// Opens the item referenced by a push notification once the inventory
+/// stream has loaded it (used when the app is launched from a push).
 class _PushItemOpener extends ConsumerStatefulWidget {
   final String itemId;
   final String? householdId;
@@ -200,6 +206,7 @@ class _PushItemOpenerState extends ConsumerState<_PushItemOpener> {
   }
 }
 
+/// Finds [itemId] in the loaded items, only if it belongs to the active household.
 InventoryItem? _findLoadedItem({
   required List<InventoryItem> items,
   required String itemId,

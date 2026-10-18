@@ -24,15 +24,4 @@ class MembershipRepositoryImpl implements MembershipRepository {
   Stream<Subscription?> watchPremiumSubscription() {
     return remoteDataSource.watchPremiumSubscription();
   }
-
-  @override
-  Future<void> updateAutoRenew(bool enabled) async {
-    try {
-      await remoteDataSource.updateAutoRenew(enabled);
-    } on AppException {
-      rethrow;
-    } catch (error) {
-      throw ServerException(error.toString());
-    }
-  }
 }

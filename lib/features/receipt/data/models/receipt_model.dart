@@ -3,6 +3,7 @@ import 'package:foora/core/constants/app_enums.dart';
 
 import '../../domain/entities/receipt.dart';
 
+/// Data model for `users/{userId}/receipts/{receiptId}`.
 class ReceiptModel extends Receipt {
   const ReceiptModel({
     required super.id,
@@ -15,6 +16,7 @@ class ReceiptModel extends Receipt {
     required super.updatedAt,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory ReceiptModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -22,6 +24,7 @@ class ReceiptModel extends Receipt {
     return ReceiptModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a model from a raw map.
   factory ReceiptModel.fromJson(Map<String, dynamic> json, {String? id}) {
     return ReceiptModel(
       id: id ?? json['id'] as String? ?? json['receiptId'] as String? ?? '',
@@ -35,6 +38,7 @@ class ReceiptModel extends Receipt {
     );
   }
 
+  /// Serializes to a Firestore map.
   Map<String, dynamic> toFirestore() {
     return {
       'householdId': householdId,
@@ -47,6 +51,7 @@ class ReceiptModel extends Receipt {
     };
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -60,6 +65,7 @@ class ReceiptModel extends Receipt {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; falls back to now.
   static DateTime _parseDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

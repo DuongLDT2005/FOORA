@@ -118,11 +118,16 @@ class AppBottomBar extends StatelessWidget {
   }
 
   /// Variant 2: Membership Action Bar (Used for `membership` page)
+  ///
+  /// [priceLabel] / [periodLabel] must come from the `memberships` config in
+  /// Firestore (e.g. `CurrencyFormatter.formatVND(plan.price)`), never hard-coded.
   factory AppBottomBar.membership({
     Key? key,
     required bool isPremium,
     required VoidCallback? onUpgrade,
     required VoidCallback? onManage,
+    required String priceLabel,
+    String periodLabel = '',
     bool isLoading = false,
   }) {
     return AppBottomBar(
@@ -185,7 +190,7 @@ class AppBottomBar extends StatelessWidget {
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
-                          '29.000đ',
+                          priceLabel,
                           style: TextStyle(
                             fontFamily: 'Lexend',
                             fontSize: 22.sp,
@@ -194,7 +199,7 @@ class AppBottomBar extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '/tháng',
+                          periodLabel,
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
@@ -257,14 +262,14 @@ class AppBottomBar extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 600.w),
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
               top: BorderSide(color: AppColors.slate100, width: 1),
             ),
             boxShadow: [
               BoxShadow(
-                color: Color(0x08000000), // shadow 2-3%
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 20,
                 offset: Offset(0, -4),
               ),

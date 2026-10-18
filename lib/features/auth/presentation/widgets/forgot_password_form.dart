@@ -7,6 +7,8 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/error_state.dart';
 
+/// Stateless form for the forgot-password flow.
+/// Shows the email input, or a success message once the email has been sent.
 class ForgotPasswordForm extends StatelessWidget {
   final bool isLoading;
   final bool isSuccess;
@@ -53,6 +55,7 @@ class ForgotPasswordForm extends StatelessWidget {
     );
   }
 
+  /// Confirmation view displayed after the reset email is sent.
   Widget _buildSuccessView() {
     final email = emailController.text.trim();
     return Column(
@@ -115,6 +118,7 @@ class ForgotPasswordForm extends StatelessWidget {
     );
   }
 
+  /// Email input with submit / back buttons.
   Widget _buildInputView() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

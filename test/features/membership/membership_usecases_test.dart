@@ -18,9 +18,6 @@ class _FakeMembershipRepository implements MembershipRepository {
 
   @override
   Stream<Subscription?> watchPremiumSubscription() => const Stream.empty();
-
-  @override
-  Future<void> updateAutoRenew(bool enabled) async {}
 }
 
 void main() {

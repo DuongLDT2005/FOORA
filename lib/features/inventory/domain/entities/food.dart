@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing a standard food item in global catalog.
 /// Strictly mapped to foods/{foodId} in docs/DATABASE.md
@@ -37,7 +38,7 @@ class Food {
         other.normalizedName == normalizedName &&
         other.categoryId == categoryId &&
         other.defaultUnit == defaultUnit &&
-        listEquals(other.aliases, aliases) &&
+        const ListEquality<dynamic>().equals(other.aliases, aliases) &&
         other.photoUrl == photoUrl &&
         other.isActive == isActive &&
         other.createdAt == createdAt &&

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing dashboard summary cards on the mobile Home screen.
 @immutable

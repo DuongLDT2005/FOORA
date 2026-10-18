@@ -4,6 +4,8 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 
+/// Implementation of [AuthRepository] backed by [AuthRemoteDataSource].
+/// Converts data-layer exceptions into domain [Failure]s.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
 
@@ -15,6 +17,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   User? get currentUser => remoteDataSource.currentUser;
 
+  /// Signs in with email & password and returns the authenticated user.
   @override
   Future<User> login({required String email, required String password}) async {
     try {
@@ -26,6 +29,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Creates a new account and its Firestore profile document.
   @override
   Future<User> register({
     required String fullName,
@@ -45,6 +49,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Signs in through Google OAuth.
   @override
   Future<User> signInWithGoogle() async {
     try {
@@ -56,6 +61,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Sends a Firebase password-reset email to [email].
   @override
   Future<void> sendPasswordResetEmail({required String email}) async {
     try {
@@ -67,6 +73,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Signs the current user out of Firebase (and Google, if used).
   @override
   Future<void> logout() async {
     try {

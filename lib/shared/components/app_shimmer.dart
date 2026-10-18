@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
+/// Animated shimmer skeleton shown while content is loading.
 class AppShimmer extends StatefulWidget {
   final Widget child;
   final Color baseColor;
@@ -105,6 +106,7 @@ class _AppShimmerState extends State<AppShimmer>
   }
 }
 
+/// Moves the shimmer gradient horizontally according to the animation value.
 class _SlidingGradientTransform extends GradientTransform {
   final double slidePercent;
 

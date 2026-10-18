@@ -5,11 +5,14 @@ import '../../domain/repositories/profile_repository.dart';
 import '../datasources/profile_remote_datasource.dart';
 import '../models/bug_report_model.dart';
 
+/// Implementation of [ProfileRepository]; delegates to [ProfileRemoteDataSource]
+/// and converts exceptions into [Failure]s.
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource remoteDataSource;
 
   ProfileRepositoryImpl({required this.remoteDataSource});
 
+  /// Streams the user's profile.
   @override
   Stream<Profile> watchProfile(String userId) {
     try {
@@ -20,6 +23,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  /// Reads the user's profile once.
   @override
   Future<Profile> getProfile(String userId) async {
     try {
@@ -30,6 +34,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  /// Updates profile fields.
   @override
   Future<void> updateProfile({
     required String userId,
@@ -48,6 +53,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  /// Uploads a new avatar and returns its URL.
   @override
   Future<String> uploadAvatar({
     required String userId,
@@ -64,6 +70,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  /// Changes the account email.
   @override
   Future<void> updateEmail({
     required String newEmail,
@@ -80,6 +87,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  /// Changes the account password.
   @override
   Future<void> changePassword({
     required String currentPassword,
@@ -96,6 +104,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  /// Sends a bug report.
   @override
   Future<void> submitBugReport(BugReport report, String? screenshotPath) async {
     try {
@@ -109,6 +118,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  /// Deletes the account.
   @override
   Future<void> deleteAccount({String? password}) async {
     try {

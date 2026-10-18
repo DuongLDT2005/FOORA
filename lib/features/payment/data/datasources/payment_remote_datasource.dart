@@ -6,13 +6,22 @@ import 'package:foora/core/constants/firestore_constants.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/payment_transaction_model.dart';
 
+/// Contract for Premium payment operations (bank-transfer QR via CAS gateway).
 abstract class PaymentRemoteDataSource {
+  /// Creates a payment order for a plan and returns its QR / transfer details.
   Future<PaymentTransactionModel> createPaymentOrder(String membershipId);
+
+  /// Streams a payment document so the UI updates when the webhook confirms it.
   Stream<PaymentTransactionModel> watchPayment(String paymentId);
+
+  /// Loads the current user's past transactions.
   Future<List<PaymentTransactionModel>> getPaymentHistory();
+
+  /// Cancels a payment that has not been paid yet.
   Future<void> cancelPendingPayment(String paymentId);
 }
 
+/// Cloud Functions + Firestore implementation of [PaymentRemoteDataSource].
 class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
   PaymentRemoteDataSourceImpl(this._auth, this._firestore, this._functions);
 
@@ -33,6 +42,8 @@ class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
       .doc(_userId)
       .collection(FirestoreConstants.payments);
 
+  /// Calls the `createCasPaymentOrder` callable; the server computes the amount
+  /// so the client can never tamper with the price.
   @override
   Future<PaymentTransactionModel> createPaymentOrder(
     String membershipId,
@@ -63,6 +74,7 @@ class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
     }
   }
 
+  /// Listens to `payments/{paymentId}`.
   @override
   Stream<PaymentTransactionModel> watchPayment(String paymentId) {
     return _payments.doc(paymentId).snapshots().map((document) {
@@ -73,6 +85,7 @@ class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
     });
   }
 
+  /// Queries the user's payments ordered by creation date.
   @override
   Future<List<PaymentTransactionModel>> getPaymentHistory() async {
     final snapshot = await _payments
@@ -84,6 +97,7 @@ class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
         .toList(growable: false);
   }
 
+  /// Calls the `cancelCasPaymentOrder` callable.
   @override
   Future<void> cancelPendingPayment(String paymentId) async {
     try {
@@ -105,6 +119,7 @@ class PaymentRemoteDataSourceImpl implements PaymentRemoteDataSource {
     }
   }
 
+  /// Converts Cloud Functions error codes into readable [ServerException]s.
   ServerException _mapFunctionsException(FirebaseFunctionsException error) {
     final fallback = switch (error.code) {
       'unauthenticated' =>

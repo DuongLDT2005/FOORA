@@ -1,6 +1,7 @@
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {MembershipService} from "../../membership/services/membership_service";
 import {
   throwNotFound,
   throwPermissionDenied,
@@ -117,18 +118,8 @@ export class InventoryService {
       .doc(input.householdId);
     const itemRef = householdRef.collection(Collections.INVENTORY_ITEMS).doc();
 
-    // 1. Resolve membership food limit
-    let foodLimit: number | null = null;
-    const membershipDoc = await db
-      .collection(Collections.MEMBERSHIPS)
-      .doc(membershipId)
-      .get();
-
-    if (membershipDoc.exists) {
-      foodLimit = membershipDoc.data()?.foodLimit ?? null;
-    } else if (membershipId === "free") {
-      foodLimit = 30; // Hard fallback for free tier
-    }
+    // 1. Resolve membership food limit (null = unlimited)
+    const {foodLimit} = await MembershipService.getLimits(membershipId);
 
     // 2. Parse purchase and expiration dates
     const purchaseDate = input.purchaseDate ?
@@ -243,18 +234,8 @@ export class InventoryService {
       .collection(Collections.HOUSEHOLDS)
       .doc(householdId);
 
-    // 1. Resolve membership food limit
-    let foodLimit: number | null = null;
-    const membershipDoc = await db
-      .collection(Collections.MEMBERSHIPS)
-      .doc(membershipId)
-      .get();
-
-    if (membershipDoc.exists) {
-      foodLimit = membershipDoc.data()?.foodLimit ?? null;
-    } else if (membershipId === "free") {
-      foodLimit = 30;
-    }
+    // 1. Resolve membership food limit (null = unlimited)
+    const {foodLimit} = await MembershipService.getLimits(membershipId);
 
     // 2. Pre-calculate expiration dates for all items
     const preparedItems = await Promise.all(

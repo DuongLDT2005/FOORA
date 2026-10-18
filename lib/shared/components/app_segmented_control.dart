@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
+/// One option of an [AppSegmentedControl].
 class SegmentedItem<T> {
   final T value;
   final String label;
@@ -18,6 +19,7 @@ class SegmentedItem<T> {
   });
 }
 
+/// Generic pill-style segmented control for choosing one value of type [T].
 class AppSegmentedControl<T> extends StatelessWidget {
   final T selectedValue;
   final List<SegmentedItem<T>> items;

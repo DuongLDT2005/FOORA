@@ -7,6 +7,7 @@ import '../../../../core/utils/input_validators.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/forgot_password_form.dart';
 
+/// Screen where users request a password-reset email.
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -25,6 +26,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     super.dispose();
   }
 
+  /// Validates the email and asks [AuthNotifier] to send the reset link.
   Future<void> _handleForgotPasswordSubmit() async {
     setState(() {
       _localErrorMessage = null;

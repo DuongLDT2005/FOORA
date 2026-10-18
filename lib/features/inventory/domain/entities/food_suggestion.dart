@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 /// Represents a suggestion when a user types in the food name input.
 /// Aggregated from Firestore master `foods` and household past inventory items.

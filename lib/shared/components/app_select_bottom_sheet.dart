@@ -60,6 +60,7 @@ class AppSelectBottomSheet<T> extends StatelessWidget {
     );
   }
 
+  /// Grid / wrap layout of options.
   Widget _buildGrid(BuildContext context) {
     return Wrap(
       spacing: 10.w,
@@ -114,6 +115,7 @@ class AppSelectBottomSheet<T> extends StatelessWidget {
     );
   }
 
+  /// Vertical list layout of options.
   Widget _buildList(BuildContext context) {
     return ListView.separated(
       shrinkWrap: true,

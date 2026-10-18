@@ -18,9 +18,14 @@ class FirebaseInitializer {
   static Future<void> initialize() async {
     try {
       if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
+        final options = DefaultFirebaseOptions.currentPlatform;
+        if (!kIsWeb && Platform.isAndroid && options.apiKey.isEmpty) {
+          // APK built without --dart-define-from-file: fall back to the
+          // native config from android/app/google-services.json.
+          await Firebase.initializeApp();
+        } else {
+          await Firebase.initializeApp(options: options);
+        }
       }
     } catch (e) {
       // Ignore duplicate-app error which can happen during Hot Restart

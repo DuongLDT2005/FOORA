@@ -4,9 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_enums.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/helpers/dialog_helper.dart';
+import '../../../../shared/helpers/toast_helper.dart';
 import '../providers/inventory_list_provider.dart';
 import '../providers/inventory_provider.dart';
 import '../widgets/category_filter_list.dart';
@@ -15,8 +17,37 @@ import '../widgets/inventory_search_bar.dart';
 import '../widgets/inventory_stats_banner.dart';
 import '../widgets/location_filter_tabs.dart';
 
+/// Main inventory screen: search, location tabs, category filter and the list
+/// of active food items. Swipe an item to mark it consumed/discarded; tap to edit.
 class InventoryPage extends ConsumerWidget {
   const InventoryPage({super.key});
+
+  /// Asks whether the item was used up or thrown away, then updates it.
+  Future<void> _onRemoveItem(
+    BuildContext context,
+    WidgetRef ref,
+    String itemId,
+  ) async {
+    final status = await DialogHelper.showChoiceDialog<InventoryItemStatus>(
+      context,
+      title: 'Xóa thực phẩm',
+      message: 'Bạn đã sử dụng hết hay vứt bỏ thực phẩm này?',
+      confirmText: 'Đã dùng',
+      confirmValue: InventoryItemStatus.consumed,
+      secondaryText: 'Vứt bỏ',
+      secondaryValue: InventoryItemStatus.discarded,
+    );
+    if (status == null) return;
+    try {
+      await ref.read(inventoryStatusControllerProvider).changeStatus([
+        itemId,
+      ], status);
+    } on Failure catch (failure) {
+      if (context.mounted) {
+        ToastHelper.show(context, failure.message, isError: true);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -188,143 +219,8 @@ class InventoryPage extends ConsumerWidget {
                                     category: category,
                                     storageLocationId: item.storageLocationId,
                                     expirationDate: item.expirationDate,
-                                    onDelete: () async {
-                                      // Show dialog to consume or discard
-                                      final result = await showDialog<String>(
-                                        context: context,
-                                        builder: (ctx) => Dialog(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              20.r,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.white,
-                                          surfaceTintColor: Colors.transparent,
-                                          insetPadding: EdgeInsets.symmetric(
-                                            horizontal: 24.w,
-                                            vertical: 24.h,
-                                          ),
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxWidth: 420.w,
-                                            ),
-                                            child: Padding(
-                                              padding: EdgeInsets.all(24.r),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    'Xóa thực phẩm',
-                                                    style: TextStyle(
-                                                      fontFamily: 'Lexend',
-                                                      fontSize: 18.sp,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: AppColors.slate800,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                  SizedBox(height: 8.h),
-                                                  Text(
-                                                    'Bạn đã sử dụng hết hay vứt bỏ thực phẩm này?',
-                                                    style: TextStyle(
-                                                      fontSize: 14.sp,
-                                                      color: AppColors.slate600,
-                                                      height: 1.4,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                  SizedBox(height: 24.h),
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: OutlinedButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                ctx,
-                                                                'cancel',
-                                                              ),
-                                                          child: const Text(
-                                                            'Hủy',
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 8.w),
-                                                      Expanded(
-                                                        child: ElevatedButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                ctx,
-                                                                'discarded',
-                                                              ),
-                                                          style:
-                                                              ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    AppColors
-                                                                        .red600,
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .white,
-                                                              ),
-                                                          child: const Text(
-                                                            'Vứt bỏ',
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 8.w),
-                                                      Expanded(
-                                                        child: ElevatedButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                ctx,
-                                                                'consumed',
-                                                              ),
-                                                          style:
-                                                              ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    AppColors
-                                                                        .primary,
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .white,
-                                                              ),
-                                                          child: const Text(
-                                                            'Đã dùng',
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-
-                                      if (result == 'consumed' ||
-                                          result == 'discarded') {
-                                        final user = ref.read(
-                                          currentUserProvider,
-                                        );
-                                        if (user?.activeHouseholdId != null) {
-                                          final newStatus = result == 'consumed'
-                                              ? InventoryItemStatus.consumed
-                                              : InventoryItemStatus.discarded;
-                                          final updatedItem = item.copyWith(
-                                            status: newStatus,
-                                            updatedAt: DateTime.now(),
-                                          );
-                                          ref.read(
-                                            updateInventoryItemUseCaseProvider,
-                                          )(
-                                            updatedItem,
-                                            householdId:
-                                                user!.activeHouseholdId!,
-                                          );
-                                        }
-                                      }
-                                    },
+                                    onDelete: () =>
+                                        _onRemoveItem(context, ref, item.id),
                                     onTap: () {
                                       context.push(
                                         AppRouteNames.itemForm,

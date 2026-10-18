@@ -9,9 +9,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/components/app_bottom_sheet.dart';
 import '../providers/inventory_list_provider.dart';
 
+/// Bottom sheet with sort options and status filters for the inventory list.
 class FilterBottomSheet extends ConsumerStatefulWidget {
   const FilterBottomSheet({super.key});
 
+  /// Opens the sheet as a modal bottom sheet.
   static void show(BuildContext context) {
     showGeneralDialog(
       context: context,
@@ -188,6 +190,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     );
   }
 
+  /// Radio-style row for a sort option.
   Widget _buildSortRadio({
     required InventorySortOption value,
     required String label,
@@ -259,6 +262,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     );
   }
 
+  /// Toggleable chip for a status filter.
   Widget _buildStatusChip({
     required InventoryStatusFilter value,
     required String label,

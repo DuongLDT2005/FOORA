@@ -16,6 +16,7 @@ import '../../../../shared/widgets/loading_widget.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/change_email_dialog.dart';
 
+/// Edit profile screen: change avatar and full name, view email.
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
 
@@ -43,6 +44,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     super.dispose();
   }
 
+  /// Fills the text fields once with the current profile values.
   void _initializeForm(String fullName, String email) {
     if (_isInitialized) return;
     _fullNameController.text = fullName;
@@ -50,6 +52,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     _isInitialized = true;
   }
 
+  /// Saves changes through [EditProfileNotifier] and shows the result.
   Future<void> _save(String userId, String? avatarUrl) async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -159,6 +162,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 }
 
+/// Labeled text field used in the edit-profile form.
 class _ProfileField extends StatelessWidget {
   const _ProfileField({
     required this.label,
@@ -234,6 +238,7 @@ class _ProfileField extends StatelessWidget {
     );
   }
 
+  /// Rounded input border with the given colour.
   OutlineInputBorder _border(Color color, {double width = 1}) {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(16.r),

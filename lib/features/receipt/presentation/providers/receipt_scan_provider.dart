@@ -3,127 +3,31 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/firebase/firebase_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../inventory/domain/entities/inventory_item.dart';
+import '../../../membership/presentation/providers/membership_provider.dart';
 import '../../data/datasources/receipt_remote_datasource.dart';
 import '../../data/repositories/receipt_repository_impl.dart';
 import '../../domain/entities/receipt_item.dart';
+import '../../domain/entities/receipt_scan_quota.dart';
 import '../../domain/repositories/receipt_repository.dart';
 import '../../domain/usecases/confirm_receipt_items.dart';
 import '../../domain/usecases/scan_receipt.dart';
+import '../../domain/usecases/watch_receipt_scan_quota.dart';
 
 // --- Data & Domain Providers ---
-
-/// Model representing the user's monthly receipt scan quota status
-class ReceiptQuotaStatus {
-  final int scansUsed;
-  final int scanLimit;
-  final bool isUnlimited;
-
-  const ReceiptQuotaStatus({
-    this.scansUsed = 0,
-    this.scanLimit = 5,
-    this.isUnlimited = false,
-  });
-
-  bool get isQuotaExceeded => !isUnlimited && scansUsed >= scanLimit;
-  int get scansRemaining =>
-      isUnlimited ? 999999 : (scanLimit - scansUsed).clamp(0, scanLimit);
-}
-
-/// Streams real-time monthly scan usage directly from Firestore database
-final receiptQuotaProvider = StreamProvider.autoDispose<ReceiptQuotaStatus>((
-  ref,
-) {
-  final authUser = ref.watch(firebaseAuthProvider).currentUser;
-  if (authUser == null) {
-    return Stream.value(const ReceiptQuotaStatus());
-  }
-
-  final firestore = ref.watch(firestoreProvider);
-  final uid = authUser.uid;
-
-  final now = DateTime.now();
-  final currentPeriod = '${now.year}-${now.month.toString().padLeft(2, '0')}';
-
-  // Listen directly to user document snapshot to get real-time membershipId from database
-  return firestore
-      .collection(FirestoreConstants.users)
-      .doc(uid)
-      .snapshots()
-      .asyncExpand((userDoc) async* {
-        if (!userDoc.exists) {
-          yield const ReceiptQuotaStatus(scansUsed: 0, scanLimit: 5);
-          return;
-        }
-
-        final userData = userDoc.data();
-        final membershipId = (userData?['membershipId'] as String?) ?? 'free';
-
-        // 1. Premium members have unlimited scans
-        if (membershipId == 'premium') {
-          yield const ReceiptQuotaStatus(isUnlimited: true);
-          return;
-        }
-
-        // 2. Fetch membership scan quota limit from memberships collection
-        int scanLimit = 5;
-        try {
-          final membershipDoc = await firestore
-              .collection(FirestoreConstants.memberships)
-              .doc(membershipId)
-              .get();
-          if (membershipDoc.exists) {
-            final quota = membershipDoc.data()?['receiptScanQuota'];
-            if (quota == null) {
-              // null in DB means unlimited
-              yield const ReceiptQuotaStatus(isUnlimited: true);
-              return;
-            }
-            scanLimit = (quota as num).toInt();
-          }
-        } catch (_) {
-          scanLimit = 5;
-        }
-
-        // 3. Listen directly to users/{uid}/ai_usage/current in Firestore
-        yield* firestore
-            .collection(FirestoreConstants.users)
-            .doc(uid)
-            .collection(FirestoreConstants.aiUsage)
-            .doc(FirestoreConstants.aiUsageCurrentDoc)
-            .snapshots()
-            .map((usageDoc) {
-              if (!usageDoc.exists) {
-                return ReceiptQuotaStatus(scansUsed: 0, scanLimit: scanLimit);
-              }
-
-              final usageData = usageDoc.data();
-              if (usageData == null) {
-                return ReceiptQuotaStatus(scansUsed: 0, scanLimit: scanLimit);
-              }
-
-              final period = usageData['period'] as String?;
-              if (period != currentPeriod) {
-                return ReceiptQuotaStatus(scansUsed: 0, scanLimit: scanLimit);
-              }
-
-              final used = (usageData['receiptScanUsed'] as num?)?.toInt() ?? 0;
-              return ReceiptQuotaStatus(
-                scansUsed: used,
-                scanLimit: scanLimit,
-                isUnlimited: false,
-              );
-            });
-      });
-});
 
 final receiptRemoteDataSourceProvider = Provider<ReceiptRemoteDataSource>((
   ref,
 ) {
-  return ReceiptRemoteDataSourceImpl(functions: ref.watch(functionsProvider));
+  return ReceiptRemoteDataSourceImpl(
+    functions: ref.watch(functionsProvider),
+    firestore: ref.watch(firestoreProvider),
+    auth: ref.watch(firebaseAuthProvider),
+  );
 });
 
 final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
@@ -141,6 +45,23 @@ final confirmReceiptItemsUseCaseProvider = Provider<ConfirmReceiptItemsUseCase>(
     return ConfirmReceiptItemsUseCase(ref.watch(receiptRepositoryProvider));
   },
 );
+
+final watchReceiptScanQuotaUseCaseProvider =
+    Provider<WatchReceiptScanQuotaUseCase>((ref) {
+      return WatchReceiptScanQuotaUseCase(
+        membershipRepository: ref.watch(membershipRepositoryProvider),
+        receiptRepository: ref.watch(receiptRepositoryProvider),
+      );
+    });
+
+/// Real-time monthly receipt-scan quota of the signed-in user.
+final receiptQuotaProvider = StreamProvider.autoDispose<ReceiptScanQuota>((
+  ref,
+) {
+  // Re-subscribe whenever the signed-in user changes.
+  ref.watch(currentUserProvider.select((user) => user?.id));
+  return ref.watch(watchReceiptScanQuotaUseCaseProvider).call();
+});
 
 // --- Receipt Scan State & Notifier ---
 
@@ -240,8 +161,8 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
       final photo = await _picker.pickImage(
         source: ImageSource.camera,
         imageQuality: 85,
-        maxWidth: 2048,
-        maxHeight: 2048,
+        maxWidth: 1600,
+        maxHeight: 1600,
       );
       if (photo != null) {
         await _processPickedImage(photo);
@@ -261,8 +182,8 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
       final image = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 85,
-        maxWidth: 2048,
-        maxHeight: 2048,
+        maxWidth: 1600,
+        maxHeight: 1600,
       );
       if (image != null) {
         await _processPickedImage(image);
@@ -379,6 +300,45 @@ class ReceiptScanNotifier extends StateNotifier<ReceiptScanState> {
       updatedList[index] = updatedItem;
       state = state.copyWith(parsedItems: updatedList);
     }
+  }
+
+  /// Builds an unsaved [InventoryItem] from a scanned item so it can be
+  /// reviewed in the item form.
+  InventoryItem buildEditDraft(int index, {DateTime? now}) {
+    final item = state.parsedItems[index];
+    final timestamp = now ?? DateTime.now();
+    return InventoryItem(
+      id: '',
+      foodId: item.foodId,
+      name: item.name,
+      normalizedName: item.normalizedName,
+      categoryId: item.categoryId,
+      quantity: item.quantity,
+      unit: item.unit,
+      remainingPercentage: 100,
+      storageLocationId: item.storageLocationId,
+      purchaseDate: timestamp,
+      expirationDate: item.estimatedExpirationDate,
+      source: InventoryItemSource.receiptScan,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+  }
+
+  /// Copies the fields edited in the item form back onto the scanned item.
+  void applyEditedDraft(int index, InventoryItem edited) {
+    if (index < 0 || index >= state.parsedItems.length) return;
+    updateItem(
+      index,
+      state.parsedItems[index].copyWith(
+        name: edited.name,
+        categoryId: edited.categoryId,
+        quantity: edited.quantity,
+        unit: edited.unit,
+        storageLocationId: edited.storageLocationId,
+        estimatedExpirationDate: edited.expirationDate,
+      ),
+    );
   }
 
   /// Batch saves all items in state.parsedItems into the household inventory

@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,8 +23,10 @@ void main() async {
   // 2. Initialize Firebase (with emulator if configured)
   await FirebaseInitializer.initialize();
 
-  // 3. Register Firebase Messaging Background Handler
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // 3. Register Firebase Messaging Background Handler (mobile platforms only)
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   // 4. Pre-initialize SharedPreferences for synchronous Riverpod access
   final sharedPreferences = await SharedPreferences.getInstance();

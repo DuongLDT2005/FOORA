@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
+/// Titled group of menu tiles on the Profile screen.
 class ProfileMenuSection extends StatelessWidget {
   const ProfileMenuSection({super.key, this.title, required this.children});
 
@@ -52,6 +53,7 @@ class ProfileMenuSection extends StatelessWidget {
   }
 }
 
+/// Single tappable row (icon, title, optional trailing) in a profile menu.
 class ProfileMenuTile extends StatelessWidget {
   const ProfileMenuTile({
     super.key,

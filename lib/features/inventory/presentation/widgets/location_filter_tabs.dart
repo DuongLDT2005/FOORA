@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/inventory_list_provider.dart';
 
+/// Tabs to filter the inventory by storage location (All / Fridge / Freezer / ...).
 class LocationFilterTabs extends ConsumerWidget {
   const LocationFilterTabs({super.key});
 
@@ -51,14 +52,15 @@ class LocationFilterTabs extends ConsumerWidget {
             label: 'Ngăn đông',
             icon: LucideIcons.snowflake,
             isActive: selectedLocationId == 'freezer',
-            activeColor: const Color(0xFF06B6D4), // Cyan-500
-            activeLabelColor: const Color(0xFF0891B2), // Cyan-600
+            activeColor: AppColors.cyan500,
+            activeLabelColor: AppColors.cyan600,
           ),
         ],
       ),
     );
   }
 
+  /// Builds a single location tab.
   Widget _buildTab({
     required BuildContext context,
     required WidgetRef ref,

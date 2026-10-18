@@ -78,6 +78,8 @@ class SubpageLayout extends StatelessWidget {
     VoidCallback? onBack,
     VoidCallback? onUpgrade,
     VoidCallback? onManage,
+    required String priceLabel,
+    String periodLabel = '',
     bool isLoading = false,
   }) {
     return SubpageLayout(
@@ -87,6 +89,8 @@ class SubpageLayout extends StatelessWidget {
         isPremium: isPremium,
         onUpgrade: onUpgrade,
         onManage: onManage,
+        priceLabel: priceLabel,
+        periodLabel: periodLabel,
         isLoading: isLoading,
       ),
       body: body,

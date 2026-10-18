@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
 
+/// Header for an expiry group (e.g. "Đã hết hạn", "Hôm nay") with item count.
 class ExpirationGroupHeader extends StatelessWidget {
   final String title;
   final Color color;
@@ -57,6 +58,7 @@ class ExpirationGroupHeader extends StatelessWidget {
   }
 }
 
+/// Animated dot that pulses to draw attention to urgent groups.
 class _PulsingDot extends StatefulWidget {
   final Color color;
 

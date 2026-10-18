@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/firebase/firebase_providers.dart';
 import '../../core/routes/route_names.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/notification/presentation/providers/notification_provider.dart';
 import '../widgets/app_button.dart';
 
@@ -21,11 +21,11 @@ class MobileShellScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(firebaseAuthProvider).currentUser;
+    final user = ref.watch(currentUserProvider);
     final currentIndex = navigationShell.currentIndex;
     final unreadCount = user == null
         ? 0
-        : ref.watch(unreadNotificationCountProvider(user.uid));
+        : ref.watch(unreadNotificationCountProvider(user.id));
     final isScanTab = currentIndex == 2;
 
     return Scaffold(
@@ -33,7 +33,7 @@ class MobileShellScaffold extends ConsumerWidget {
       appBar: isScanTab
           ? null
           : _MobileShellHeader(
-              userInitial: _getUserInitial(user?.displayName, user?.email),
+              userInitial: _getUserInitial(user?.fullName, user?.email),
               unreadCount: unreadCount,
               onNotificationTap: () {
                 context.push(AppRouteNames.notifications);
@@ -64,6 +64,7 @@ class MobileShellScaffold extends ConsumerWidget {
     );
   }
 
+  /// First letter of the display name (or email) for the header avatar.
   String _getUserInitial(String? displayName, String? email) {
     if (displayName != null && displayName.trim().isNotEmpty) {
       final names = displayName.trim().split(' ');
@@ -274,6 +275,7 @@ class _MobileBottomNavBar extends StatelessWidget {
     );
   }
 
+  /// Builds one bottom-navigation item.
   Widget _buildNavItem({
     required int index,
     required IconData icon,

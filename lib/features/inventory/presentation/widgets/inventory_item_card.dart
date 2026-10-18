@@ -218,6 +218,7 @@ class InventoryItemCard extends StatelessWidget {
     );
   }
 
+  /// Food image (greyed out when expired).
   Widget _buildImage(bool isExpired) {
     Widget imageWidget = FoodImageAvatar(
       photoUrl: imageUrl,
@@ -288,6 +289,7 @@ class InventoryItemCard extends StatelessWidget {
     );
   }
 
+  /// Badge describing freshness (fresh / expiring soon / expired).
   Widget _buildStatusBadge(
     bool isExpired,
     bool isWarning,
@@ -339,17 +341,18 @@ class InventoryItemCard extends StatelessWidget {
     );
   }
 
+  /// Small badge showing where the item is stored.
   Widget _buildStorageBadge() {
     final isFridge = storageLocationId == 'fridge';
     final bgColor = isFridge
         ? AppColors.emerald50.withValues(alpha: 0.8)
-        : const Color(0xFFECFEFF); // Cyan-50
+        : AppColors.cyan50; // Cyan-50
     final textColor = isFridge
         ? AppColors.emerald700
-        : const Color(0xFF0E7490); // Cyan-700
+        : AppColors.cyan700; // Cyan-700
     final borderColor = isFridge
         ? AppColors.emerald100.withValues(alpha: 0.5)
-        : const Color(0xFFCFFAFE); // Cyan-100
+        : AppColors.cyan100; // Cyan-100
     final iconData = isFridge ? LucideIcons.thermometer : LucideIcons.snowflake;
     final label = isFridge ? 'Ngăn mát' : 'Ngăn đông';
 
@@ -366,7 +369,7 @@ class InventoryItemCard extends StatelessWidget {
           Icon(
             iconData,
             size: 10.r,
-            color: isFridge ? AppColors.emerald500 : const Color(0xFF06B6D4),
+            color: isFridge ? AppColors.emerald500 : AppColors.cyan500,
           ),
           SizedBox(width: 2.w),
           Text(

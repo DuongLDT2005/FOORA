@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 
+/// Base class for all exceptions thrown by the data layer.
+/// Repositories catch these and convert them into [Failure]s for the UI.
 abstract class AppException implements Exception {
   final String message;
   final String? code;
@@ -11,12 +13,14 @@ abstract class AppException implements Exception {
   String toString() => message;
 }
 
+/// Thrown when a Firestore / Cloud Functions / Storage call fails on the server side.
 class ServerException extends AppException {
   const ServerException([
     super.message = 'Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.',
     super.code,
   ]);
 
+  /// Maps a [FirebaseException] code to a user-friendly Vietnamese message.
   factory ServerException.fromFirebase(FirebaseException e) {
     switch (e.code) {
       case 'permission-denied':
@@ -40,12 +44,15 @@ class ServerException extends AppException {
   }
 }
 
+/// Thrown when a Firebase Authentication operation fails (login, register, reset...).
 class AuthException extends AppException {
   const AuthException([
     super.message = 'Xác thực không thành công.',
     super.code,
   ]);
 
+  /// Translates Firebase Auth error codes (wrong-password, email-already-in-use, ...)
+  /// into readable messages shown to the user.
   factory AuthException.fromFirebase(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -97,6 +104,7 @@ class AuthException extends AppException {
   }
 }
 
+/// Thrown when the device has no internet connection or the request timed out.
 class NetworkException extends AppException {
   const NetworkException([
     super.message = 'Không có kết nối mạng. Vui lòng kiểm tra lại Wifi/4G.',
@@ -104,6 +112,7 @@ class NetworkException extends AppException {
   ]);
 }
 
+/// Thrown when reading/writing local storage (SharedPreferences) fails.
 class CacheException extends AppException {
   const CacheException([
     super.message = 'Lỗi truy xuất bộ nhớ tạm.',
@@ -111,6 +120,7 @@ class CacheException extends AppException {
   ]);
 }
 
+/// Thrown when a requested document does not exist.
 class NotFoundException extends AppException {
   const NotFoundException([
     super.message = 'Không tìm thấy tài nguyên yêu cầu.',
@@ -118,6 +128,7 @@ class NotFoundException extends AppException {
   ]);
 }
 
+/// Thrown when Firestore security rules reject the current user's request.
 class PermissionDeniedException extends AppException {
   const PermissionDeniedException([
     super.message = 'Bạn không có quyền thực hiện thao tác này.',

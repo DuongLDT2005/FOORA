@@ -3,6 +3,7 @@ import 'package:foora/core/constants/app_enums.dart';
 
 import '../../domain/entities/app_notification.dart';
 
+/// Data model for `users/{userId}/notifications/{id}`.
 class AppNotificationModel extends AppNotification {
   const AppNotificationModel({
     required super.id,
@@ -15,6 +16,7 @@ class AppNotificationModel extends AppNotification {
     required super.createdAt,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory AppNotificationModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -22,6 +24,7 @@ class AppNotificationModel extends AppNotification {
     return AppNotificationModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a model from a raw map.
   factory AppNotificationModel.fromJson(
     Map<String, dynamic> json, {
     String? id,
@@ -42,6 +45,7 @@ class AppNotificationModel extends AppNotification {
     );
   }
 
+  /// Serializes to a Firestore map.
   Map<String, dynamic> toFirestore() {
     return {
       if (householdId != null) 'householdId': householdId,
@@ -54,6 +58,7 @@ class AppNotificationModel extends AppNotification {
     };
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -67,6 +72,7 @@ class AppNotificationModel extends AppNotification {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; falls back to now.
   static DateTime _parseDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

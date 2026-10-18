@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -15,12 +16,16 @@ import '../../../../shared/widgets/error_state.dart';
 import '../../../membership/presentation/providers/membership_provider.dart';
 import '../providers/payment_provider.dart';
 
+/// Premium upgrade / checkout screen: shows the plan summary and price, and
+/// creates a payment order before navigating to the QR screen.
 class PaymentPage extends ConsumerWidget {
   const PaymentPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final plan = ref.watch(membershipPlanProvider('premium'));
+    final plan = ref.watch(
+      membershipPlanProvider(MembershipTier.premium.value),
+    );
     final paymentState = ref.watch(paymentControllerProvider);
 
     return SubpageLayout(
@@ -128,6 +133,7 @@ class PaymentPage extends ConsumerWidget {
   }
 }
 
+/// Label / value row in the order summary.
 class _SummaryRow extends StatelessWidget {
   const _SummaryRow({
     required this.label,

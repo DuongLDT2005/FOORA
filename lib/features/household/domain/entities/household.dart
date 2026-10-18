@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing a household group.
 /// Strictly mapped to households/{householdId} in docs/DATABASE.md
@@ -22,7 +23,10 @@ class Household {
     required this.updatedAt,
   });
 
+  /// Whether [userId] created / owns this household.
   bool isOwner(String userId) => ownerId == userId;
+
+  /// Whether [userId] belongs to this household.
   bool isMember(String userId) => members.contains(userId);
 
   Household copyWith({
@@ -52,7 +56,7 @@ class Household {
         other.id == id &&
         other.name == name &&
         other.ownerId == ownerId &&
-        listEquals(other.members, members) &&
+        const ListEquality<dynamic>().equals(other.members, members) &&
         other.activeItemCount == activeItemCount &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/payment_transaction.dart';
 
+/// Row in the payment history list (plan, amount, date, status badge).
 class TransactionTile extends StatelessWidget {
   const TransactionTile({super.key, required this.transaction});
 
@@ -118,6 +119,7 @@ class TransactionTile extends StatelessWidget {
   }
 }
 
+/// Label and colours for each payment status.
 class _StatusPresentation {
   const _StatusPresentation(this.label, this.color, this.icon);
 

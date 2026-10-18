@@ -3,6 +3,8 @@ import 'package:foora/core/constants/app_enums.dart';
 
 import '../../domain/entities/user.dart';
 
+/// Data model for the `users/{uid}` Firestore document.
+/// Extends the domain [User] entity and adds (de)serialization helpers.
 class UserModel extends User {
   const UserModel({
     required super.id,
@@ -17,11 +19,13 @@ class UserModel extends User {
     required super.updatedAt,
   });
 
+  /// Builds a [UserModel] from a Firestore document snapshot.
   factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     return UserModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a [UserModel] from a raw map; [id] overrides the `id` field if given.
   factory UserModel.fromJson(Map<String, dynamic> json, {String? id}) {
     return UserModel(
       id: id ?? json['id'] as String? ?? '',
@@ -37,6 +41,7 @@ class UserModel extends User {
     );
   }
 
+  /// Wraps a domain [User] so it can be serialized back to Firestore.
   factory UserModel.fromEntity(User user) {
     return UserModel(
       id: user.id,

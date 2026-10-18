@@ -14,6 +14,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../providers/profile_provider.dart';
 
+/// Privacy & security: data-privacy toggles, cache cleaning and account deletion.
 class PrivacySettingsPage extends ConsumerStatefulWidget {
   const PrivacySettingsPage({super.key});
 
@@ -27,6 +28,7 @@ class _PrivacySettingsPageState extends ConsumerState<PrivacySettingsPage> {
   bool _allowAiAnalytics = true;
   bool _isClearingCache = false;
 
+  /// NOTE: cache cleaning is simulated (delay + toast) for now.
   void _clearCache() async {
     setState(() => _isClearingCache = true);
     await Future.delayed(const Duration(milliseconds: 600));
@@ -36,6 +38,7 @@ class _PrivacySettingsPageState extends ConsumerState<PrivacySettingsPage> {
     }
   }
 
+  /// Confirmation dialog (asks for the password) before deleting the account.
   void _showDeleteAccountDialog() {
     final passwordController = TextEditingController();
 
@@ -279,6 +282,7 @@ class _PrivacySettingsPageState extends ConsumerState<PrivacySettingsPage> {
     );
   }
 
+  // Small layout helpers shared by the sections.
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: EdgeInsets.only(left: 4.w, bottom: 8.h),

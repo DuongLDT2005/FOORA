@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 
 // --- FeatureCard (Generic banner / menu card) ---
+/// Generic banner / menu card with icon, title and subtitle.
 class FeatureCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -19,7 +20,7 @@ class FeatureCard extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.iconColor = AppColors.amber500,
-    this.iconBgColor = const Color(0xFFFFFBEB), // amber-50
+    this.iconBgColor = AppColors.amber50,
   });
 
   @override
@@ -75,6 +76,7 @@ class FeatureCard extends StatelessWidget {
 }
 
 // --- StatisticCard (Generic metric / summary card) ---
+/// Small metric card (value + label); factories for good/warning/expired.
 class StatisticCard extends StatelessWidget {
   final String title;
   final int count;
@@ -94,7 +96,7 @@ class StatisticCard extends StatelessWidget {
   factory StatisticCard.good(int count) => StatisticCard(
     title: 'Tươi mới',
     count: count,
-    bgColor: const Color(0xFFF0FDF4),
+    bgColor: AppColors.green50,
     iconColor: AppColors.primary,
     icon: Icons.eco,
   );
@@ -102,7 +104,7 @@ class StatisticCard extends StatelessWidget {
   factory StatisticCard.warning(int count) => StatisticCard(
     title: 'Sắp hết hạn',
     count: count,
-    bgColor: const Color(0xFFFFFBEB),
+    bgColor: AppColors.amber50,
     iconColor: AppColors.amber500,
     icon: Icons.access_time,
   );
@@ -110,7 +112,7 @@ class StatisticCard extends StatelessWidget {
   factory StatisticCard.expired(int count) => StatisticCard(
     title: 'Hết hạn',
     count: count,
-    bgColor: const Color(0xFFFEF2F2),
+    bgColor: AppColors.red50,
     iconColor: AppColors.red500,
     icon: Icons.warning_amber_rounded,
   );

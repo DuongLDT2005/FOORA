@@ -31,6 +31,12 @@ export function throwResourceExhausted(
   throw new HttpsError("resource-exhausted", message);
 }
 
+export function throwFailedPrecondition(
+  message = "Hệ thống chưa sẵn sàng cho thao tác này."
+): never {
+  throw new HttpsError("failed-precondition", message);
+}
+
 export function handleFunctionError(
   error: unknown,
   functionName: string

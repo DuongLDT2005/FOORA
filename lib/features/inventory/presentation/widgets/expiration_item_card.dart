@@ -8,8 +8,10 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/inventory_item.dart';
 import 'food_image_avatar.dart';
 
+/// Which expiry bucket an item belongs to; drives the card colours/badge.
 enum ExpirationGroupType { expired, today, tomorrow, upcoming, safe }
 
+/// Item card on the expiry management screen, styled by [ExpirationGroupType].
 class ExpirationItemCard extends StatelessWidget {
   final InventoryItem item;
   final String categoryName;
@@ -26,6 +28,7 @@ class ExpirationItemCard extends StatelessWidget {
     required this.onSwipeDelete,
   });
 
+  // Badge / progress colours depend on the expiry group.
   Color _getBadgeBackgroundColor() {
     switch (groupType) {
       case ExpirationGroupType.expired:
@@ -67,26 +70,19 @@ class ExpirationItemCard extends StatelessWidget {
     }
   }
 
+  /// Human-readable badge text, e.g. "Hết hạn 2 ngày" or "Còn 3 ngày".
   String _getBadgeText() {
-    final now = DateTime.now();
-    final startOfToday = DateTime(now.year, now.month, now.day);
-    final startOfExpiry = DateTime(
-      item.expirationDate.year,
-      item.expirationDate.month,
-      item.expirationDate.day,
-    );
+    final days = DateFormatter.getDaysUntilExpiry(item.expirationDate);
 
     switch (groupType) {
       case ExpirationGroupType.expired:
-        final days = startOfToday.difference(startOfExpiry).inDays;
-        return 'QUÁ HẠN $days NGÀY';
+        return 'QUÁ HẠN ${days.abs()} NGÀY';
       case ExpirationGroupType.today:
         return 'HÔM NAY';
       case ExpirationGroupType.tomorrow:
         return 'NGÀY MAI';
       case ExpirationGroupType.upcoming:
       case ExpirationGroupType.safe:
-        final days = startOfExpiry.difference(startOfToday).inDays;
         return 'CÒN $days NGÀY';
     }
   }

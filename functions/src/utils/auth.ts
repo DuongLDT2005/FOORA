@@ -1,6 +1,7 @@
 import {CallableRequest} from "firebase-functions/v2/https";
 import {db} from "../config/firebase";
 import {Collections} from "../constants/collections";
+import {MembershipService} from "../membership/services/membership_service";
 import {AuthenticatedUser} from "../types";
 import {throwPermissionDenied, throwUnauthenticated} from "./errors";
 
@@ -28,19 +29,9 @@ export async function getAuthenticatedUser(
     throwPermissionDenied("Tài khoản của bạn đã bị vô hiệu hóa.");
   }
 
-  let membershipId = data?.membershipId || "free";
-  if (membershipId !== "free") {
-    const activeSubscriptions = await userDoc.ref
-      .collection(Collections.SUBSCRIPTIONS)
-      .where("status", "==", "active")
-      .limit(10)
-      .get();
-    const active = activeSubscriptions.docs.find((subscription) => {
-      const endDate = subscription.data().endDate;
-      return endDate?.toMillis?.() > Date.now();
-    });
-    membershipId = active?.data().membershipId || "free";
-  }
+  // Entitlement always comes from active subscriptions, never from the
+  // cached users.membershipId (docs/DATABASE.md §16).
+  const membershipId = await MembershipService.resolveMembershipId(uid);
 
   return {
     uid,

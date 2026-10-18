@@ -1,5 +1,6 @@
 import '../../domain/entities/receipt_item.dart';
 
+/// Data model for a line item parsed from a receipt.
 class ReceiptItemModel extends ReceiptItem {
   const ReceiptItemModel({
     required super.id,
@@ -17,6 +18,8 @@ class ReceiptItemModel extends ReceiptItem {
     super.matchedExistingItem,
   });
 
+  /// Builds an item from the `parseReceiptAi` response (AI-normalised fields
+  /// and the optional matched-stock alert).
   factory ReceiptItemModel.fromBackendJson(
     Map<String, dynamic> json, {
     String? id,
@@ -61,10 +64,12 @@ class ReceiptItemModel extends ReceiptItem {
     );
   }
 
+  /// Builds an item from a raw map.
   factory ReceiptItemModel.fromJson(Map<String, dynamic> json) {
     return ReceiptItemModel.fromBackendJson(json);
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -82,6 +87,7 @@ class ReceiptItemModel extends ReceiptItem {
     };
   }
 
+  /// Payload expected by `batchAddInventoryItems` to create an inventory item.
   Map<String, dynamic> toInventoryItemJson() {
     return {
       'name': name,

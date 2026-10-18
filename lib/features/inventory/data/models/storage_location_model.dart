@@ -4,6 +4,7 @@ import '../../../../core/constants/app_enums.dart';
 
 import '../../domain/entities/storage_location.dart';
 
+/// Data model for a storage location (fridge, freezer, pantry, ...).
 class StorageLocationModel extends StorageLocation {
   const StorageLocationModel({
     required super.id,
@@ -14,6 +15,7 @@ class StorageLocationModel extends StorageLocation {
     required super.updatedAt,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory StorageLocationModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -21,6 +23,7 @@ class StorageLocationModel extends StorageLocation {
     return StorageLocationModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a model from a raw map.
   factory StorageLocationModel.fromJson(
     Map<String, dynamic> json, {
     String? id,
@@ -35,6 +38,7 @@ class StorageLocationModel extends StorageLocation {
     );
   }
 
+  /// Serializes to a Firestore map.
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
@@ -45,6 +49,7 @@ class StorageLocationModel extends StorageLocation {
     };
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -56,6 +61,7 @@ class StorageLocationModel extends StorageLocation {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; falls back to now.
   static DateTime _parseDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

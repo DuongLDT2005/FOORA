@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/inventory_item.dart';
 
@@ -17,9 +18,9 @@ class SmartInventoryAlertBanner extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB), // amber-50
+        color: AppColors.amber50,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFFEF3C7)), // amber-100
+        border: Border.all(color: AppColors.amber100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +32,7 @@ class SmartInventoryAlertBanner extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFFB45309), // amber-700
+                  color: AppColors.amber700,
                   letterSpacing: 0.8,
                 ),
               ),
@@ -42,7 +43,7 @@ class SmartInventoryAlertBanner extends StatelessWidget {
             text: TextSpan(
               style: TextStyle(
                 fontSize: 12.5.sp,
-                color: const Color(0xFF92400E),
+                color: AppColors.amber800,
                 height: 1.45,
                 fontWeight: FontWeight.w500,
               ),

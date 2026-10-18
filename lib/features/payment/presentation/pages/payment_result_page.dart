@@ -12,6 +12,7 @@ import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../providers/payment_provider.dart';
 
+/// Final result of a payment (success, expired, cancelled, failed, review).
 class PaymentResultPage extends ConsumerStatefulWidget {
   const PaymentResultPage({super.key, required this.paymentId});
 
@@ -124,6 +125,7 @@ class _PaymentResultPageState extends ConsumerState<PaymentResultPage> {
   }
 }
 
+/// Icon, colour and texts used to present each payment outcome.
 class _ResultPresentation {
   const _ResultPresentation({
     required this.icon,

@@ -35,9 +35,9 @@ class ScannedItemsBottomSheet extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Colors.black12,
+                color: Colors.black.withValues(alpha: 0.12),
                 blurRadius: 30,
                 offset: Offset(0, -8),
               ),
@@ -186,6 +186,8 @@ class ScannedItemsBottomSheet extends StatelessWidget {
   }
 }
 
+/// Card for one scanned item: name, quantity, delete button and a
+/// stock alert if the same food is already in the fridge.
 class _ScannedItemCard extends StatelessWidget {
   final ReceiptItem item;
   final VoidCallback onTap;
@@ -306,6 +308,7 @@ class _ScannedItemCard extends StatelessWidget {
     );
   }
 
+  /// Warns that this food is already in stock (FEFO: use older items first).
   Widget _buildStockAlertBanner(dynamic alert) {
     final existingQty = alert.quantity % 1 == 0
         ? alert.quantity.toInt().toString()

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 
 // --- PrimaryButton ---
+/// Main call-to-action button with loading state.
 class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -38,6 +39,7 @@ class PrimaryButton extends StatelessWidget {
 }
 
 // --- SecondaryButton ---
+/// Outlined secondary button.
 class SecondaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -54,6 +56,7 @@ class SecondaryButton extends StatelessWidget {
 }
 
 // --- DangerButton ---
+/// Red button for destructive actions (delete, logout).
 class DangerButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -98,6 +101,7 @@ class DangerButton extends StatelessWidget {
 }
 
 // --- AppFloatingActionButton ---
+/// Floating action button in the app's style.
 class AppFloatingActionButton extends StatelessWidget {
   final VoidCallback onPressed;
 
@@ -123,6 +127,7 @@ class AppFloatingActionButton extends StatelessWidget {
 }
 
 // --- AppButton Unified Facade ---
+/// Facade with static helpers to create the button variants above.
 class AppButton {
   AppButton._();
 

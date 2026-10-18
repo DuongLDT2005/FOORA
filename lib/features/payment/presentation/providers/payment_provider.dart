@@ -14,6 +14,7 @@ import '../../domain/usecases/create_payment_intent.dart';
 import '../../domain/usecases/get_payment_history.dart';
 import '../../domain/usecases/watch_payment.dart';
 
+// --- Data & Domain Providers ---
 final paymentRemoteDataSourceProvider = Provider<PaymentRemoteDataSource>((
   ref,
 ) {
@@ -48,11 +49,13 @@ final cancelPendingPaymentUseCaseProvider = Provider<CancelPendingPayment>((
   return CancelPendingPayment(ref.watch(paymentRepositoryProvider));
 });
 
+/// Loads the current user's payment history.
 final paymentHistoryProvider =
     FutureProvider.autoDispose<List<PaymentTransaction>>((ref) {
       return ref.watch(getPaymentHistoryUseCaseProvider)();
     });
 
+/// Steps of the checkout flow shown by the payment screens.
 enum PaymentFlowPhase {
   idle,
   creatingOrder,
@@ -64,6 +67,7 @@ enum PaymentFlowPhase {
   failed,
 }
 
+/// UI state of the payment flow (phase, current transaction, error message).
 class PaymentFlowState {
   const PaymentFlowState({
     this.phase = PaymentFlowPhase.idle,
@@ -77,6 +81,7 @@ class PaymentFlowState {
   final String? message;
   final bool retryable;
 
+  /// Returns a copy with the given fields replaced.
   PaymentFlowState copyWith({
     PaymentFlowPhase? phase,
     PaymentTransaction? payment,
@@ -92,6 +97,7 @@ class PaymentFlowState {
   }
 }
 
+/// Orchestrates checkout: create order -> watch status -> cancel if needed.
 class PaymentController extends StateNotifier<PaymentFlowState> {
   PaymentController(
     this._createPayment,
@@ -105,6 +111,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
   StreamSubscription<PaymentTransaction>? _subscription;
   bool _isSubmitting = false;
 
+  /// Creates a payment order for [membershipId]; returns it or `null` on error.
   Future<PaymentTransaction?> createOrder(String membershipId) async {
     if (_isSubmitting) return state.payment;
     _isSubmitting = true;
@@ -126,6 +133,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
     }
   }
 
+  /// Subscribes to real-time updates of [paymentId].
   Future<void> watch(String paymentId) async {
     await _subscription?.cancel();
     _subscription = _watchPayment(paymentId).listen(
@@ -141,6 +149,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
     );
   }
 
+  /// Cancels the current pending payment.
   Future<void> cancel() async {
     final payment = state.payment;
     if (payment == null || payment.status != PaymentStatus.pending) return;
@@ -156,6 +165,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
     }
   }
 
+  /// Maps the transaction status to a [PaymentFlowPhase].
   void _applyPayment(PaymentTransaction payment) {
     state = PaymentFlowState(
       phase: switch (payment.status) {
@@ -174,6 +184,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
     );
   }
 
+  /// Picks a readable error message for the UI.
   String _messageFor(Object error) {
     if (error is AppException && error.message.trim().isNotEmpty) {
       return error.message;
@@ -181,6 +192,7 @@ class PaymentController extends StateNotifier<PaymentFlowState> {
     return 'Không thể xử lý giao dịch. Vui lòng thử lại.';
   }
 
+  /// Cancels the payment stream subscription.
   @override
   void dispose() {
     _subscription?.cancel();

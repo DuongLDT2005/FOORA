@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/constants/firestore_constants.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../models/user_model.dart';
 
+/// Contract for all remote authentication operations (Firebase Auth + Firestore).
 abstract class AuthRemoteDataSource {
   Stream<UserModel?> get authStateChanges;
   UserModel? get currentUser;
@@ -20,6 +23,7 @@ abstract class AuthRemoteDataSource {
   Future<void> logout();
 }
 
+/// Firebase implementation of [AuthRemoteDataSource].
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final fb.FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
@@ -29,6 +33,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required this.firestore,
   });
 
+  /// Emits the signed-in user (merged with their Firestore profile) whenever
+  /// the Firebase auth state changes, or `null` after sign-out.
   @override
   Stream<UserModel?> get authStateChanges {
     return firebaseAuth.authStateChanges().asyncExpand((fbUser) {
@@ -54,11 +60,73 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
               await firebaseAuth.signOut();
               return null;
             }
+            await _syncVerifiedEmail(fbUser, userModel.email);
             return userModel;
           });
     });
   }
 
+  /// Copies the Auth email into `users/{uid}.email` once Firebase Auth has
+  /// verified it (e.g. after a `verifyBeforeUpdateEmail` link was confirmed).
+  /// Firestore rules only accept an email equal to the verified token email.
+  Future<void> _syncVerifiedEmail(fb.User fbUser, String storedEmail) async {
+    final authEmail = fbUser.email;
+    if (authEmail == null ||
+        authEmail == storedEmail ||
+        !fbUser.emailVerified) {
+      return;
+    }
+    try {
+      await firestore
+          .collection(FirestoreConstants.users)
+          .doc(fbUser.uid)
+          .update({
+            'email': authEmail,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+    } catch (e, st) {
+      AppLogger.w('Could not sync verified email for ${fbUser.uid}: $e');
+      AppLogger.e('Email sync failed', e, st);
+    }
+  }
+
+  /// Saves the display name and renames the default household created by the
+  /// `onUserCreated` trigger. Only called for brand-new accounts, so a household
+  /// the user renamed later is never overwritten.
+  Future<void> _saveNewUserProfileName(String uid, String fullName) async {
+    final userRef = firestore.collection(FirestoreConstants.users).doc(uid);
+    await userRef.set({
+      'fullName': fullName,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    final userSnapshot = await userRef.get();
+    final activeHouseholdId =
+        userSnapshot.data()?['activeHouseholdId'] as String?;
+    if (activeHouseholdId == null || activeHouseholdId.isEmpty) {
+      // The trigger has not finished yet; it reads `fullName` when it runs.
+      AppLogger.i('Default household for $uid not created yet; skip rename.');
+      return;
+    }
+    try {
+      await firestore
+          .collection(FirestoreConstants.households)
+          .doc(activeHouseholdId)
+          .update({
+            'name': 'Tủ lạnh của $fullName',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+    } on FirebaseException catch (e, st) {
+      // Renaming is cosmetic; the account itself was created successfully.
+      AppLogger.e(
+        'Could not rename default household $activeHouseholdId',
+        e,
+        st,
+      );
+    }
+  }
+
+  /// Synchronously returns the currently signed-in user, or `null`.
   @override
   UserModel? get currentUser {
     final fbUser = firebaseAuth.currentUser;
@@ -72,6 +140,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 
+  /// Signs in with email/password, then loads the user's Firestore profile.
   @override
   Future<UserModel> login({
     required String email,
@@ -121,6 +190,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  /// Creates a Firebase Auth account, sets the display name and stores the
+  /// profile in Firestore (the default household is created by a Cloud Function).
   @override
   Future<UserModel> register({
     required String fullName,
@@ -140,29 +211,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       await fbUser.updateDisplayName(fullName);
 
-      // Save fullName into Firestore user document using merge: true
-      await firestore.collection(FirestoreConstants.users).doc(fbUser.uid).set({
-        'fullName': fullName,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      // Also update default household name if user doc already has activeHouseholdId
-      final userSnapshot = await firestore
-          .collection(FirestoreConstants.users)
-          .doc(fbUser.uid)
-          .get();
-      final activeHouseholdId =
-          userSnapshot.data()?['activeHouseholdId'] as String?;
-      if (activeHouseholdId != null && activeHouseholdId.isNotEmpty) {
-        await firestore
-            .collection(FirestoreConstants.households)
-            .doc(activeHouseholdId)
-            .update({
-              'name': 'Tủ lạnh của $fullName',
-              'updatedAt': FieldValue.serverTimestamp(),
-            })
-            .catchError((_) => null);
-      }
+      await _saveNewUserProfileName(fbUser.uid, fullName);
 
       final now = DateTime.now();
       return UserModel(
@@ -181,59 +230,57 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  /// Google sign-in: native Google Sign-In on mobile, popup provider on web.
   @override
   Future<UserModel> signInWithGoogle() async {
     try {
       final googleSignIn = GoogleSignIn();
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        throw const AuthException('Đã hủy đăng nhập Google.');
-      }
+      fb.UserCredential userCredential;
+      String resolvedName = '';
+      String? resolvedEmail;
 
-      final googleAuth = await googleUser.authentication;
-      final credential = fb.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCredential = await firebaseAuth.signInWithCredential(
-        credential,
-      );
-      final fbUser = userCredential.user;
-      if (fbUser == null) {
-        throw const AuthException(
-          'Đăng nhập Google thất bại. Không tìm thấy thông tin người dùng.',
-        );
-      }
-
-      final resolvedName = fbUser.displayName ?? googleUser.displayName ?? '';
-
-      // Save fullName into Firestore user document using merge: true
-      if (resolvedName.isNotEmpty) {
-        await firestore
-            .collection(FirestoreConstants.users)
-            .doc(fbUser.uid)
-            .set({
-              'fullName': resolvedName,
-              'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
-
-        final userSnapshot = await firestore
-            .collection(FirestoreConstants.users)
-            .doc(fbUser.uid)
-            .get();
-        final activeHouseholdId =
-            userSnapshot.data()?['activeHouseholdId'] as String?;
-        if (activeHouseholdId != null && activeHouseholdId.isNotEmpty) {
-          await firestore
-              .collection(FirestoreConstants.households)
-              .doc(activeHouseholdId)
-              .update({
-                'name': 'Tủ lạnh của $resolvedName',
-                'updatedAt': FieldValue.serverTimestamp(),
-              })
-              .catchError((_) => null);
+      if (kIsWeb) {
+        // On Web, use Firebase Auth's native popup provider to prevent null accessToken / idToken issues
+        final googleProvider = fb.GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        userCredential = await firebaseAuth.signInWithPopup(googleProvider);
+        final fbUser = userCredential.user;
+        if (fbUser == null) {
+          throw const AuthException(
+            'Đăng nhập Google thất bại. Không tìm thấy thông tin người dùng.',
+          );
         }
+        resolvedName = fbUser.displayName ?? '';
+        resolvedEmail = fbUser.email;
+      } else {
+        final googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          throw const AuthException('Đã hủy đăng nhập Google.');
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final credential = fb.GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        userCredential = await firebaseAuth.signInWithCredential(credential);
+        final fbUser = userCredential.user;
+        if (fbUser == null) {
+          throw const AuthException(
+            'Đăng nhập Google thất bại. Không tìm thấy thông tin người dùng.',
+          );
+        }
+        resolvedName = fbUser.displayName ?? googleUser.displayName ?? '';
+        resolvedEmail = fbUser.email ?? googleUser.email;
+      }
+
+      final fbUser = userCredential.user!;
+
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+      if (isNewUser && resolvedName.isNotEmpty) {
+        await _saveNewUserProfileName(fbUser.uid, resolvedName);
       }
 
       final doc = await firestore
@@ -245,7 +292,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final userModel = UserModel.fromFirestore(doc);
         if (!userModel.isActive) {
           await firebaseAuth.signOut();
-          await googleSignIn.signOut();
+          await googleSignIn.signOut().catchError((_) => null);
           throw const AuthException('Tài khoản của bạn đã bị vô hiệu hóa.');
         }
         return userModel;
@@ -255,7 +302,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return UserModel(
         id: fbUser.uid,
         fullName: resolvedName,
-        email: fbUser.email ?? googleUser.email,
+        email: resolvedEmail ?? fbUser.email ?? '',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -268,6 +315,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  /// Asks Firebase to email a password-reset link.
   @override
   Future<void> sendPasswordResetEmail({required String email}) async {
     try {
@@ -281,6 +329,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  /// Signs out of Firebase Auth and Google Sign-In.
   @override
   Future<void> logout() async {
     try {

@@ -12,6 +12,7 @@ class ToastHelper {
   static OverlayEntry? _entry;
   static Timer? _timer;
 
+  /// Shows a toast with [message]; replaces any toast already on screen.
   static void show(
     BuildContext context,
     String message, {
@@ -43,6 +44,7 @@ class ToastHelper {
     _timer = Timer(const Duration(seconds: 3), _dismiss);
   }
 
+  /// Removes the current toast overlay entry.
   static void _dismiss() {
     _timer?.cancel();
     _timer = null;
@@ -52,6 +54,7 @@ class ToastHelper {
   }
 }
 
+/// Visual card of the toast.
 class _ToastCard extends StatelessWidget {
   final String message;
   final bool isError;
@@ -63,7 +66,7 @@ class _ToastCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
+        color: AppColors.slate900.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
         boxShadow: [

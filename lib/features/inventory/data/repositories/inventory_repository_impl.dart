@@ -4,16 +4,21 @@ import '../../../../core/errors/failures.dart';
 import '../../domain/entities/food_category.dart';
 import '../../domain/entities/food_suggestion.dart';
 import '../../domain/entities/inventory_item.dart';
+import '../../domain/entities/shelf_life_duration.dart';
 import '../../domain/entities/storage_location.dart';
 import '../../domain/repositories/inventory_repository.dart';
 import '../datasources/inventory_remote_datasource.dart';
 import '../models/inventory_item_model.dart';
 
+/// Implementation of [InventoryRepository] on top of [InventoryRemoteDataSource].
+/// Maps data-layer exceptions to domain [Failure]s and provides offline fallbacks.
 class InventoryRepositoryImpl implements InventoryRepository {
   final InventoryRemoteDataSource remoteDataSource;
 
   const InventoryRepositoryImpl({required this.remoteDataSource});
 
+  /// Adds a food item via the `addInventoryItem` Cloud Function.
+  /// Throws [ResourceExhaustedFailure] when the plan's item limit is reached.
   @override
   Future<String> addInventoryItem(
     InventoryItem item, {
@@ -45,6 +50,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  /// Updates an existing inventory item.
   @override
   Future<void> updateInventoryItem(
     InventoryItem item, {
@@ -65,6 +71,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  /// Changes the status (consumed / discarded ...) of many items at once.
   @override
   Future<void> batchUpdateInventoryStatus({
     required String householdId,
@@ -86,11 +93,13 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  /// Real-time stream of the household's active (not consumed/discarded) items.
   @override
   Stream<List<InventoryItem>> watchActiveInventoryItems(String householdId) {
     return remoteDataSource.watchActiveInventoryItems(householdId);
   }
 
+  /// Loads all food categories.
   @override
   Future<List<FoodCategory>> getCategories() async {
     try {
@@ -104,6 +113,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  /// Loads all storage locations.
   @override
   Future<List<StorageLocation>> getStorageLocations() async {
     try {
@@ -118,60 +128,25 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
-  Future<DateTime> calculateExpiryDate({
+  Future<ShelfLifeDuration?> findShelfLife({
     String? foodId,
     required String categoryId,
     required String storageLocationId,
-    required DateTime purchaseDate,
   }) async {
     try {
-      return await remoteDataSource.calculateExpiryDate(
+      return await remoteDataSource.findShelfLife(
         foodId: foodId,
         categoryId: categoryId,
         storageLocationId: storageLocationId,
-        purchaseDate: purchaseDate,
       );
+    } on AppException catch (e) {
+      throw Failure.fromException(e);
     } catch (_) {
-      final fallbackDays = storageLocationId == 'freezer' ? 30 : 3;
-      return purchaseDate.add(Duration(days: fallbackDays));
+      throw const ServerFailure('Không thể tải thời hạn bảo quản.');
     }
   }
 
-  @override
-  Future<
-    ({
-      DateTime expirationDate,
-      num? maxValue,
-      num? minValue,
-      String? unit,
-      bool hasRule,
-    })
-  >
-  calculateExpiryWithRule({
-    String? foodId,
-    required String categoryId,
-    required String storageLocationId,
-    required DateTime purchaseDate,
-  }) async {
-    try {
-      return await remoteDataSource.calculateExpiryWithRule(
-        foodId: foodId,
-        categoryId: categoryId,
-        storageLocationId: storageLocationId,
-        purchaseDate: purchaseDate,
-      );
-    } catch (_) {
-      final fallbackDays = storageLocationId == 'freezer' ? 30 : 3;
-      return (
-        expirationDate: purchaseDate.add(Duration(days: fallbackDays)),
-        maxValue: null,
-        minValue: null,
-        unit: null,
-        hasRule: false,
-      );
-    }
-  }
-
+  /// Searches the food catalogue for autocomplete suggestions.
   @override
   Future<List<FoodSuggestion>> searchFoodSuggestions({
     required String query,

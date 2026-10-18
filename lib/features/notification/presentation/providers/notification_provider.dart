@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/firebase/firebase_providers.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/notification_remote_datasource.dart';
 import '../../data/repositories/notification_repository_impl.dart';
 import '../../domain/entities/app_notification.dart';
@@ -13,9 +14,10 @@ import '../../domain/usecases/unregister_device.dart';
 
 final currentNotificationUserIdProvider = StreamProvider<String?>((ref) {
   return ref
-      .watch(firebaseAuthProvider)
-      .authStateChanges()
-      .map((user) => user?.uid);
+      .watch(authRepositoryProvider)
+      .authStateChanges
+      .map((user) => user?.id)
+      .distinct();
 });
 
 // --- Data Layer Providers ---

@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../widgets/app_button.dart';
 
+/// Reusable styled dialog with icon, title, message and confirm/cancel actions.
 class AppDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -12,6 +13,10 @@ class AppDialog extends StatelessWidget {
   final String? cancelText;
   final VoidCallback? onConfirm;
   final VoidCallback? onCancel;
+
+  /// Optional destructive action shown between cancel and confirm.
+  final String? secondaryText;
+  final VoidCallback? onSecondary;
   final IconData? icon;
   final Color iconColor;
   final Color iconBgColor;
@@ -25,9 +30,11 @@ class AppDialog extends StatelessWidget {
     this.cancelText = 'Hủy',
     this.onConfirm,
     this.onCancel,
+    this.secondaryText,
+    this.onSecondary,
     this.icon,
     this.iconColor = AppColors.primary,
-    this.iconBgColor = const Color(0xFFF0FDF4),
+    this.iconBgColor = AppColors.green50,
     this.isDestructive = false,
   });
 
@@ -91,6 +98,15 @@ class AppDialog extends StatelessWidget {
                         text: cancelText!,
                         onPressed:
                             onCancel ?? () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                  ],
+                  if (secondaryText != null) ...[
+                    Expanded(
+                      child: DangerButton(
+                        text: secondaryText!,
+                        onPressed: onSecondary,
                       ),
                     ),
                     SizedBox(width: 12.w),

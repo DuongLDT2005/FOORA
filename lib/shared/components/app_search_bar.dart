@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 import '../helpers/debouncer.dart';
 
+/// Reusable search field with a clear button; reports text changes via a callback.
 class AppSearchBar extends StatefulWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
@@ -46,6 +47,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
     _controller.addListener(_handleTextChange);
   }
 
+  /// Rebuilds to toggle the clear button and forwards the new text.
   void _handleTextChange() {
     final hasText = _controller.text.isNotEmpty;
     if (hasText != _hasText) {

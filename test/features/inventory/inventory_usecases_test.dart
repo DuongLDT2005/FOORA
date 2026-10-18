@@ -3,6 +3,7 @@ import 'package:foora/core/constants/app_enums.dart';
 import 'package:foora/features/inventory/domain/entities/food_category.dart';
 import 'package:foora/features/inventory/domain/entities/food_suggestion.dart';
 import 'package:foora/features/inventory/domain/entities/inventory_item.dart';
+import 'package:foora/features/inventory/domain/entities/shelf_life_duration.dart';
 import 'package:foora/features/inventory/domain/entities/storage_location.dart';
 import 'package:foora/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:foora/features/inventory/domain/usecases/add_inventory_item.dart';
@@ -63,38 +64,12 @@ class MockInventoryRepository implements InventoryRepository {
   }
 
   @override
-  Future<DateTime> calculateExpiryDate({
+  Future<ShelfLifeDuration?> findShelfLife({
     String? foodId,
     required String categoryId,
     required String storageLocationId,
-    required DateTime purchaseDate,
   }) async {
-    return purchaseDate.add(const Duration(days: 7));
-  }
-
-  @override
-  Future<
-    ({
-      DateTime expirationDate,
-      num? maxValue,
-      num? minValue,
-      String? unit,
-      bool hasRule,
-    })
-  >
-  calculateExpiryWithRule({
-    String? foodId,
-    required String categoryId,
-    required String storageLocationId,
-    required DateTime purchaseDate,
-  }) async {
-    return (
-      expirationDate: purchaseDate.add(const Duration(days: 7)),
-      maxValue: 7,
-      minValue: 5,
-      unit: 'days',
-      hasRule: true,
-    );
+    return const ShelfLifeDuration(minValue: 5, maxValue: 7, unit: 'days');
   }
 
   @override

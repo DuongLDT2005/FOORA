@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing system dashboard metrics for Web Admin.
 @immutable

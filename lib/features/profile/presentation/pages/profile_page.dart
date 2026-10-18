@@ -16,6 +16,8 @@ import '../widgets/change_password_dialog.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/profile_menu.dart';
 
+/// Profile tab: user header card, membership badge and menu sections
+/// (account, settings & security, support, app info) plus logout.
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
@@ -53,6 +55,7 @@ class ProfilePage extends ConsumerWidget {
                   onEdit: () => context.push(AppRouteNames.profileDetail),
                 ),
                 SizedBox(height: 36.h),
+                // Account section
                 ProfileMenuSection(
                   title: 'TÀI KHOẢN',
                   children: [
@@ -78,6 +81,7 @@ class ProfilePage extends ConsumerWidget {
                     ),
                   ],
                 ),
+                // Settings & security section
                 ProfileMenuSection(
                   title: 'CÀI ĐẶT & BẢO MẬT',
                   children: [
@@ -95,6 +99,7 @@ class ProfilePage extends ConsumerWidget {
                     ),
                   ],
                 ),
+                // Support section
                 ProfileMenuSection(
                   title: 'HỖ TRỢ',
                   children: [
@@ -121,6 +126,7 @@ class ProfilePage extends ConsumerWidget {
                     ),
                   ],
                 ),
+                // App information section
                 ProfileMenuSection(
                   title: 'THÔNG TIN ỨNG DỤNG',
                   children: [
@@ -191,10 +197,12 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
+  /// Toast for menu items that are not implemented yet.
   void _showComingSoon(BuildContext context, String feature) {
     ToastHelper.show(context, '$feature sẽ sớm được cập nhật.');
   }
 
+  /// Asks for confirmation, then logs out (which also unregisters the push device).
   Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await DialogHelper.showConfirmDialog(
       context,
@@ -214,6 +222,7 @@ class ProfilePage extends ConsumerWidget {
   }
 }
 
+/// Header card with avatar, name and email.
 class _ProfileHeaderCard extends StatelessWidget {
   const _ProfileHeaderCard({
     required this.fullName,
@@ -316,6 +325,7 @@ class _ProfileHeaderCard extends StatelessWidget {
   }
 }
 
+/// Badge showing Free / Premium.
 class _MembershipBadge extends StatelessWidget {
   const _MembershipBadge({required this.isPremium});
 

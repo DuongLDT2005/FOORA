@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/services/storage_service.dart';
 
+/// User preferences for notifications (push on/off, expiry alerts, reminder time, sound).
 @immutable
 class NotificationSettingsState {
   final bool isPushEnabled;
@@ -30,6 +31,7 @@ class NotificationSettingsState {
     return '$h:$m';
   }
 
+  /// Returns a copy with the given fields replaced.
   NotificationSettingsState copyWith({
     bool? isPushEnabled,
     bool? expiryAlert1Day,
@@ -51,6 +53,7 @@ class NotificationSettingsState {
   }
 }
 
+/// Loads and persists notification preferences locally with [SharedPreferences].
 class NotificationSettingsNotifier
     extends StateNotifier<NotificationSettingsState> {
   final SharedPreferences _prefs;
@@ -76,32 +79,38 @@ class NotificationSettingsNotifier
         ),
       );
 
+  /// Enables / disables push notifications.
   Future<void> togglePush(bool value) async {
     state = state.copyWith(isPushEnabled: value);
     await _prefs.setBool(_keyPush, value);
   }
 
+  /// Toggles the "1 day before expiry" alert.
   Future<void> toggleExpiry1Day(bool value) async {
     state = state.copyWith(expiryAlert1Day: value);
     await _prefs.setBool(_key1Day, value);
   }
 
+  /// Toggles the "3 days before expiry" alert.
   Future<void> toggleExpiry3Days(bool value) async {
     state = state.copyWith(expiryAlert3Days: value);
     await _prefs.setBool(_key3Days, value);
   }
 
+  /// Toggles the "7 days before expiry" alert.
   Future<void> toggleExpiry7Days(bool value) async {
     state = state.copyWith(expiryAlert7Days: value);
     await _prefs.setBool(_key7Days, value);
   }
 
+  /// Sets the daily reminder time.
   Future<void> setReminderTime(int hour, int minute) async {
     state = state.copyWith(reminderHour: hour, reminderMinute: minute);
     await _prefs.setInt(_keyHour, hour);
     await _prefs.setInt(_keyMinute, minute);
   }
 
+  /// Toggles notification sound.
   Future<void> toggleSound(bool value) async {
     state = state.copyWith(soundEnabled: value);
     await _prefs.setBool(_keySound, value);

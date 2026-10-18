@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 
 // --- StatusBadge ---
+/// Small coloured badge (expired / warning / premium...).
 class StatusBadge extends StatelessWidget {
   final String text;
   final Color bgColor;
@@ -20,19 +21,19 @@ class StatusBadge extends StatelessWidget {
 
   factory StatusBadge.expired() => const StatusBadge(
     text: 'Hết hạn',
-    bgColor: Color(0xFFFEF2F2),
+    bgColor: AppColors.red50,
     textColor: AppColors.red500,
   );
 
   factory StatusBadge.warning() => const StatusBadge(
     text: 'Sắp hết',
-    bgColor: Color(0xFFFFFBEB),
+    bgColor: AppColors.amber50,
     textColor: AppColors.amber500,
   );
 
   factory StatusBadge.premium() => const StatusBadge(
     text: 'PREMIUM',
-    bgColor: Color(0xFFFFFBEB),
+    bgColor: AppColors.amber50,
     textColor: AppColors.amber500,
     icon: Icons.star,
   );
@@ -67,6 +68,7 @@ class StatusBadge extends StatelessWidget {
 }
 
 // --- CategoryAvatar ---
+/// Rounded icon avatar for a food category.
 class CategoryAvatar extends StatelessWidget {
   final IconData icon;
   final Color bgColor;

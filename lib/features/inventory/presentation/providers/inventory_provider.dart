@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/firebase/firebase_providers.dart';
+import '../../../../core/utils/string_utils.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/inventory_remote_datasource.dart';
 import '../../data/repositories/inventory_repository_impl.dart';
@@ -12,6 +16,7 @@ import '../../domain/entities/storage_location.dart';
 import '../../domain/repositories/inventory_repository.dart';
 import '../../domain/usecases/add_inventory_item.dart';
 import '../../domain/usecases/batch_update_inventory_status_usecase.dart';
+import '../../domain/usecases/calculate_expiration_date.dart';
 
 import '../../domain/usecases/get_inventory_items.dart';
 import '../../domain/usecases/update_inventory_item.dart';
@@ -49,6 +54,49 @@ final updateInventoryItemUseCaseProvider = Provider<UpdateInventoryItemUseCase>(
 final batchUpdateInventoryStatusUseCaseProvider =
     Provider<BatchUpdateInventoryStatusUseCase>((ref) {
       return BatchUpdateInventoryStatusUseCase(
+        ref.watch(inventoryRepositoryProvider),
+      );
+    });
+
+/// Moves items of the active household to `consumed` / `discarded`.
+final inventoryStatusControllerProvider = Provider<InventoryStatusController>(
+  InventoryStatusController.new,
+);
+
+/// Coordinates status changes between the UI and the domain use case.
+/// Throws a [Failure] with a user-facing message on error.
+class InventoryStatusController {
+  final Ref ref;
+
+  InventoryStatusController(this.ref);
+
+  Future<void> changeStatus(
+    List<String> itemIds,
+    InventoryItemStatus status,
+  ) async {
+    final householdId = ref.read(currentUserProvider)?.activeHouseholdId;
+    if (householdId == null || householdId.isEmpty) {
+      throw const NotFoundFailure('Chưa có thông tin tủ lạnh gia đình.');
+    }
+    try {
+      await ref.read(batchUpdateInventoryStatusUseCaseProvider)(
+        itemIds,
+        status,
+        householdId: householdId,
+      );
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const ServerFailure(
+        'Không thể cập nhật thực phẩm. Vui lòng thử lại.',
+      );
+    }
+  }
+}
+
+final calculateExpirationDateUseCaseProvider =
+    Provider<CalculateExpirationDateUseCase>((ref) {
+      return CalculateExpirationDateUseCase(
         ref.watch(inventoryRepositoryProvider),
       );
     });
@@ -114,6 +162,8 @@ final inventoryFormNotifierProvider = StateNotifierProvider.autoDispose
       );
     });
 
+/// Drives the add/edit item form: loads metadata, autocompletes names,
+/// recalculates the expiry date and submits the item.
 class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
   final Ref ref;
   final InventoryRepository repository;
@@ -141,6 +191,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     _initMetadata();
   }
 
+  /// Loads categories and storage locations for the dropdowns.
   Future<void> _initMetadata() async {
     if (state.categories.isEmpty || state.storageLocations.isEmpty) {
       state = state.copyWith(isLoadingMetadata: true);
@@ -173,39 +224,78 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     }
   }
 
+  /// Retries loading metadata after a failure.
   Future<void> retryLoadMetadata() async {
     state = state.copyWith(categories: [], storageLocations: []);
     await _initMetadata();
   }
 
+  Timer? _searchDebounce;
+
+  /// Bumped on every keystroke and selection, so a slow search that finishes
+  /// late cannot overwrite newer results or reopen the dropdown.
+  int _searchSeq = 0;
+
+  /// Name of the suggestion picked in this form. Editing the name away from
+  /// it unlinks that food, so its photo and shelf-life rule are not kept.
+  String? _selectedSuggestionName;
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
+
+  /// Updates the name, searches suggestions and checks for duplicates.
   Future<void> onNameChanged(String newName) async {
-    state = state.copyWith(name: newName);
+    final unlinkSelection =
+        _selectedSuggestionName != null &&
+        newName.trim() != _selectedSuggestionName;
+    state = state.copyWith(
+      name: newName,
+      clearFoodId: unlinkSelection,
+      clearPhotoUrl: unlinkSelection,
+    );
+    if (unlinkSelection) {
+      _selectedSuggestionName = null;
+      unawaited(_recalculateExpiry());
+    }
     _checkSmartInventoryMatch(newName);
 
+    _searchDebounce?.cancel();
+    final seq = ++_searchSeq;
+    if (newName.trim().isEmpty) {
+      state = state.copyWith(suggestions: [], showSuggestions: false);
+      return;
+    }
+
     // Search food suggestions in master foods & household history
-    final user = ref.read(currentUserProvider);
-    final householdId = user?.activeHouseholdId;
-    if (newName.trim().isNotEmpty) {
+    _searchDebounce = Timer(const Duration(milliseconds: 250), () async {
+      final householdId = ref.read(currentUserProvider)?.activeHouseholdId;
       final suggestions = await repository.searchFoodSuggestions(
         query: newName,
         householdId: householdId,
       );
+      if (!mounted || seq != _searchSeq) return;
       state = state.copyWith(
         suggestions: suggestions,
         showSuggestions: suggestions.isNotEmpty,
       );
-    } else {
-      state = state.copyWith(suggestions: [], showSuggestions: false);
-    }
+    });
   }
 
+  /// Hides the autocomplete dropdown.
   void dismissSuggestions() {
     if (state.showSuggestions) {
       state = state.copyWith(showSuggestions: false);
     }
   }
 
+  /// Fills name/category/location from a suggestion and recalculates expiry.
   Future<void> onSelectSuggestion(FoodSuggestion suggestion) async {
+    _searchDebounce?.cancel();
+    _searchSeq++;
+    _selectedSuggestionName = suggestion.name.trim();
     state = state.copyWith(
       name: suggestion.name,
       foodId: suggestion.foodId,
@@ -222,8 +312,10 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     await _recalculateExpiry();
   }
 
+  /// "Smart inventory": warns if a similar item is already in the household,
+  /// helping users avoid buying duplicates.
   void _checkSmartInventoryMatch(String query) {
-    final clean = query.trim().toLowerCase();
+    final clean = StringUtils.normalize(query);
     if (clean.isEmpty || itemToEdit != null) {
       state = state.copyWith(clearMatchedItem: true);
       return;
@@ -231,10 +323,13 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
 
     InventoryItem? match;
     for (final item in activeItems) {
-      final itemName = item.name.toLowerCase().trim();
-      if (itemName == clean ||
-          itemName.contains(clean) ||
-          clean.contains(itemName)) {
+      // Same food when the names are equal or one extends the other by whole
+      // words ("Trứng" / "Trứng gà"), so a single letter does not match.
+      final itemName = StringUtils.normalize(item.name);
+      if (itemName.isNotEmpty &&
+          (itemName == clean ||
+              itemName.startsWith('$clean ') ||
+              clean.startsWith('$itemName '))) {
         match = item;
         break;
       }
@@ -247,16 +342,19 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     }
   }
 
+  /// Category changed -> expiry must be recalculated.
   Future<void> onCategoryChanged(String newCategoryId) async {
     state = state.copyWith(categoryId: newCategoryId);
     await _recalculateExpiry();
   }
 
+  /// Storage location changed -> expiry must be recalculated.
   Future<void> onLocationChanged(String newLocationId) async {
     state = state.copyWith(storageLocationId: newLocationId);
     await _recalculateExpiry();
   }
 
+  // Simple field setters.
   void onQuantityChanged(double newQty) {
     state = state.copyWith(quantity: newQty);
   }
@@ -269,6 +367,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     state = state.copyWith(remainingPercentage: newPercentage.toInt());
   }
 
+  /// Purchase date changed -> expiry must be recalculated.
   Future<void> onPurchaseDateChanged(DateTime newPurchaseDate) async {
     state = state.copyWith(purchaseDate: newPurchaseDate);
     await _recalculateExpiry();
@@ -278,30 +377,32 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     state = state.copyWith(expirationDate: newExpirationDate);
   }
 
+  /// Recalculates the expiry date + rule hint for the current fields.
   Future<void> _recalculateExpiry() async {
-    try {
-      final result = await repository.calculateExpiryWithRule(
-        foodId: state.foodId,
-        categoryId: state.categoryId,
-        storageLocationId: state.storageLocationId,
-        purchaseDate: state.purchaseDate,
-      );
-      state = state.copyWith(
-        expirationDate: result.expirationDate,
-        maxStorageTime: result.maxValue,
-        minStorageTime: result.minValue,
-        storageTimeUnit: result.unit,
-        hasShelfLifeRule: result.hasRule,
-      );
-    } catch (_) {
-      final fallbackDays = state.storageLocationId == 'freezer' ? 30 : 3;
-      state = state.copyWith(
-        expirationDate: state.purchaseDate.add(Duration(days: fallbackDays)),
-        clearShelfLifeRule: true,
-      );
-    }
+    final estimate = await ref.read(calculateExpirationDateUseCaseProvider)(
+      foodId: state.foodId,
+      categoryId: state.categoryId,
+      storageLocationId: state.storageLocationId,
+      purchaseDate: state.purchaseDate,
+    );
+    if (!mounted) return;
+    final shelfLife = estimate.shelfLife;
+    state = shelfLife == null
+        ? state.copyWith(
+            expirationDate: estimate.expirationDate,
+            clearShelfLifeRule: true,
+          )
+        : state.copyWith(
+            expirationDate: estimate.expirationDate,
+            maxStorageTime: shelfLife.maxValue,
+            minStorageTime: shelfLife.minValue,
+            storageTimeUnit: shelfLife.unit,
+            hasShelfLifeRule: estimate.hasRule,
+          );
   }
 
+  /// Validates and saves the item (update if editing, add otherwise).
+  /// Returns `true` on success.
   Future<bool> submit() async {
     // 1. Validate form fields first
     if (state.name.trim().isEmpty) {

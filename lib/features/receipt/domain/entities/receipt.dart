@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 import 'package:foora/core/constants/app_enums.dart';
 
 /// Pure domain entity representing a scanned receipt document.
@@ -29,6 +29,7 @@ class Receipt {
   bool get isProcessing => status == ReceiptStatus.processing;
   bool get isFailed => status == ReceiptStatus.failed;
 
+  /// Returns a copy with the given fields replaced.
   Receipt copyWith({
     String? id,
     String? householdId,

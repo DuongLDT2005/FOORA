@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_header.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../membership/domain/entities/membership_plan.dart';
+import '../../../membership/presentation/providers/membership_provider.dart';
 
-class HelpCenterPage extends StatefulWidget {
+/// Help center: searchable FAQ grouped by category, plus a contact CTA.
+class HelpCenterPage extends ConsumerStatefulWidget {
   const HelpCenterPage({super.key});
 
   @override
-  State<HelpCenterPage> createState() => _HelpCenterPageState();
+  ConsumerState<HelpCenterPage> createState() => _HelpCenterPageState();
 }
 
-class _HelpCenterPageState extends State<HelpCenterPage> {
+class _HelpCenterPageState extends ConsumerState<HelpCenterPage> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'all';
   String _searchQuery = '';
@@ -37,15 +42,16 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     },
     {
       'category': 'household',
-      'question': 'Làm thế nào để chia sẻ tủ lạnh với thành viên gia đình?',
+      'question': 'Tôi có thể chia sẻ tủ lạnh với thành viên gia đình không?',
       'answer':
-          'Bạn chỉ cần vào mục "Gia đình của tôi", chọn "Mời thành viên" và nhập mã hoặc chia sẻ liên kết lời mời. Khi người thân tham gia, mọi thay đổi thêm, sửa hoặc tiêu thụ thực phẩm sẽ được đồng bộ theo thời gian thực cho tất cả mọi người.',
+          'Hiện mỗi tài khoản có một tủ lạnh riêng. Tính năng mời thành viên gia đình cùng quản lý tủ lạnh sẽ được hỗ trợ trong phiên bản sau.',
     },
     {
+      'id': _membershipFaqId,
       'category': 'membership',
       'question': 'Sự khác biệt giữa Gói Miễn phí và Gói Premium?',
       'answer':
-          'Gói Miễn phí hỗ trợ lưu tối đa 50 món và 5 lượt quét hóa đơn AI mỗi tháng. Gói Premium mở khóa lưu trữ không giới hạn, không giới hạn quét AI, hỗ trợ lên tới 10 thành viên hộ gia đình và quyền ưu tiên hỗ trợ 24/7.',
+          'Gói Miễn phí có giới hạn số món lưu trữ và lượt quét hóa đơn AI mỗi tháng. Gói Premium mở khóa lưu trữ và quét hóa đơn không giới hạn.',
     },
     {
       'category': 'receipt',
@@ -61,9 +67,39 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     super.dispose();
   }
 
+  static const _membershipFaqId = 'membership_compare';
+
+  /// Builds the Free vs Premium answer from the `memberships` configuration.
+  String _membershipAnswer(MembershipPlan free, MembershipPlan? premium) {
+    String limit(int? value, String unit) =>
+        value == null ? 'không giới hạn $unit' : 'tối đa $value $unit';
+    final buffer = StringBuffer(
+      'Gói ${free.name} cho phép lưu ${limit(free.foodLimit, 'món')} và '
+      '${limit(free.receiptScanQuota, 'lượt quét hóa đơn AI')} mỗi tháng.',
+    );
+    if (premium != null) {
+      buffer.write(
+        ' Gói ${premium.name} cho phép lưu ${limit(premium.foodLimit, 'món')} '
+        'và ${limit(premium.receiptScanQuota, 'lượt quét hóa đơn AI')} mỗi tháng.',
+      );
+    }
+    return buffer.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filteredFaqs = _faqItems.where((faq) {
+    final freePlan = ref
+        .watch(membershipPlanProvider(MembershipTier.free.value))
+        .valueOrNull;
+    final premiumPlan = ref
+        .watch(membershipPlanProvider(MembershipTier.premium.value))
+        .valueOrNull;
+    final faqItems = _faqItems.map((faq) {
+      if (faq['id'] != _membershipFaqId || freePlan == null) return faq;
+      return {...faq, 'answer': _membershipAnswer(freePlan, premiumPlan)};
+    });
+
+    final filteredFaqs = faqItems.where((faq) {
       final matchesCat =
           _selectedCategory == 'all' || faq['category'] == _selectedCategory;
       final matchesQuery =
@@ -304,6 +340,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     );
   }
 
+  /// Category filter chip for the FAQ list.
   Widget _buildChip(String label, String value) {
     final isSelected = _selectedCategory == value;
     return Padding(

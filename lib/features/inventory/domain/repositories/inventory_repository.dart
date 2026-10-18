@@ -2,6 +2,7 @@ import '../../../../core/constants/app_enums.dart';
 import '../entities/food_category.dart';
 import '../entities/food_suggestion.dart';
 import '../entities/inventory_item.dart';
+import '../entities/shelf_life_duration.dart';
 import '../entities/storage_location.dart';
 
 abstract class InventoryRepository {
@@ -33,32 +34,13 @@ abstract class InventoryRepository {
   /// Retrieves active storage locations from `storage_locations`
   Future<List<StorageLocation>> getStorageLocations();
 
-  /// Calculates estimated expiration date dynamically from Firestore:
-  /// 1. `shelf_life_rules` matching foodId + storageLocationId
-  /// 2. fallback to `food_categories/{categoryId}` defaultShelfLife[storageLocationId]
-  /// 3. fallback 3 days (fridge) / 30 days (freezer)
-  Future<DateTime> calculateExpiryDate({
+  /// Recommended storage duration for a food at a storage location:
+  /// exact `shelf_life_rules` entry first, then the category default.
+  /// Returns `null` when no recommendation exists.
+  Future<ShelfLifeDuration?> findShelfLife({
     String? foodId,
     required String categoryId,
     required String storageLocationId,
-    required DateTime purchaseDate,
-  });
-
-  /// Calculates estimated expiration date and returns rule values for UI alert
-  Future<
-    ({
-      DateTime expirationDate,
-      num? maxValue,
-      num? minValue,
-      String? unit,
-      bool hasRule,
-    })
-  >
-  calculateExpiryWithRule({
-    String? foodId,
-    required String categoryId,
-    required String storageLocationId,
-    required DateTime purchaseDate,
   });
 
   /// Searches master foods catalog and household past items

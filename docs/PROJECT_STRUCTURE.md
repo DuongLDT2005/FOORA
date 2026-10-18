@@ -116,7 +116,7 @@ lib/shared/
 | **`layouts`** | `mobile_shell_scaffold.dart` | Shell Scaffold cho các tab chính Mobile (Home, Inventory, Scan, Profile) tích hợp Bottom Navigation Bar & Responsive header. |
 | | `subpage_layout.dart` | `SubpageLayout` (Khung Scaffold wrapper hoàn chỉnh kết hợp `AppHeader` + `body` + `AppBottomBar` tích hợp giới hạn responsive `maxWidth: 600.w` căn giữa cho tablet/web). |
 | **`components`** | `app_header.dart` | `AppHeader` (Header chuẩn di động font Lexend, nền xanh primary, nút back bo tròn, responsive `.w`/`.h`/`.sp`, variants: `itemForm`, `notifications`, `profileDetail`, `membership`, `paymentHistory`). |
-| | `app_bottom_bar.dart` | `AppBottomBar` (Thanh action bar đáy màn hình hỗ trợ Safe Area, responsive units & giới hạn `maxWidth: 600.w`: variants `form` Hủy/Lưu 1:2 kèm loading spinner, `membership` giá 29k/tháng & nâng cấp/quản lý gói). |
+| | `app_bottom_bar.dart` | `AppBottomBar` (Thanh action bar đáy màn hình hỗ trợ Safe Area, responsive units & giới hạn `maxWidth: 600.w`: variants `form` Hủy/Lưu 1:2 kèm loading spinner, `membership` giá/chu kỳ truyền vào từ `memberships` trên Firestore & nâng cấp/quản lý gói). |
 | | `app_shimmer.dart` | Hiệu ứng Skeleton Shimmer loading quét gradient mượt mà (`AppShimmer.box`, `AppShimmer.circle`). |
 | | `app_search_bar.dart` | Thanh tìm kiếm bo 16px tích hợp `Debouncer`, responsive scaling, icon kính lúp và nút xóa text tự động. |
 | | `app_segmented_control.dart` | Bộ nút gạt phân loại tab mềm (Ngăn mát / Ngăn đông) hỗ trợ icon và badge số lượng. |
@@ -166,8 +166,8 @@ features/{feature_name}/
 | :---: | :--- | :--- | :--- |
 | **1** | **`auth`** | Đăng nhập & Đăng ký (2 tab trên 1 page), quên mật khẩu, đăng xuất. | `user.dart`, `user_model.dart`, usecases (`login`, `register`, `logout`), pages (`auth_page.dart`, `forgot_password_page.dart`), `auth_provider.dart`. |
 | **2** | **`profile`** | Xem và cập nhật thông tin cá nhân, avatar, cài đặt tài khoản. | `profile.dart`, `profile_model.dart`, `get_profile.dart`, `update_profile.dart`, `profile_page.dart`, `profile_provider.dart`. |
-| **3** | **`membership`** | Quản lý gói thành viên (Free / Premium), gói đăng ký (Subscription). | `membership_plan.dart`, `membership_plan_model.dart`, `subscription.dart`, `subscription_model.dart`, `get_membership_plans.dart`, `membership_page.dart`, `membership_provider.dart`. |
-| **4** | **`payment`** | Tích hợp In-App Purchase (IAP Google Play / App Store), xem lịch sử giao dịch. | `payment_transaction.dart`, `payment_transaction_model.dart`, `create_payment_intent.dart`, `payment_page.dart`, `payment_history_page.dart`. |
+| **3** | **`membership`** | Quản lý gói thành viên (Free / Premium), gói đăng ký (Subscription). Quyền Premium lấy từ subscription đang active. | `membership_plan.dart`, `membership_plan_model.dart`, `subscription.dart`, `subscription_model.dart`, `get_membership_plans.dart`, `watch_premium_subscription.dart`, `membership_provider.dart` (màn hình nằm ở `profile/presentation/pages/my_membership_page.dart`). |
+| **4** | **`payment`** | Thanh toán QR qua payOS (Cloud Functions tạo đơn & đối soát webhook), theo dõi realtime và xem lịch sử giao dịch. | `payment_transaction.dart`, `payment_transaction_model.dart`, `create_payment_intent.dart`, `payment_page.dart`, `payment_qr_page.dart`, `payment_result_page.dart`, `payment_history_page.dart`. |
 | **5** | **`household`** | Quản lý gia đình/nhóm: tạo kho chung (Scope hiện tại), tham gia qua mã mời (Hạ tầng cho sau). | `household.dart`, `household_model.dart`, `invite_member.dart`, `household_page.dart`, `household_provider.dart`. |
 | **6** | **`inventory`** | Quản lý kho thực phẩm trong tủ lạnh (`inventory_items`), theo dõi hạn dùng FEFO & Master Data Catalog (`foods`, `food_categories`, `storage_locations`, `shelf_life_rules`). | `inventory_item.dart`, `inventory_item_model.dart`, usecases (`add_inventory_item.dart`, `update_inventory_item.dart`, `get_inventory_items.dart`), pages (`inventory_page.dart`, `item_form_page.dart`), providers (`inventory_provider.dart`, `inventory_form_state.dart`), `inventory_item_card.dart`. |
 | **7** | **`receipt`** | Chụp/quét hóa đơn bằng Camera OCR (ML Kit) & trích xuất AI. | `receipt.dart`, `receipt_model.dart`, `receipt_item.dart`, `receipt_item_model.dart`, `scan_receipt.dart`, `receipt_scan_page.dart`, `receipt_review_page.dart`. |
@@ -190,7 +190,7 @@ Chứa mã nguồn Node.js/TypeScript chạy trên Firebase Cloud Functions đ�
 | **`ai/`** | Proxy gọi Gemini API, ghi nhận số lần dùng và kiểm tra quota gói thành viên. |
 | **`notification/`** | Gửi tin nhắn đẩy FCM cho toàn bộ thiết bị trong Household khi có sự kiện quan trọng. |
 | **`membership/`** | Quản lý nâng cấp/hạ cấp gói, reset quota quét hàng tháng. |
-| **`payment/`** | Xác thực biên lai In-App Purchase (IAP Google Play / App Store), ghi payments và kích hoạt subscription. |
+| **`payment/`** | Tạo đơn QR payOS, xác thực webhook, đối soát và kích hoạt subscription Premium (`autoRenew: false`). |
 | **`household/`** | `createHousehold` (Scope hiện tại), chuẩn bị hạ tầng `joinHousehold` cho giai đoạn sau. |
 | **`admin/`** | Quản lý phân quyền (Custom Claims), khóa tài khoản tức thì (`revokeRefreshTokens`), xuất báo cáo. |
 

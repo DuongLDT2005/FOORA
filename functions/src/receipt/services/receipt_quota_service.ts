@@ -1,6 +1,7 @@
 import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {MembershipService} from "../../membership/services/membership_service";
 import {throwResourceExhausted} from "../../utils/errors";
 
 export class ReceiptQuotaService {
@@ -13,28 +14,14 @@ export class ReceiptQuotaService {
     uid: string,
     membershipId: string
   ): Promise<{used: number; limit: number | null}> {
-    // 1. Premium members have unlimited quota
-    if (membershipId === "premium") {
-      return {used: 0, limit: null};
-    }
-
-    // 2. Fetch membership configuration for Free tier
-    const membershipDoc = await db
-      .collection(Collections.MEMBERSHIPS)
-      .doc(membershipId || "free")
-      .get();
-
-    let scanLimit: number | null = 5; // Default free quota from docs/DATABASE.md
-    if (membershipDoc.exists) {
-      scanLimit = membershipDoc.data()?.receiptScanQuota ?? 5;
-    }
-
-    // Unlimited limit
+    // 1. Quota comes from the membership configuration (null = unlimited).
+    const {receiptScanQuota: scanLimit} =
+      await MembershipService.getLimits(membershipId);
     if (scanLimit === null) {
       return {used: 0, limit: null};
     }
 
-    // 3. Format current period (e.g. "2026-09")
+    // 2. Format current period (e.g. "2026-09")
     const now = new Date();
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
@@ -66,7 +53,7 @@ export class ReceiptQuotaService {
       }
 
       usedCount = (currentData.receiptScanUsed as number) || 0;
-      if (usedCount >= scanLimit!) {
+      if (usedCount >= scanLimit) {
         throwResourceExhausted(
           `Bạn đã dùng hết lượt quét hóa đơn AI trong tháng (${usedCount}/${scanLimit} lượt). ` +
           "Vui lòng nâng cấp gói Premium để quét không giới hạn!"

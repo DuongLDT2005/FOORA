@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
 // --- AppTextField ---
+/// Styled text field with label, icons, error text and password toggle.
 class AppTextField extends StatelessWidget {
   final String label;
   final String? placeholder;
@@ -148,6 +149,7 @@ class AppTextField extends StatelessWidget {
 }
 
 // --- AppDropdown ---
+/// Styled dropdown field for picking a value of type [T].
 class AppDropdown<T> extends StatelessWidget {
   final String label;
   final T value;
@@ -222,6 +224,7 @@ class AppDropdown<T> extends StatelessWidget {
 }
 
 // --- AppPercentageSlider ---
+/// Slider for choosing a percentage (e.g. remaining amount of food).
 class AppPercentageSlider extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;

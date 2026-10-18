@@ -53,8 +53,11 @@ Firestore
 ├── storage_locations
 │   └── {locationId}
 │
-└── shelf_life_rules
-    └── {ruleId}
+├── shelf_life_rules
+│   └── {ruleId}
+│
+└── bug_reports
+    └── {reportId}
 ```
 
 ---
@@ -74,6 +77,7 @@ users/{userId}
 | `role`              | String    |      Yes | `member` or `admin`              |
 | `membershipId`      | String    |      Yes | Current membership ID            |
 | `activeHouseholdId` | String    |      Yes | Reference to active household ID |
+| `avatarUrl`         | String    |       No | Profile photo URL (Storage)      |
 | `isActive`          | Boolean   |      Yes | true or false                    |
 | `createdAt`         | Timestamp |      Yes | Creation time                    |
 | `updatedAt`         | Timestamp |      Yes | Last update time                 |
@@ -93,7 +97,9 @@ inside this document.
 > **Security Rules & Access Control**:
 >
 > - `fullName`, `updatedAt`, `avatarUrl`: The authenticated document owner (`isOwner`) is allowed to update these profile fields directly.
-> - `role`, `membershipId`, `isActive`, `activeHouseholdId`: System-protected fields strictly guarded by Security Rules; clients cannot mutate them (managed exclusively via Cloud Functions / Admin SDK).
+> - `email`: The owner may only sync it to the **verified** email of the Firebase Auth token (`request.auth.token.email`, `email_verified == true`). An email change is requested with `verifyBeforeUpdateEmail`; the client copies the new address after the user confirms the link.
+> - `role`, `membershipId`, `isActive`, `activeHouseholdId`, `createdAt`: System-protected fields strictly guarded by Security Rules; clients cannot mutate them (managed exclusively via Cloud Functions / Admin SDK).
+> - Create: the `onUserCreated` trigger creates the document. If the client writes first, it may only create `fullName` and `updatedAt`.
 
 ---
 
@@ -127,7 +133,7 @@ MVP memberships:
     "price": 0,
     "currency": "VND",
     "durationDays": null,
-    "foodLimit": 50,
+    "foodLimit": 30,
     "receiptScanQuota": 5,
     "isActive": true
   },
@@ -262,7 +268,9 @@ households/{householdId}
 >
 > - Lưu trữ số lượng thực phẩm đang còn sử dụng (`status == 'active'`) trong tủ lạnh/tủ đông của gia đình.
 > - Được quản lý an toàn và tự động cập nhật nguyên tử bằng Firestore Increment / Cloud Functions mỗi khi thêm món mới (+1), dùng hết/hủy món (-1).
-> - Giúp Client và Backend kiểm tra tức thì hạn mức món ăn (`foodLimit`) theo gói Free (tối đa 30 món) mà **không cần quét lại toàn bộ database hay đếm mảng (O(1) read thay vì O(N))**, tối ưu chi phí và tốc độ load.
+> - Giúp Client và Backend kiểm tra tức thì hạn mức món ăn (`foodLimit`, đọc từ `memberships/{membershipId}`) mà **không cần quét lại toàn bộ database hay đếm mảng (O(1) read thay vì O(N))**, tối ưu chi phí và tốc độ load.
+>
+> **Security Rules**: Household được tạo bởi Cloud Functions. Thành viên chỉ được sửa `name` và `updatedAt`; `members`, `ownerId`, `activeItemCount` là field do backend quản lý.
 
 ---
 
@@ -291,6 +299,8 @@ households/{householdId}/inventory_items/{inventoryItemId}
 | `status`              | String    |      Yes | Item lifecycle status: `active`, `consumed`, `discarded`                           |
 | `createdAt`           | Timestamp |      Yes | Creation time                                                                      |
 | `updatedAt`           | Timestamp |      Yes | Last update                                                                        |
+
+> **Security Rules**: Client **không** được tạo hoặc xóa `inventory_items` trực tiếp; món mới phải đi qua callable `addInventoryItem` / `batchAddInventoryItems` để backend kiểm tra `foodLimit`. Thành viên household chỉ được cập nhật các field nội dung (`name`, `quantity`, `unit`, `remainingPercentage`, `storageLocationId`, `purchaseDate`, `expirationDate`, `categoryId`, `foodId`, `normalizedName`, `photoUrl`, `status`, `updatedAt`) và không được chuyển một món `consumed`/`discarded` về lại `active`.
 
 > **Cơ chế Vòng đời & Tự động gợi ý món (Autocomplete & Lifecycle)**:
 >
@@ -339,6 +349,7 @@ shelf_life_rules/{ruleId}
 > Khi thêm thực phẩm vào kho (hoặc quét hóa đơn), hệ thống tính tự động:
 > `expirationDate = purchaseDate + maxValue` theo `unit` (ví dụ: `purchaseDate + 6 months` hoặc `purchaseDate + 4 days`).
 > Nếu `maxValue` là null (không khuyến nghị bảo quản ở vị trí này), app cảnh báo người dùng.
+> Nếu không có rule lẫn `defaultShelfLife` của category, app gợi ý mặc định `AppConstants.fallbackFridgeShelfLifeDays` (3 ngày, ngăn mát) / `AppConstants.fallbackFreezerShelfLifeDays` (30 ngày, ngăn đông) và người dùng có thể sửa lại.
 
 ---
 
@@ -460,21 +471,48 @@ users/{userId}/ai_usage/current
 users/{userId}/subscriptions/{subscriptionId}
 ```
 
-| Field | Type | Required | Description |
-| --- | --- | ---: | --- |
-| `membershipId` | String | Yes | Reference to the membership document ID |
-| `provider` | String | Yes | Payment provider; `payos` for QR payment |
-| `status` | String | Yes | `active`, `cancelled`, or `expired` |
-| `startDate` | Timestamp | Yes | Initial entitlement start |
-| `endDate` | Timestamp | Yes | Current entitlement expiration |
-| `autoRenew` | Boolean | Yes | Always `false` for payOS |
-| `cancelAtPeriodEnd` | Boolean | Yes | Whether access ends at the current period |
-| `lastPaymentId` | String | Yes | Most recent payment that extended entitlement |
-| `createdAt` | Timestamp | Yes | Creation time |
-| `updatedAt` | Timestamp | Yes | Last update time |
+Document ID convention: `{provider}_{membershipId}` (e.g. `payos_premium`), so
+repeated purchases of the same plan extend one document.
 
-The active subscription is the source of truth for Premium entitlement.
-`users.membershipId` is a backend-maintained cache only.
+Flutter mapping: entity `Subscription`
+(`lib/features/membership/domain/entities/subscription.dart`) and
+`SubscriptionModel` (`lib/features/membership/data/models/subscription_model.dart`).
+
+| Field | Type | Required | Entity field (default) | Description |
+| --- | --- | ---: | --- | --- |
+| *(document ID)* | String | Yes | `id` | Subscription ID, e.g. `payos_premium` |
+| `membershipId` | String | Yes | `membershipId` | Reference to `memberships/{membershipId}` |
+| `provider` | String | Yes | `provider` | Payment provider that granted the entitlement; `payos` |
+| `status` | String | Yes | `status` (`SubscriptionStatus`) | `active`, `cancelled`, or `expired` |
+| `startDate` | Timestamp | Yes | `startDate` | Initial entitlement start (kept when the period is extended) |
+| `endDate` | Timestamp | Yes | `endDate` | Current entitlement expiration |
+| `autoRenew` | Boolean | Yes | `autoRenew` (`false`) | Always `false` for payOS |
+| `cancelAtPeriodEnd` | Boolean | Yes | `cancelAtPeriodEnd` (`false`) | Whether access ends at the current period |
+| `lastPaymentId` | String | Yes | `lastPaymentId` (nullable) | Most recent `payments/{paymentId}` that extended entitlement |
+| `createdAt` | Timestamp | Yes | `createdAt` | Creation time |
+| `updatedAt` | Timestamp | Yes | `updatedAt` | Last update time |
+
+Legacy IAP fields (`platform`, `productId`, `purchaseToken`) are no longer part
+of the schema and are ignored by the app.
+
+**Writes**: backend only (Firestore Rules deny all client writes). The payOS
+webhook creates/extends the document in the same transaction that completes the
+payment: `endDate = max(paidAt, currentEndDate) + durationDays`. The
+`expirePendingPayments` scheduler moves `active` subscriptions whose `endDate`
+has passed to `expired`.
+
+**Entitlement** (source of truth for Premium): a subscription grants its plan
+when `status == 'active'`, `startDate <= now` and `endDate > now`
+(`Subscription.isEntitledAt(now)` in Flutter, `pickActiveSubscription` in
+`functions/src/membership/services/entitlement.ts`). If several match, the one
+with the furthest `endDate` wins; with none, the user is on `free`.
+
+`users.membershipId` is only a derived cache. The backend recomputes it from
+subscriptions (`MembershipService.syncMembershipCache`) on activation and
+expiry, and never uses it for authorization, limits or quota.
+
+payOS subscriptions never auto-renew, so the app does not offer an auto-renew
+toggle: the user renews by paying again.
 
 ---
 
@@ -530,6 +568,30 @@ Firestore Rules deny all client reads and writes.
 
 Server-only idempotency ledger. The provider transaction ID is the document ID so
 one bank transaction cannot activate more than one payment.
+
+---
+
+# 17.4 Collection: bug_reports
+
+**Path**
+
+```text
+bug_reports/{reportId}
+```
+
+| Field           | Type      | Required | Description                                   |
+| --------------- | --------- | -------: | --------------------------------------------- |
+| `userId`        | String    |      Yes | Reporter (must equal the authenticated uid)   |
+| `userEmail`     | String    |      Yes | Reporter email                                |
+| `category`      | String    |      Yes | Report category selected in the app           |
+| `title`         | String    |      Yes | Short summary                                 |
+| `description`   | String    |      Yes | Details                                       |
+| `screenshotUrl` | String    |       No | Screenshot in Storage `bug_reports/{userId}/` |
+| `deviceInfo`    | String    |       No | Device / OS / app version                     |
+| `createdAt`     | Timestamp |      Yes | Creation time                                 |
+
+Clients may only create their own reports; reads, updates and deletes are
+server/admin only.
 
 ---
 
@@ -590,13 +652,19 @@ Storage
 │   └── categories/
 │       └── {categoryId}.webp       # Category default icon / illustration
 │
-└── users/
+├── users/
+│   └── {userId}/
+│       ├── avatar/
+│       │   └── {fileName}            # Profile photo (image/*, < 5MB, owner write)
+│       ├── receipts/
+│       │   └── {receiptId}/
+│       │       └── {fileName}
+│       └── custom_foods/
+│           └── {customFoodId}.webp  # User-captured / uploaded custom food photo
+│
+└── bug_reports/
     └── {userId}/
-        ├── receipts/
-        │   └── {receiptId}/
-        │       └── {fileName}
-        └── custom_foods/
-            └── {customFoodId}.webp  # User-captured / uploaded custom food photo
+        └── {fileName}                # Bug report screenshot (image/*, < 10MB, owner only)
 ```
 
 ### 19.1. System Foods Image Strategy

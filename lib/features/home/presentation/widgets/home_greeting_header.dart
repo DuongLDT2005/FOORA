@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
+/// Greeting header at the top of the Home screen (user name + live status dot).
 class HomeGreetingHeader extends StatelessWidget {
   final String firstName;
 

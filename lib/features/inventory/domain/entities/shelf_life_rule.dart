@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing a shelf life rule for food storage.
 /// Strictly mapped to shelf_life_rules/{ruleId} in docs/DATABASE.md

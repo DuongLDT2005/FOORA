@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -7,6 +8,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
+/// Circular avatar: shows a locally picked image, the network photo, or
+/// the user's initials as a fallback.
 class ProfileAvatar extends StatelessWidget {
   final String? imageUrl;
   final String? localImagePath;
@@ -31,12 +34,20 @@ class ProfileAvatar extends StatelessWidget {
 
     Widget imageWidget;
     if (localImagePath != null && localImagePath!.isNotEmpty) {
-      imageWidget = Image.file(
-        File(localImagePath!),
-        width: avatarSize,
-        height: avatarSize,
-        fit: BoxFit.cover,
-      );
+      // On web, picked image paths are blob URLs that Image.file can't read.
+      imageWidget = kIsWeb
+          ? Image.network(
+              localImagePath!,
+              width: avatarSize,
+              height: avatarSize,
+              fit: BoxFit.cover,
+            )
+          : Image.file(
+              File(localImagePath!),
+              width: avatarSize,
+              height: avatarSize,
+              fit: BoxFit.cover,
+            );
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       imageWidget = Image.network(
         imageUrl!,
@@ -119,6 +130,7 @@ class ProfileAvatar extends StatelessWidget {
     );
   }
 
+  /// Initials shown when there is no photo.
   Widget _buildFallback() {
     return Container(
       color: AppColors.primary,

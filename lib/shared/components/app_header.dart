@@ -97,7 +97,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
         color: AppColors.primary,
         boxShadow: [
           BoxShadow(
-            color: const Color(0x26000000), // shadow-md
+            color: Colors.black.withValues(alpha: 0.15), // shadow-md
             blurRadius: 10.r,
             offset: Offset(0, 4.h),
           ),
@@ -211,10 +211,10 @@ class _HeaderPremiumBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.5.h),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.2),
+        color: AppColors.amber500.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: Colors.amber.shade300.withValues(alpha: 0.35),
+          color: AppColors.amber300.withValues(alpha: 0.35),
           width: 1,
         ),
       ),
@@ -224,7 +224,7 @@ class _HeaderPremiumBadge extends StatelessWidget {
           Icon(
             Icons.workspace_premium_rounded,
             size: 15.r,
-            color: Colors.amber.shade300,
+            color: AppColors.amber300,
           ),
           SizedBox(width: 4.w),
           Text(
@@ -232,7 +232,7 @@ class _HeaderPremiumBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w800,
-              color: Colors.amber.shade300,
+              color: AppColors.amber300,
               letterSpacing: 0.8,
             ),
           ),

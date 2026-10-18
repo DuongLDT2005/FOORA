@@ -18,4 +18,7 @@ abstract class ReceiptRepository {
     required List<ReceiptItem> items,
     String? receiptId,
   });
+
+  /// Streams the number of AI receipt scans used in [period] (e.g. `2026-09`).
+  Stream<int> watchMonthlyScanUsage({required String period});
 }

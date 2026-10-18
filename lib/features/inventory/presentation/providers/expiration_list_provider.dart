@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/inventory_item.dart';
 import 'inventory_provider.dart';
 
+/// Sort options on the expiry management screen.
 enum ExpirationSortType { expirationDate, quantity }
 
+/// State of the expiry screen: items bucketed by how soon they expire.
 class ExpirationListState {
   final List<InventoryItem> expiredItems;
   final List<InventoryItem> todayItems;
@@ -31,6 +33,7 @@ class ExpirationListState {
     this.sortType = ExpirationSortType.expirationDate,
   });
 
+  /// Returns a copy with the given fields replaced.
   ExpirationListState copyWith({
     List<InventoryItem>? expiredItems,
     List<InventoryItem>? todayItems,
@@ -58,9 +61,12 @@ class ExpirationListState {
   }
 }
 
+/// Buckets active inventory items by expiry date and keeps them sorted.
 class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
   ExpirationListNotifier() : super(const ExpirationListState());
 
+  /// Re-groups [activeItems] into expired / today / tomorrow / upcoming / safe
+  /// and recomputes the urgent & spoiled counters.
   void updateItems(List<InventoryItem> activeItems) {
     if (activeItems.isEmpty) {
       state = const ExpirationListState();
@@ -132,10 +138,12 @@ class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
     );
   }
 
+  /// Toggles the loading flag.
   void setLoading(bool isLoading) {
     state = state.copyWith(isLoading: isLoading);
   }
 
+  /// Shows loading only when there is no data yet (avoids flicker on refresh).
   void handleStreamLoading() {
     if (!state.isLoading &&
         state.expiredItems.isEmpty &&
@@ -144,10 +152,12 @@ class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
     }
   }
 
+  /// Stores an error message.
   void setError(String error) {
     state = state.copyWith(error: error, isLoading: false);
   }
 
+  /// Changes the sort order and re-sorts every bucket.
   void setSortType(ExpirationSortType type) {
     if (state.sortType == type) return;
 
@@ -184,6 +194,7 @@ class ExpirationListNotifier extends StateNotifier<ExpirationListState> {
   }
 }
 
+/// Provides [ExpirationListNotifier], fed by the active-inventory stream.
 final expirationListNotifierProvider =
     StateNotifierProvider.autoDispose<
       ExpirationListNotifier,

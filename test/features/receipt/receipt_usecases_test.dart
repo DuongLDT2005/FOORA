@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/features/receipt/domain/entities/receipt_item.dart';
+import 'package:foora/features/receipt/domain/entities/receipt_scan_quota.dart';
 import 'package:foora/features/receipt/domain/repositories/receipt_repository.dart';
 import 'package:foora/features/receipt/domain/usecases/confirm_receipt_items.dart';
 import 'package:foora/features/receipt/domain/usecases/scan_receipt.dart';
@@ -50,6 +51,10 @@ class MockReceiptRepository implements ReceiptRepository {
     lastBatchReceiptId = receiptId;
     return mockSavedCount;
   }
+
+  @override
+  Stream<int> watchMonthlyScanUsage({required String period}) =>
+      const Stream.empty();
 }
 
 void main() {
@@ -184,27 +189,24 @@ void main() {
     });
   });
 
-  group('ReceiptQuotaStatus Tests', () {
+  group('ReceiptScanQuota Tests', () {
     test('standard free quota calculations', () {
-      const quota = ReceiptQuotaStatus(scansUsed: 3, scanLimit: 5);
+      const quota = ReceiptScanQuota(scansUsed: 3, scanLimit: 5);
       expect(quota.isQuotaExceeded, isFalse);
       expect(quota.scansRemaining, equals(2));
     });
 
     test('exceeded free quota', () {
-      const quota = ReceiptQuotaStatus(scansUsed: 5, scanLimit: 5);
+      const quota = ReceiptScanQuota(scansUsed: 5, scanLimit: 5);
       expect(quota.isQuotaExceeded, isTrue);
       expect(quota.scansRemaining, equals(0));
     });
 
-    test('unlimited premium quota', () {
-      const quota = ReceiptQuotaStatus(
-        scansUsed: 20,
-        scanLimit: 5,
-        isUnlimited: true,
-      );
+    test('null limit means unlimited', () {
+      const quota = ReceiptScanQuota(scansUsed: 20, scanLimit: null);
+      expect(quota.isUnlimited, isTrue);
       expect(quota.isQuotaExceeded, isFalse);
-      expect(quota.scansRemaining, greaterThan(1000));
+      expect(quota.scansRemaining, isNull);
     });
   });
 

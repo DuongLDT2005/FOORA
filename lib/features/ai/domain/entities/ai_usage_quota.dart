@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing monthly AI quota usage.
 /// Strictly mapped to users/{userId}/ai_usage/current in docs/DATABASE.md

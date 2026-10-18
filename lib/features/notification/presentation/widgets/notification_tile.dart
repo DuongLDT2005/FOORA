@@ -8,6 +8,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/app_notification.dart';
 
+/// One row in the notification inbox: icon by type, title, body, time and
+/// an unread indicator.
 class NotificationTile extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback? onTap;
@@ -62,9 +64,9 @@ class NotificationTile extends StatelessWidget {
           border: Border.all(
             color: isUnread ? AppColors.emerald100 : AppColors.slate100,
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x0A08121B),
+              color: AppColors.slate900.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: Offset(0, 4),
             ),

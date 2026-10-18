@@ -54,6 +54,9 @@ export interface EnrichedParsedItem {
   matchedExistingItem: MatchedExistingStock | null;
 }
 
+/** Max time to wait for one OpenRouter model before trying the next. */
+const OPENROUTER_MODEL_TIMEOUT_MS = 25_000;
+
 export class ReceiptParserService {
   /**
    * Parses receipt using multimodal Gemini (Image + OCR text),
@@ -275,10 +278,21 @@ export class ReceiptParserService {
     imageBase64?: string,
     mimeType?: string
   ): Promise<ParsedReceiptItemRaw[]> {
+    const openrouterKey = process.env.OPENROUTER_API_KEY;
+    if (openrouterKey) {
+      return this._callOpenRouterToExtractItems(
+        openrouterKey,
+        ocrText,
+        masterFoods,
+        imageBase64,
+        mimeType
+      );
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       logger.warn(
-        "[ReceiptParserService] GEMINI_API_KEY is not set. Falling back to rule-based line parser."
+        "[ReceiptParserService] Neither OPENROUTER_API_KEY nor GEMINI_API_KEY is set. Falling back to rule-based line parser."
       );
       return this._fallbackLineParser(ocrText, masterFoods);
     }
@@ -389,7 +403,7 @@ export class ReceiptParserService {
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
           response = await ai.models.generateContent({
-            model: "gemini-3.6-flash",
+            model: "gemini-3.8-flash",
             contents: parts,
             config: {
               temperature: 0.1,
@@ -508,6 +522,134 @@ export class ReceiptParserService {
       logger.error("[ReceiptParserService] Error calling Gemini API:", error);
       return this._fallbackLineParser(ocrText, masterFoods);
     }
+  }
+
+  /**
+   * Calls OpenRouter API using free multimodal models (e.g. nvidia/nemotron-3.5-super-vl:free or google/gemma-4-31b-it:free).
+   * OpenRouter provides free-tier models with 0 credit cost and zero billing requirements.
+   */
+  private static async _callOpenRouterToExtractItems(
+    apiKey: string,
+    ocrText: string,
+    masterFoods: MasterFoodItem[],
+    imageBase64?: string,
+    mimeType?: string
+  ): Promise<ParsedReceiptItemRaw[]> {
+    logger.info("[ReceiptParserService] Calling OpenRouter Vision AI (Free-tier model)...");
+
+    const promptText = [
+      "Bạn là chuyên gia thị giác AI phân tích hóa đơn siêu thị Việt Nam (WinMart, Co.opmart, Bách Hóa Xanh, Big C, GO!, Lotte Mart, Aeon, v.v.).\n\n",
+      "NGUYÊN TẮC: HÌNH ẢNH HÓA ĐƠN LÀ NGUỒN CHÂN LÝ DUY NHẤT. Hãy nhìn ảnh để đọc tên sản phẩm và số lượng mua.\n",
+      "NHIỆM VỤ: Trích xuất danh sách các sản phẩm thực phẩm, đồ uống, gia vị.\n",
+      "YÊU CẦU: Trả về JSON thuần dạng Array các object: [{\"rawName\": \"...\", \"purchaseQuantity\": 1, \"purchaseUnit\": \"gói\", \"productSize\": 250, \"productSizeUnit\": \"g\"}].\n",
+      "CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG KÈM GIẢI THÍCH NÀO KHÁC.\n\n",
+      imageBase64 ?
+        `VĂN BẢN OCR PHỤ TRỢ (nếu có):\n"""\n${ocrText}\n"""` :
+        `VĂN BẢN HÓA ĐƠN:\n"""\n${ocrText}\n"""`,
+    ].join("");
+
+    const messagesContent: Array<
+      {type: "text"; text: string} | {type: "image_url"; image_url: {url: string}}
+    > = [];
+
+    if (imageBase64) {
+      const dataUrl = `data:${mimeType || "image/jpeg"};base64,${imageBase64}`;
+      messagesContent.push({
+        type: "image_url",
+        image_url: {url: dataUrl},
+      });
+    }
+    messagesContent.push({type: "text", text: promptText});
+
+    // Free vision-capable models only, tried in order. "openrouter/free" is last
+    // because it may route to a model that cannot read images.
+    const candidateModels = [
+      "nvidia/nemotron-3.5-super-vl:free",
+      "google/gemma-4-31b-it:free",
+      "google/gemma-4-26b-a4b-it:free",
+      "dots-studio/dots-3-note-preview:free",
+      "openrouter/free",
+    ];
+
+    for (const model of candidateModels) {
+      try {
+        logger.info(`[ReceiptParserService] Attempting OpenRouter model: ${model}`);
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://foora-app.web.app",
+            "X-Title": "FOORA Food Management",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{role: "user", content: messagesContent}],
+            temperature: 0.1,
+            max_tokens: 2000,
+            // Free models otherwise spend most of their time "thinking"
+            // before answering, which made scans take up to ~2 minutes.
+            reasoning: {enabled: false},
+          }),
+          // Give up on a slow model and move on to the next one.
+          signal: AbortSignal.timeout(OPENROUTER_MODEL_TIMEOUT_MS),
+        });
+
+        if (!res.ok) {
+          const errBody = await res.text();
+          logger.warn(`[ReceiptParserService] OpenRouter model ${model} failed (${res.status}): ${errBody}`);
+          continue; // Try next free model
+        }
+
+        const data = (await res.json()) as {
+          choices?: Array<{message?: {content?: string}}>;
+        };
+        const content = data.choices?.[0]?.message?.content?.trim();
+        if (!content) continue;
+
+        logger.info("[ReceiptParserService] OpenRouter raw response:", content);
+
+        const cleanJson = content
+          .replace(/^```(?:json)?\s*/i, "")
+          .replace(/\s*```$/i, "")
+          .trim();
+
+        const parsed = JSON.parse(cleanJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const validated: ParsedReceiptItemRaw[] = [];
+          for (const item of parsed) {
+            if (
+              item &&
+              typeof item.rawName === "string" &&
+              item.rawName.trim().length >= 2
+            ) {
+              validated.push({
+                rawName: item.rawName.trim(),
+                purchaseQuantity:
+                  typeof item.purchaseQuantity === "number" && item.purchaseQuantity > 0 ?
+                    item.purchaseQuantity :
+                    1,
+                purchaseUnit:
+                  typeof item.purchaseUnit === "string" ? item.purchaseUnit.trim() : "gói",
+                productSize: typeof item.productSize === "number" ? item.productSize : undefined,
+                productSizeUnit: typeof item.productSizeUnit === "string" ? item.productSizeUnit : undefined,
+                packCount: typeof item.packCount === "number" ? item.packCount : undefined,
+                packUnit: typeof item.packUnit === "string" ? item.packUnit : undefined,
+              });
+            }
+          }
+          if (validated.length > 0) {
+            logger.info(`[ReceiptParserService] OpenRouter extracted ${validated.length} items successfully!`);
+            return validated;
+          }
+        }
+      } catch (err) {
+        logger.warn(`[ReceiptParserService] Error trying OpenRouter model ${model}:`, err);
+      }
+    }
+
+    logger.warn("[ReceiptParserService] All OpenRouter models exhausted, falling back to line parser.");
+    return this._fallbackLineParser(ocrText, masterFoods);
   }
 
   /**

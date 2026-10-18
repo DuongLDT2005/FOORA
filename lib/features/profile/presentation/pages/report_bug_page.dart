@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,6 +17,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../providers/profile_provider.dart';
 
+/// Bug report form: category, title, description and optional screenshot.
 class ReportBugPage extends ConsumerStatefulWidget {
   const ReportBugPage({super.key});
 
@@ -45,6 +47,7 @@ class _ReportBugPageState extends ConsumerState<ReportBugPage> {
     super.dispose();
   }
 
+  /// Picks a screenshot from the gallery.
   Future<void> _pickScreenshot() async {
     final file = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -57,6 +60,7 @@ class _ReportBugPageState extends ConsumerState<ReportBugPage> {
     }
   }
 
+  /// Validates and submits the report through [BugReportNotifier].
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -212,12 +216,20 @@ class _ReportBugPageState extends ConsumerState<ReportBugPage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12.r),
-                      child: Image.file(
-                        File(reportState.selectedScreenshotPath!),
-                        height: 180.h,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                      // On web, picked image paths are blob URLs.
+                      child: kIsWeb
+                          ? Image.network(
+                              reportState.selectedScreenshotPath!,
+                              height: 180.h,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.file(
+                              File(reportState.selectedScreenshotPath!),
+                              height: 180.h,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
                     ),
                     Positioned(
                       top: 8.r,
@@ -228,8 +240,8 @@ class _ReportBugPageState extends ConsumerState<ReportBugPage> {
                             .setScreenshot(null),
                         child: Container(
                           padding: EdgeInsets.all(6.r),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.54),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(

@@ -12,14 +12,25 @@ import '../../../../core/utils/app_logger.dart';
 import '../models/app_notification_model.dart';
 import '../models/device_model.dart';
 
+/// Contract for push-notification devices and the in-app notification inbox.
 abstract class NotificationRemoteDataSource {
+  /// Registers this device's FCM token so the server can send push messages.
   Future<void> registerDevice(String userId);
+
+  /// Removes this device's token (called on logout).
   Future<void> unregisterDevice(String userId);
+
+  /// Real-time stream of the user's notifications, newest first.
   Stream<List<AppNotificationModel>> getNotifications(String userId);
+
+  /// Marks one notification as read.
   Future<void> markAsRead(String userId, String notificationId);
+
+  /// Marks every unread notification as read.
   Future<void> markAllAsRead(String userId);
 }
 
+/// Firebase Messaging + Firestore implementation of [NotificationRemoteDataSource].
 class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   final FirebaseFirestore firestore;
   final FirebaseMessaging messaging;
@@ -55,6 +66,8 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     return AppPlatform.android;
   }
 
+  /// Requests permission, gets the FCM token and stores it under
+  /// `users/{userId}/devices/{deviceId}`; also listens for token refreshes.
   @override
   Future<void> registerDevice(String userId) async {
     if (userId.isEmpty) return;
@@ -130,6 +143,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     }
   }
 
+  /// Deletes the device document and the local FCM token.
   @override
   Future<void> unregisterDevice(String userId) async {
     if (userId.isEmpty) return;
@@ -162,6 +176,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     }
   }
 
+  /// Listens to `users/{userId}/notifications` ordered by creation time.
   @override
   Stream<List<AppNotificationModel>> getNotifications(String userId) {
     if (userId.isEmpty) {
@@ -181,6 +196,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
         });
   }
 
+  /// Sets `isRead = true` on a single notification.
   @override
   Future<void> markAsRead(String userId, String notificationId) async {
     try {
@@ -197,6 +213,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     }
   }
 
+  /// Batch-updates all unread notifications to read.
   @override
   Future<void> markAllAsRead(String userId) async {
     try {

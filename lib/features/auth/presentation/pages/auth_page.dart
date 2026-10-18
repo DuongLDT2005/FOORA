@@ -11,6 +11,8 @@ import '../providers/auth_provider.dart';
 import '../widgets/auth_form.dart';
 import '../widgets/social_login_buttons.dart';
 
+/// Combined Login / Register screen.
+/// Toggles between the two modes and delegates actions to [AuthNotifier].
 class AuthPage extends ConsumerStatefulWidget {
   const AuthPage({super.key});
 
@@ -40,6 +42,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     super.dispose();
   }
 
+  /// Validates the form fields, then calls login or register depending on mode.
   Future<void> _handleSubmit() async {
     setState(() {
       _localErrorMessage = null;
@@ -102,6 +105,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     }
   }
 
+  /// Starts the Google sign-in flow.
   Future<void> _handleGoogleSignIn() async {
     setState(() {
       _localErrorMessage = null;
@@ -119,6 +123,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     }
   }
 
+  /// Opens the forgot-password screen.
   void _navigateToForgotPassword() {
     context.go(AppRouteNames.forgotPassword);
   }
@@ -180,6 +185,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     );
   }
 
+  /// Card shown after a successful registration.
   Widget _buildSuccessCard() {
     return Container(
       clipBehavior: Clip.antiAlias,

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
+/// Social sign-in buttons (currently Google) shown under the login form.
 class SocialLoginButtons extends StatelessWidget {
   final bool isLoading;
   final VoidCallback? onGoogleSignIn;

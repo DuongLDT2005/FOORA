@@ -7,6 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../providers/inventory_list_provider.dart';
 import 'filter_bottom_sheet.dart';
 
+/// Search field for the inventory list plus a button that opens [FilterBottomSheet].
+/// Updates the search query in the inventory filter provider as the user types.
 class InventorySearchBar extends ConsumerStatefulWidget {
   const InventorySearchBar({super.key});
 

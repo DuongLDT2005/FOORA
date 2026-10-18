@@ -20,6 +20,7 @@ class ShelfLifeRuleAlertBanner extends StatelessWidget {
     required this.hasRule,
   });
 
+  /// Converts a rule unit (day/week/month) to Vietnamese text.
   String _formatUnit(String? unit) {
     switch (unit) {
       case 'days':

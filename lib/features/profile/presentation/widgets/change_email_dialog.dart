@@ -10,11 +10,13 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../providers/profile_provider.dart';
 
+/// Dialog to change the account email (new email + current password).
 class ChangeEmailDialog extends ConsumerStatefulWidget {
   final String currentEmail;
 
   const ChangeEmailDialog({super.key, required this.currentEmail});
 
+  /// Shows the dialog; resolves to `true` if the email was changed.
   static Future<bool?> show(BuildContext context, String currentEmail) {
     return showDialog<bool>(
       context: context,
@@ -46,6 +48,7 @@ class _ChangeEmailDialogState extends ConsumerState<ChangeEmailDialog> {
     super.dispose();
   }
 
+  /// Validates input and calls [EditProfileNotifier.updateEmail].
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 

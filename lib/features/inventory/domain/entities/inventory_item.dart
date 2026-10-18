@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 import '../../../../core/constants/app_enums.dart';
 
@@ -46,6 +46,7 @@ class InventoryItem {
 
   bool get isExpired => expirationDate.isBefore(DateTime.now());
 
+  /// Returns a copy with the given fields replaced.
   InventoryItem copyWith({
     String? id,
     String? foodId,

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 /// Stock duplicate matching info inside active household inventory (Smart Query / FEFO Alert)
 @immutable
@@ -58,6 +58,7 @@ class ReceiptItem {
     this.matchedExistingItem,
   });
 
+  /// Returns a copy with the given fields replaced.
   ReceiptItem copyWith({
     String? id,
     String? rawName,

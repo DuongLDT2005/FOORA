@@ -14,9 +14,9 @@ class ScanViewfinderWidget extends StatelessWidget {
         final topSafe = MediaQuery.of(context).padding.top;
         final bottomSafe = MediaQuery.of(context).padding.bottom;
 
-        // Kéo dài khung quét chiếm gần như toàn bộ màn hình
+        // Stretch the scan frame to fill almost the whole screen
         final boxWidth = constraints.maxWidth * 0.92;
-        // Bắt đầu từ dưới top controls (topSafe + 56) đến gần mép dưới (bottomSafe + 16)
+        // From below the top controls (topSafe + 56) to near the bottom edge (bottomSafe + 16)
         final availableHeight =
             constraints.maxHeight - (topSafe + 60) - (bottomSafe + 20);
         final boxHeight = availableHeight.clamp(

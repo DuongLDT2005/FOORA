@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 import 'package:foora/core/constants/app_enums.dart';
 
 /// Pure domain entity representing a user device registration for push notifications.

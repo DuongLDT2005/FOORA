@@ -170,15 +170,23 @@ void main() {
       final sub = SubscriptionModel(
         id: 'sub-1',
         membershipId: 'premium',
+        provider: 'payos',
         status: SubscriptionStatus.active,
         startDate: now,
         endDate: now.add(const Duration(days: 30)),
-        platform: AppPlatform.android,
-        productId: 'foora_premium_monthly',
+        lastPaymentId: 'pay-1',
         createdAt: now,
         updatedAt: now,
       );
-      expect(SubscriptionModel.fromJson(sub.toJson()).isActive, isTrue);
+      final parsed = SubscriptionModel.fromJson(sub.toJson());
+      expect(parsed, sub);
+      expect(parsed.autoRenew, isFalse);
+      expect(parsed.isEntitledAt(now.add(const Duration(days: 1))), isTrue);
+      expect(parsed.isEntitledAt(now.add(const Duration(days: 30))), isFalse);
+      expect(
+        parsed.isEntitledAt(now.subtract(const Duration(seconds: 1))),
+        isFalse,
+      );
     });
   });
 

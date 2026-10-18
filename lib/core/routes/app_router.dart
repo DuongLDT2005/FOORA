@@ -29,6 +29,7 @@ import '../../features/receipt/presentation/pages/receipt_scan_page.dart';
 import '../../shared/layouts/mobile_shell_scaffold.dart';
 import '../firebase/auth_session_providers.dart';
 import '../firebase/firebase_providers.dart';
+import '../utils/app_logger.dart';
 import 'route_names.dart';
 
 /// Global navigator key for root navigator
@@ -60,11 +61,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: kIsWeb
-        ? (auth.currentUser != null
-              ? AppRouteNames.adminDashboard
-              : AppRouteNames.adminLogin)
-        : (auth.currentUser != null ? AppRouteNames.home : AppRouteNames.auth),
+    initialLocation: auth.currentUser != null
+        ? AppRouteNames.home
+        : AppRouteNames.auth,
     debugLogDiagnostics: kDebugMode,
     refreshListenable: routerNotifier,
     redirect: (context, state) {
@@ -421,7 +420,7 @@ class _NotFoundScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[FOORA 404] state.uri = $uri | error = $error');
+    AppLogger.w('[FOORA 404] state.uri = $uri | error = $error');
     final isWebAdmin = kIsWeb || uri.startsWith('/admin');
 
     return Scaffold(
@@ -475,7 +474,7 @@ class _PlaceholderScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userEmail = ref.watch(firebaseAuthProvider).currentUser?.email ?? '';
+    final userEmail = ref.watch(currentUserProvider)?.email ?? '';
 
     return Scaffold(
       body: Center(

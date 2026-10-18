@@ -17,6 +17,8 @@ import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../providers/payment_provider.dart';
 
+/// Shows the bank-transfer QR code with a countdown, and watches the payment
+/// in real time so the app moves to the result screen once it is paid.
 class PaymentQrPage extends ConsumerStatefulWidget {
   const PaymentQrPage({super.key, required this.paymentId});
 
@@ -31,6 +33,7 @@ class _PaymentQrPageState extends ConsumerState<PaymentQrPage> {
   DateTime _now = DateTime.now();
   bool _navigated = false;
 
+  // Start watching the payment and tick every second for the countdown.
   @override
   void initState() {
     super.initState();
@@ -141,6 +144,7 @@ class _PaymentQrPageState extends ConsumerState<PaymentQrPage> {
   }
 }
 
+/// Renders the VietQR payload as a QR image.
 class _QrCodeView extends StatelessWidget {
   const _QrCodeView({required this.data});
 
@@ -172,6 +176,7 @@ class _QrCodeView extends StatelessWidget {
   }
 }
 
+/// Transfer details (bank, account, amount, content) shown under the QR.
 class _PaymentInfo extends StatelessWidget {
   const _PaymentInfo({
     required this.amount,
@@ -207,6 +212,7 @@ class _PaymentInfo extends StatelessWidget {
   }
 }
 
+/// Single label / value row.
 class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.label, required this.value});
 

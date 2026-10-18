@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
+/// Counters at the top of the expiry screen (urgent vs. spoiled items).
 class ExpirationStatsBoard extends StatelessWidget {
   final int urgentCount;
   final int spoiledCount;
@@ -49,6 +50,7 @@ class ExpirationStatsBoard extends StatelessWidget {
   }
 }
 
+/// Single statistic tile.
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;

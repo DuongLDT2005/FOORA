@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
+/// Shared layout for auth screens: branded header/logo above a content card.
 class AuthShellScaffold extends StatelessWidget {
   final Widget child;
 
@@ -68,6 +69,7 @@ class AuthShellScaffold extends StatelessWidget {
     );
   }
 
+  /// App logo and tagline shown at the top of auth screens.
   Widget _buildHeaderLogo() {
     return Column(
       mainAxisSize: MainAxisSize.min,

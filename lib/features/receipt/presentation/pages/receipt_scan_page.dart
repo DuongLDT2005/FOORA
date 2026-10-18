@@ -1,3 +1,5 @@
+import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,16 +8,15 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/helpers/toast_helper.dart';
-import '../../../../shared/widgets/app_button.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
 import '../providers/receipt_scan_provider.dart';
+import '../widgets/scan_status_overlays.dart';
 import '../widgets/scan_viewfinder_widget.dart';
 import '../widgets/scanned_items_bottom_sheet.dart';
 
 /// Receipt Scan Tab Page matching Stitch Screen:
-/// `Quét hóa đơn (Đã cập nhật List)`
+/// `Quét hóa đơn (Đã cập nhật List)` with Live Camera Feed
 class ReceiptScanPage extends ConsumerStatefulWidget {
   const ReceiptScanPage({super.key});
 
@@ -23,14 +24,180 @@ class ReceiptScanPage extends ConsumerStatefulWidget {
   ConsumerState<ReceiptScanPage> createState() => _ReceiptScanPageState();
 }
 
-class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
+class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage>
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+  CameraController? _cameraController;
+  bool get _isCameraInitialized =>
+      _cameraController?.value.isInitialized ?? false;
+  bool _isCameraInitializing = false;
+  String? _cameraErrorMessage;
+
+  /// Whether this tab is the visible branch of the shell (inactive branches
+  /// are wrapped in a disabled [TickerMode] by go_router).
+  bool _isTabActive = true;
+
+  /// Whether the app / browser tab is in the foreground.
+  bool _isAppForeground = true;
+
+  bool get _shouldRunCamera => mounted && _isTabActive && _isAppForeground;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isTabActive = TickerMode.valuesOf(context).enabled;
+    _syncCamera();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
+    // On web, `inactive` fires whenever the window loses focus (file dialog,
+    // address bar...), so only release the camera once the page is hidden.
+    final releaseOnInactive = !kIsWeb;
+    _isAppForeground =
+        lifecycleState == AppLifecycleState.resumed ||
+        (lifecycleState == AppLifecycleState.inactive && !releaseOnInactive);
+    _syncCamera();
+  }
+
+  void _syncCamera() {
+    if (_shouldRunCamera) {
+      if (_cameraController == null) _initializeCamera();
+    } else {
+      _releaseCamera();
+    }
+  }
+
+  void _releaseCamera() {
+    final controller = _cameraController;
+    if (controller == null) return;
+    _cameraController = null;
+    if (mounted) setState(() {});
+    controller.dispose();
+  }
+
+  Future<void> _initializeCamera() async {
+    if (_isCameraInitializing) return;
+    _isCameraInitializing = true;
+
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _cameraErrorMessage = 'Không tìm thấy máy ảnh trên thiết bị này.';
+            _isCameraInitializing = false;
+          });
+        }
+        return;
+      }
+
+      // Prioritize back camera for receipt scanning
+      final camera = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+
+      final controller = CameraController(
+        camera,
+        ResolutionPreset.veryHigh,
+        enableAudio: false,
+      );
+
+      await controller.initialize();
+
+      try {
+        await controller.setFocusMode(FocusMode.auto);
+      } catch (_) {}
+
+      // User may have left the tab / backgrounded the app while initializing.
+      if (!_shouldRunCamera) {
+        _isCameraInitializing = false;
+        await controller.dispose();
+        return;
+      }
+
+      _cameraController = controller;
+
+      setState(() {
+        _cameraErrorMessage = null;
+        _isCameraInitializing = false;
+      });
+    } catch (e) {
+      _isCameraInitializing = false;
+      if (mounted) {
+        setState(() {
+          _cameraErrorMessage =
+              'Không thể khởi động camera. Vui lòng cấp quyền truy cập máy ảnh.';
+        });
+      }
+    }
+  }
+
+  Future<void> _capturePhoto() async {
+    final scanNotifier = ref.read(receiptScanNotifierProvider.notifier);
+    final controller = _cameraController;
+    if (controller != null && controller.value.isInitialized) {
+      XFile? xFile;
+      Uint8List? bytes;
+      try {
+        xFile = await controller.takePicture();
+        bytes = await xFile.readAsBytes();
+      } catch (_) {
+        // Fall through to ImagePicker if the live camera fails to capture
+      }
+      if (xFile != null && bytes != null) {
+        await scanNotifier.processImage(
+          imageBytes: bytes,
+          imagePath: xFile.path,
+          mimeType: xFile.mimeType ?? 'image/jpeg',
+        );
+        return;
+      }
+    }
+    // Fallback if camera controller is not available
+    await scanNotifier.captureImageFromCamera();
+  }
+
+  Future<void> _toggleFlash() async {
+    final controller = _cameraController;
+    final scanNotifier = ref.read(receiptScanNotifierProvider.notifier);
+    scanNotifier.toggleFlash();
+    final isFlashOn = ref.read(receiptScanNotifierProvider).isFlashOn;
+
+    if (controller != null && controller.value.isInitialized) {
+      try {
+        await controller.setFlashMode(
+          isFlashOn ? FlashMode.torch : FlashMode.off,
+        );
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraController?.dispose();
+    _cameraController = null;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final scanState = ref.watch(receiptScanNotifierProvider);
     final scanNotifier = ref.read(receiptScanNotifierProvider.notifier);
     final quotaAsync = ref.watch(receiptQuotaProvider);
-    final quotaStatus = quotaAsync.valueOrNull ?? const ReceiptQuotaStatus();
-    final isBlocked = quotaStatus.isQuotaExceeded;
+    final quotaStatus = quotaAsync.valueOrNull;
+    final isBlocked = quotaStatus?.isQuotaExceeded ?? false;
 
     ref.listen<ReceiptScanState>(receiptScanNotifierProvider, (prev, next) {
       if (next.errorMessage != null &&
@@ -41,9 +208,7 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
       }
       if (next.status == ScanStatus.success && next.successMessage != null) {
         ToastHelper.show(context, next.successMessage!);
-        // Reset scan state completely back to initial camera viewfinder
         scanNotifier.reset();
-        // Navigate back to Inventory tab to see newly added items
         context.go(AppRouteNames.inventory);
       }
     });
@@ -57,37 +222,112 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. Camera / Mock Viewfinder Layer
+          // 1. Live Camera / Captured Image Layer
           Positioned.fill(
             child: scanState.capturedImageBytes != null
                 ? Container(
                     color: Colors.black,
                     alignment: Alignment.center,
-                    child: Image.memory(
-                      scanState.capturedImageBytes!,
-                      fit: BoxFit
-                          .contain, // Hiển thị trọn vẹn ảnh, tự co theo chiều lớn hơn (ngang hoặc dọc) không bị cắt
+                    child: InteractiveViewer(
+                      minScale: 1.0,
+                      maxScale: 3.0,
+                      child: Image.memory(
+                        scanState.capturedImageBytes!,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+                    ),
+                  )
+                : (_isCameraInitialized && _cameraController != null)
+                ? Container(
+                    color: Colors.black,
+                    alignment: Alignment.center,
+                    child: ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: SizedBox(
+                            width: _cameraController!.value.previewSize != null
+                                ? (_cameraController!.value.previewSize!.width >
+                                          _cameraController!
+                                              .value
+                                              .previewSize!
+                                              .height
+                                      ? _cameraController!
+                                            .value
+                                            .previewSize!
+                                            .height
+                                      : _cameraController!
+                                            .value
+                                            .previewSize!
+                                            .width)
+                                : MediaQuery.of(context).size.width,
+                            height: _cameraController!.value.previewSize != null
+                                ? (_cameraController!.value.previewSize!.width >
+                                          _cameraController!
+                                              .value
+                                              .previewSize!
+                                              .height
+                                      ? _cameraController!
+                                            .value
+                                            .previewSize!
+                                            .width
+                                      : _cameraController!
+                                            .value
+                                            .previewSize!
+                                            .height)
+                                : MediaQuery.of(context).size.height,
+                            child: CameraPreview(_cameraController!),
+                          ),
+                        ),
+                      ),
                     ),
                   )
                 : Container(
-                    color: const Color(0xFF0F172A), // Slate 900
+                    color: AppColors.slate900,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            LucideIcons.scanLine,
-                            size: 64,
-                            color: Colors.white.withValues(alpha: 0.15),
+                            LucideIcons.camera,
+                            size: 56,
+                            color: Colors.white.withValues(alpha: 0.25),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Khung hình máy ảnh',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(height: 14),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 32.w),
+                            child: Text(
+                              _cameraErrorMessage ??
+                                  'Nhấn vào nút bên dưới để cấp quyền máy ảnh cho FOORA.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                            ),
+                            icon: const Icon(LucideIcons.camera, size: 18),
+                            label: const Text('Bật máy ảnh'),
+                            onPressed: () {
+                              _initializeCamera();
+                            },
                           ),
                         ],
                       ),
@@ -101,7 +341,7 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
               child: ScanViewfinderWidget(
                 bottomChild: (!isProcessing && !isBlocked)
                     ? GestureDetector(
-                        onTap: scanNotifier.captureImageFromCamera,
+                        onTap: _capturePhoto,
                         child: Container(
                           width: 70,
                           height: 70,
@@ -162,7 +402,7 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
                       color: scanState.isFlashOn
                           ? AppColors.amber500
                           : Colors.white,
-                      onTap: isBlocked ? null : scanNotifier.toggleFlash,
+                      onTap: isBlocked ? null : _toggleFlash,
                     ),
                   ],
                 ),
@@ -182,151 +422,18 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
             ),
           ),
 
-          // 3.5 Persistent Quota Exceeded Card Overlay (Always visible in scan tab if free limit reached)
+          // 3.5 Persistent quota-exceeded card (visible while the limit is reached)
           if (isBlocked && !isReviewing)
             Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.6),
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 440.w),
-                    child: Container(
-                      padding: EdgeInsets.all(24.r),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 24.r,
-                            offset: Offset(0, 8.h),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 60.r,
-                            height: 60.r,
-                            decoration: const BoxDecoration(
-                              color: AppColors.amber100,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              LucideIcons.crown,
-                              size: 32.r,
-                              color: AppColors.amber500,
-                            ),
-                          ),
-                          SizedBox(height: 18.h),
-                          Text(
-                            'Hết lượt quét hóa đơn',
-                            style: AppTextStyles.headlineSmall.copyWith(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.slate800,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 10.h),
-                          Text(
-                            'Bạn đã sử dụng hết ${quotaStatus.scansUsed}/${quotaStatus.scanLimit} lượt quét hóa đơn AI miễn phí trong tháng này. Hãy nâng cấp gói Premium để tận hưởng lượt quét không giới hạn!',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: AppColors.slate600,
-                              height: 1.45,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 24.h),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: SecondaryButton(
-                                  text: 'Để sau',
-                                  onPressed: () {
-                                    context.go(AppRouteNames.home);
-                                  },
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: PrimaryButton(
-                                  text: 'Nâng cấp',
-                                  onPressed: () {
-                                    context.push(AppRouteNames.membership);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              child: QuotaExceededOverlay(
+                scansUsed: quotaStatus?.scansUsed ?? 0,
+                scanLimit: quotaStatus?.scanLimit ?? 0,
               ),
             ),
 
           // 4. Processing Overlay (AI analyzing)
           if (isProcessing)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.65),
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 440.w),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 24.w,
-                        vertical: 20.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 36.r,
-                            height: 36.r,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 3,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.primary,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'Đang phân tích hóa đơn bằng AI...',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15.sp,
-                              color: AppColors.slate800,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            'Tự động bóc tách tên món, số lượng và đơn vị',
-                            style: AppTextStyles.caption.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.slate500,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            const Positioned.fill(child: ScanProcessingOverlay()),
 
           // 6. Scanned Items Bottom Sheet (Stitch UI Screen)
           if (isReviewing && scanState.parsedItems.isNotEmpty)
@@ -340,40 +447,13 @@ class _ReceiptScanPageState extends ConsumerState<ReceiptScanPage> {
                 onItemDelete: (index) => scanNotifier.removeItem(index),
                 onAddAll: () => scanNotifier.submitAllItems(),
                 onItemTap: (index) async {
-                  final item = scanState.parsedItems[index];
                   // Open ItemFormPage prefilled with recognized data
-                  final now = DateTime.now();
-                  final dummyItem = InventoryItem(
-                    id: '',
-                    foodId: item.foodId,
-                    name: item.name,
-                    normalizedName: item.normalizedName,
-                    categoryId: item.categoryId,
-                    quantity: item.quantity,
-                    unit: item.unit,
-                    remainingPercentage: 100,
-                    storageLocationId: item.storageLocationId,
-                    purchaseDate: now,
-                    expirationDate: item.estimatedExpirationDate,
-                    createdAt: now,
-                    updatedAt: now,
-                  );
-
                   final updated = await context.push<InventoryItem>(
                     AppRouteNames.itemForm,
-                    extra: dummyItem,
+                    extra: scanNotifier.buildEditDraft(index),
                   );
-
                   if (updated != null && mounted) {
-                    final newReceiptItem = item.copyWith(
-                      name: updated.name,
-                      categoryId: updated.categoryId,
-                      quantity: updated.quantity,
-                      unit: updated.unit,
-                      storageLocationId: updated.storageLocationId,
-                      estimatedExpirationDate: updated.expirationDate,
-                    );
-                    scanNotifier.updateItem(index, newReceiptItem);
+                    scanNotifier.applyEditedDraft(index, updated);
                   }
                 },
               ),

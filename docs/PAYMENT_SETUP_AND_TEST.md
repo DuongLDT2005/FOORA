@@ -204,7 +204,7 @@ Tai khoan test luong mua moi:
 - Email: user.free@gmail.com
 - Password: Password@123
 
-Seed Premium dung subscription cas_premium, provider cas va autoRenew=false.
+Seed Premium dung subscription payos_premium, provider payos va autoRenew=false.
 
 ### Terminal 4 - Flutter
 
@@ -254,7 +254,7 @@ Kiem tra Firestore va app:
 
 - Payment status = completed.
 - providerTransactionId = local-e2e-001.
-- users/{uid}/subscriptions/cas_premium ton tai va active.
+- users/{uid}/subscriptions/payos_premium ton tai va active.
 - Subscription autoRenew = false, lastPaymentId dung payment vua tao.
 - users/{uid}.membershipId = premium.
 - App dang mo tu chuyen sang success; app resume van doc dung status.

@@ -10,9 +10,11 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../providers/profile_provider.dart';
 
+/// Dialog to change the password (current, new and confirm fields).
 class ChangePasswordDialog extends ConsumerStatefulWidget {
   const ChangePasswordDialog({super.key});
 
+  /// Shows the dialog; resolves to `true` if the password was changed.
   static Future<bool?> show(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -51,6 +53,7 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
     super.dispose();
   }
 
+  /// Validates input and calls [EditProfileNotifier.changePassword].
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 

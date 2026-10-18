@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 enum Environment {
   dev,
   prod;
@@ -10,9 +12,14 @@ enum Environment {
 class AppEnv {
   AppEnv._();
 
-  static const String _env = String.fromEnvironment('ENV', defaultValue: 'dev');
-
-  static Environment get environment => Environment.fromString(_env);
+  static Environment get environment {
+    if (const bool.hasEnvironment('ENV')) {
+      return Environment.fromString(const String.fromEnvironment('ENV'));
+    }
+    // A release APK is installed on real phones, which cannot reach the
+    // local emulators, so it talks to live Firebase unless told otherwise.
+    return kReleaseMode ? Environment.prod : Environment.dev;
+  }
 
   static bool get useFirebaseEmulator {
     // If explicitly provided via --dart-define, override the environment default

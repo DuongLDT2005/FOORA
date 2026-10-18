@@ -194,6 +194,13 @@ npm install
 cd ..
 ```
 
+### Secrets for AI receipt scan & PayOS:
+
+`OPENROUTER_API_KEY`, `GEMINI_API_KEY` and the `PAYOS_*` keys are `defineSecret()` params, so keep them out of `functions/.env`:
+
+- Emulator: copy `functions/.secret.local.example` to `functions/.secret.local` and fill in the keys.
+- Deployed: `firebase functions:secrets:set OPENROUTER_API_KEY` (already set on `foora-app`).
+
 ### Start Firebase Emulator Suite:
 
 To develop offline and test Cloud Functions locally, start the emulators:
@@ -308,21 +315,23 @@ flutter devices
 
 From the project root:
 
+`--dart-define-from-file=.env.json` is required (it loads the API keys), see `docs/DEVELOPMENT_WORKFLOW.md`.
+
 ```bash
 # Run with Local Firebase Emulators (Default Dev)
-flutter run
+flutter run --dart-define-from-file=.env.json
 
 # To run on a specific device with emulators
-flutter run -d emulator-5554
+flutter run -d emulator-5554 --dart-define-from-file=.env.json
 
 # Run for Web (Admin with Local Emulators)
-flutter run -d chrome
+flutter run -d chrome --dart-define-from-file=.env.json
 
 # Run with Production Environment (Connect to live Firebase Cloud by default)
-flutter run --dart-define=ENV=prod
+flutter run --dart-define-from-file=.env.json --dart-define=ENV=prod
 
 # Run Dev Environment with live Firebase Cloud (Explicitly disable emulators)
-flutter run --dart-define=USE_FIREBASE_EMULATOR=false
+flutter run --dart-define-from-file=.env.json --dart-define=USE_FIREBASE_EMULATOR=false
 ```
 
 ---
@@ -344,7 +353,7 @@ flutter pub get
 Then:
 
 ```bash
-flutter run
+flutter run --dart-define-from-file=.env.json
 ```
 
 ---
@@ -390,13 +399,17 @@ flutter run --dart-define-from-file=.env.json
 
 Build application:
 
+Release builds use `.env.prod.json` (copy `.env.prod.example.json` and fill in the keys). It sets `ENV=prod` and `USE_FIREBASE_EMULATOR=false`, so the APK talks to live Firebase instead of the local emulators (`10.0.2.2`), which a real phone cannot reach.
+
 ```bash
 # Build APK
-flutter build apk --release --dart-define-from-file=.env.json
+flutter build apk --release --dart-define-from-file=.env.prod.json
 
 # Build App Bundle
-flutter build appbundle --release --dart-define-from-file=.env.json
+flutter build appbundle --release --dart-define-from-file=.env.prod.json
 ```
+
+The APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
 
 Firebase login:
 

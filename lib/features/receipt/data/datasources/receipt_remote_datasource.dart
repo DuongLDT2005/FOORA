@@ -1,13 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
+import '../../../../core/constants/firestore_constants.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/receipt_item_model.dart';
 
+/// Contract for the receipt scanning pipeline: on-device OCR -> AI parsing -> save.
 abstract class ReceiptRemoteDataSource {
   /// Extracts raw text from an image file using Google ML Kit on-device
   Future<String> extractOcrText(File imageFile);
@@ -29,26 +33,42 @@ abstract class ReceiptRemoteDataSource {
     required List<ReceiptItemModel> items,
     String? receiptId,
   });
+
+  /// Streams `users/{uid}/ai_usage/current.receiptScanUsed` for [period];
+  /// a stale period counts as 0 because the backend resets it on next use.
+  Stream<int> watchMonthlyScanUsage({required String period});
 }
 
+/// ML Kit + Cloud Functions implementation of [ReceiptRemoteDataSource].
 class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
   final FirebaseFunctions functions;
+  final FirebaseFirestore firestore;
+  final FirebaseAuth auth;
   final TextRecognizer _textRecognizer;
 
   ReceiptRemoteDataSourceImpl({
     required this.functions,
+    required this.firestore,
+    required this.auth,
     TextRecognizer? textRecognizer,
   }) : _textRecognizer =
            textRecognizer ??
            TextRecognizer(script: TextRecognitionScript.latin);
 
+  /// Runs ML Kit Latin text recognition on the image and returns the raw text.
   @override
   Future<String> extractOcrText(File imageFile) async {
+    if (kIsWeb) {
+      throw const ServerException(
+        'Tính năng quét OCR on-device chỉ hỗ trợ trên ứng dụng mobile.',
+      );
+    }
     try {
       final inputImage = InputImage.fromFile(imageFile);
       final recognizedText = await _textRecognizer.processImage(inputImage);
       return recognizedText.text;
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('Lỗi nhận diện văn bản từ hóa đơn: $e');
     }
   }
@@ -66,7 +86,7 @@ class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
     try {
       final callable = functions.httpsCallable(
         'parseReceiptAi',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 120)),
       );
 
       final imageBase64 = base64Encode(imageBytes);
@@ -110,6 +130,7 @@ class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
     }
   }
 
+  /// Sends the confirmed items to `batchAddInventoryItems`; returns how many were added.
   @override
   Future<int> batchAddInventoryItems({
     required String householdId,
@@ -145,5 +166,32 @@ class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
       if (e is ServerException) rethrow;
       throw ServerException('Lỗi kết nối khi lưu thực phẩm: $e');
     }
+  }
+
+  @override
+  Stream<int> watchMonthlyScanUsage({required String period}) {
+    final userId = auth.currentUser?.uid;
+    if (userId == null) {
+      return Stream.error(
+        const AuthException('Vui lòng đăng nhập để xem hạn mức quét.'),
+      );
+    }
+    return firestore
+        .collection(FirestoreConstants.users)
+        .doc(userId)
+        .collection(FirestoreConstants.aiUsage)
+        .doc(FirestoreConstants.aiUsageCurrentDoc)
+        .snapshots()
+        .map((document) {
+          final data = document.data();
+          if (data == null || data['period'] != period) return 0;
+          return (data['receiptScanUsed'] as num?)?.toInt() ?? 0;
+        })
+        .handleError((Object error) {
+          if (error is FirebaseException) {
+            throw ServerException.fromFirebase(error);
+          }
+          throw ServerException(error.toString());
+        });
   }
 }

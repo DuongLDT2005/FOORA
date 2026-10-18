@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
 
+/// List card for the "Sắp hết hạn" (expiring soon) section on Home.
 class HomeVerticalItemCard extends StatelessWidget {
   final InventoryItem item;
   final VoidCallback onTap;

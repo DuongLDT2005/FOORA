@@ -3,6 +3,7 @@ import {FieldValue} from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {MembershipIds} from "../../membership/services/entitlement";
 
 export class AuthService {
   /**
@@ -57,7 +58,7 @@ export class AuthService {
         {
           email: email,
           role: "member",
-          membershipId: "free",
+          membershipId: MembershipIds.FREE,
           activeHouseholdId: householdRef.id,
           isActive: true,
           createdAt: serverTimestamp,

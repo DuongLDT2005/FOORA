@@ -490,9 +490,13 @@ Rules:
 Storage structure:
 
 ```text
-foods/{foodId}/*
+system/foods/{foodId}.webp
+users/{userId}/avatar/*
 users/{userId}/receipts/{receiptId}/*
+bug_reports/{userId}/*
 ```
+
+See `docs/DATABASE.md` §19 for the full structure.
 
 Rules:
 

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 /// Pure domain entity representing a category of food (e.g. Vegetables, Meat, Seafood).
 /// Strictly mapped to food_categories/{categoryId} in docs/DATABASE.md

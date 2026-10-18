@@ -312,6 +312,7 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
     );
   }
 
+  /// Maps a category icon name to a Lucide icon.
   IconData _getCategoryIcon(String iconName) {
     switch (iconName.toLowerCase()) {
       case 'lucide-carrot':

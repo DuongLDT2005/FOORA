@@ -4,6 +4,8 @@ import '../../../../core/constants/app_enums.dart';
 
 import '../../domain/entities/inventory_item.dart';
 
+/// Data model for `households/{householdId}/inventory_items/{id}`.
+/// Adds Firestore/JSON conversion on top of the [InventoryItem] entity.
 class InventoryItemModel extends InventoryItem {
   const InventoryItemModel({
     required super.id,
@@ -24,6 +26,7 @@ class InventoryItemModel extends InventoryItem {
     required super.updatedAt,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory InventoryItemModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -31,6 +34,7 @@ class InventoryItemModel extends InventoryItem {
     return InventoryItemModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a model from a raw map; enum fields are parsed from strings.
   factory InventoryItemModel.fromJson(Map<String, dynamic> json, {String? id}) {
     final name = json['name'] as String? ?? '';
     return InventoryItemModel(
@@ -59,6 +63,7 @@ class InventoryItemModel extends InventoryItem {
     );
   }
 
+  /// Wraps a domain [InventoryItem] for serialization.
   factory InventoryItemModel.fromEntity(InventoryItem item) {
     return InventoryItemModel(
       id: item.id,
@@ -80,6 +85,7 @@ class InventoryItemModel extends InventoryItem {
     );
   }
 
+  /// Serializes to a Firestore map (dates as [Timestamp]).
   Map<String, dynamic> toFirestore() {
     return {
       'foodId': foodId,
@@ -100,6 +106,7 @@ class InventoryItemModel extends InventoryItem {
     };
   }
 
+  /// Serializes to a JSON map (dates as ISO-8601 strings).
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -121,6 +128,7 @@ class InventoryItemModel extends InventoryItem {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; falls back to now.
   static DateTime _parseDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

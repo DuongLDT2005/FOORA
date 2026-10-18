@@ -51,6 +51,36 @@ class DialogHelper {
     );
   }
 
+  /// Show a dialog with cancel, a destructive [secondaryText] action and a
+  /// primary [confirmText] action. Returns the value of the tapped action,
+  /// or `null` when cancelled/dismissed.
+  static Future<T?> showChoiceDialog<T>(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmText,
+    required T confirmValue,
+    required String secondaryText,
+    required T secondaryValue,
+    String cancelText = 'Hủy',
+    IconData icon = Icons.help_outline,
+  }) {
+    return showDialog<T>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: title,
+        message: message,
+        confirmText: confirmText,
+        cancelText: cancelText,
+        secondaryText: secondaryText,
+        icon: icon,
+        onConfirm: () => Navigator.of(context).pop(confirmValue),
+        onSecondary: () => Navigator.of(context).pop(secondaryValue),
+        onCancel: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
   /// Show informational dialog (single OK button)
   static Future<void> showInfoDialog(
     BuildContext context, {

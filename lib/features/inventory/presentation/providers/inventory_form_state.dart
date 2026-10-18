@@ -3,6 +3,8 @@ import '../../domain/entities/food_suggestion.dart';
 import '../../domain/entities/inventory_item.dart';
 import '../../domain/entities/storage_location.dart';
 
+/// Immutable state of the add/edit item form (field values, metadata,
+/// validation errors, suggestions and shelf-life hints).
 class InventoryFormState {
   final String name;
   final String? foodId;
@@ -56,6 +58,7 @@ class InventoryFormState {
     this.photoUrl,
   });
 
+  /// Initial state: empty for a new item, or pre-filled from [itemToEdit].
   factory InventoryFormState.initial({
     InventoryItem? itemToEdit,
     List<FoodCategory> categories = const [],
@@ -107,6 +110,7 @@ class InventoryFormState {
     );
   }
 
+  /// Returns a copy with the given fields replaced.
   InventoryFormState copyWith({
     String? name,
     String? foodId,

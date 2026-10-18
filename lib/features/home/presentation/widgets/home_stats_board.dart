@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
+/// Summary board with three counters: total items, expiring soon and expired.
 class HomeStatsBoard extends StatelessWidget {
   final int totalCount;
   final int expiringSoonCount;
@@ -54,6 +55,7 @@ class HomeStatsBoard extends StatelessWidget {
     );
   }
 
+  /// Builds a single statistic tile (icon, value, label).
   Widget _buildStatCard({
     required BuildContext context,
     required String title,

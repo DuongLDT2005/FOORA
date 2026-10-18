@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../providers/inventory_list_provider.dart';
 import '../providers/inventory_provider.dart';
 
+/// Horizontal chip list to filter the inventory by food category.
 class CategoryFilterList extends ConsumerWidget {
   const CategoryFilterList({super.key});
 
@@ -57,6 +58,7 @@ class CategoryFilterList extends ConsumerWidget {
     );
   }
 
+  /// Builds one selectable category chip.
   Widget _buildCategoryChip({
     required BuildContext context,
     required WidgetRef ref,
@@ -113,6 +115,7 @@ class CategoryFilterList extends ConsumerWidget {
     );
   }
 
+  /// Maps the icon name stored in Firestore to a Lucide icon.
   IconData _getIconData(String iconName) {
     switch (iconName.replaceAll('lucide-', '')) {
       case 'carrot':

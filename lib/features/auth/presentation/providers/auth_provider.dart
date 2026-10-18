@@ -74,6 +74,7 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 
 // --- Presentation State Notifier ---
 
+/// UI state of the authentication screens (loading flag, error, success).
 class AuthState {
   final bool isLoading;
   final User? user;
@@ -87,6 +88,7 @@ class AuthState {
     this.isSuccess = false,
   });
 
+  /// Returns a copy with the given fields replaced.
   AuthState copyWith({
     bool? isLoading,
     User? user,
@@ -103,6 +105,8 @@ class AuthState {
   }
 }
 
+/// Riverpod [StateNotifier] that runs auth use cases and exposes [AuthState]
+/// so the login/register/forgot-password screens can react to it.
 class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;
@@ -122,10 +126,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required this.unregisterDeviceUseCase,
   }) : super(const AuthState());
 
+  /// Clears the current error message.
   void clearError() {
     state = state.copyWith(clearError: true);
   }
 
+  /// Logs in; returns `true` on success, otherwise stores the error in state.
   Future<bool> login({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, clearError: true, isSuccess: false);
     try {
@@ -150,6 +156,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Registers a new account; returns `true` on success.
   Future<bool> register({
     required String fullName,
     required String email,
@@ -182,6 +189,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Signs in with Google; returns `true` on success.
   Future<bool> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, clearError: true, isSuccess: false);
     try {
@@ -206,6 +214,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Sends a reset email; returns `true` on success.
   Future<bool> resetPassword({required String email}) async {
     state = state.copyWith(isLoading: true, clearError: true, isSuccess: false);
     try {
@@ -229,6 +238,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Signs out the current user.
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     try {

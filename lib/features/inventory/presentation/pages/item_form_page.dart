@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/helpers/bottom_sheet_helper.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/helpers/toast_helper.dart';
@@ -14,10 +15,15 @@ import '../../../../shared/layouts/subpage_layout.dart';
 import '../../domain/entities/inventory_item.dart';
 import '../providers/inventory_provider.dart';
 import '../widgets/date_field_picker_tile.dart';
+import '../widgets/food_suggestion_dropdown.dart';
 import '../widgets/item_category_location_selectors.dart';
+import '../widgets/unit_picker_field.dart';
 import '../widgets/shelf_life_rule_alert_banner.dart';
 import '../widgets/smart_inventory_alert_banner.dart';
 
+/// Add / edit food item form.
+/// Pass [itemToEdit] to edit an existing item (or a receipt draft item);
+/// otherwise a new item is created. State lives in [InventoryFormNotifier].
 class ItemFormPage extends ConsumerStatefulWidget {
   final InventoryItem? itemToEdit;
 
@@ -29,6 +35,10 @@ class ItemFormPage extends ConsumerStatefulWidget {
 
 class _ItemFormPageState extends ConsumerState<ItemFormPage> {
   late final TextEditingController _nameController;
+
+  /// Anchors the suggestion dropdown to the name field, wherever the field
+  /// ends up (error banner shown above it, form scrolled).
+  final _nameFieldLink = LayerLink();
   late final TextEditingController _quantityController;
   final FocusNode _nameFocusNode = FocusNode();
   final FocusNode _quantityFocusNode = FocusNode();
@@ -61,9 +71,14 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
 
     _nameFocusNode.addListener(() {
       if (!_nameFocusNode.hasFocus) {
-        ref
-            .read(inventoryFormNotifierProvider(widget.itemToEdit).notifier)
-            .dismissSuggestions();
+        // Delay dismissing suggestions slightly so tap events on the dropdown can fire
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (mounted && !_nameFocusNode.hasFocus) {
+            ref
+                .read(inventoryFormNotifierProvider(widget.itemToEdit).notifier)
+                .dismissSuggestions();
+          }
+        });
       }
     });
 
@@ -101,6 +116,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     super.dispose();
   }
 
+  /// Opens a date picker constrained to the allowed range.
   Future<void> _pickDate({
     required BuildContext context,
     required DateTime initialDate,
@@ -158,11 +174,15 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
         .firstOrNull;
     final selectedLocName =
         selectedLoc?.name ??
-        (formState.storageLocationId == 'freezer' ? 'Ngăn đông' : 'Ngăn mát');
+        (formState.storageLocationId.toUpperCase() ==
+                StorageLocationCode.freezer.value
+            ? 'Ngăn đông'
+            : 'Ngăn mát');
 
     final isFromReceiptDraft =
         widget.itemToEdit != null && widget.itemToEdit!.id.isEmpty;
 
+    // Confirm before discarding unsaved changes.
     Future<void> handleCancel() async {
       final isDirty =
           _nameController.text.trim().isNotEmpty ||
@@ -258,7 +278,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
           children: [
             SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -267,37 +287,40 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
                     AppErrorBanner(message: formState.errorMessage),
 
                   // 1. Food Name
-                  AppTextField(
-                    label: 'TÊN THỰC PHẨM',
-                    placeholder: 'Ví dụ: Cà chua, Sữa tươi, Táo...',
-                    isRequired: true,
-                    controller: _nameController,
-                    focusNode: _nameFocusNode,
-                    onSubmitted: formNotifier.onNameChanged,
-                    fillColor: Colors.white,
-                    borderColor: AppColors.slate100,
-                    labelStyle: AppTextStyles.inputLabel.copyWith(
-                      color: AppColors.slate600,
-                    ),
-                    textStyle: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.slate800,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
+                  CompositedTransformTarget(
+                    link: _nameFieldLink,
+                    child: AppTextField(
+                      label: 'TÊN THỰC PHẨM',
+                      placeholder: 'Ví dụ: Cà chua, Sữa tươi, Táo...',
+                      isRequired: true,
+                      controller: _nameController,
+                      focusNode: _nameFocusNode,
+                      onSubmitted: formNotifier.onNameChanged,
+                      fillColor: Colors.white,
+                      borderColor: AppColors.slate100,
+                      labelStyle: AppTextStyles.inputLabel.copyWith(
+                        color: AppColors.slate600,
+                      ),
+                      textStyle: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.slate800,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 14.h,
+                      ),
                     ),
                   ),
 
                   // Smart Inventory Query Alert Banner
                   if (formState.matchedExistingItem != null) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                     SmartInventoryAlertBanner(
                       item: formState.matchedExistingItem!,
                     ),
                   ],
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // 2. Category & Storage Location (Isolated component with retry/loading support)
                   ItemCategoryLocationSelectors(
@@ -340,90 +363,27 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
                             fontWeight: FontWeight.w500,
                             color: AppColors.slate800,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 14.h,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14.w),
                       // Unit (Bottom Sheet Picker)
                       Expanded(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                text: 'ĐƠN VỊ',
-                                style: AppTextStyles.inputLabel.copyWith(
-                                  color: AppColors.slate600,
-                                ),
-                                children: const [
-                                  TextSpan(
-                                    text: ' *',
-                                    style: TextStyle(color: AppColors.red500),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            InkWell(
-                              onTap: () {
-                                BottomSheetHelper.showSelect<String>(
-                                  context,
-                                  title: 'Đơn vị tính',
-                                  isGrid: true,
-                                  selectedValue: formState.unit.isNotEmpty
-                                      ? formState.unit
-                                      : _commonUnits.first,
-                                  options: _commonUnits
-                                      .map(
-                                        (u) => SelectOption(value: u, label: u),
-                                      )
-                                      .toList(),
-                                  onSelected: formNotifier.onUnitChanged,
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.slate100),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      formState.unit.isNotEmpty
-                                          ? formState.unit
-                                          : _commonUnits.first,
-                                      style: AppTextStyles.bodyMedium.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.slate800,
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.keyboard_arrow_down,
-                                      color: AppColors.slate400,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: UnitPickerField(
+                          unit: formState.unit.isNotEmpty
+                              ? formState.unit
+                              : _commonUnits.first,
+                          units: _commonUnits,
+                          onChanged: formNotifier.onUnitChanged,
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20.h),
 
                   // 4. Remaining Percentage (Slider)
                   AppPercentageSlider(
@@ -431,7 +391,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
                     onChanged: formNotifier.onRemainingPercentageChanged,
                   ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20.h),
 
                   // 5. Purchase Date (cannot be after expiration date)
                   DateFieldPickerTile(
@@ -451,7 +411,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
                     },
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // 6. Expiration Date (must be equal to or after purchase date)
                   DateFieldPickerTile(
@@ -484,7 +444,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
                       hasRule: formState.hasShelfLifeRule,
                     ),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32.h),
                 ],
               ),
             ),
@@ -492,115 +452,28 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             // Floating Dropdown Overlay (Topmost element in Stack, covers fields below)
             if (formState.showSuggestions && formState.suggestions.isNotEmpty)
               Positioned(
-                top: 98, // padding top 20 + label + input
-                left: 20,
-                right: 20,
-                child: Material(
-                  elevation: 8,
-                  shadowColor: Colors.black.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(16),
-                  color: Colors.white,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.slate200),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: formState.suggestions.take(5).map((suggestion) {
-                        final isLast =
-                            suggestion == formState.suggestions.take(5).last;
-
-                        return InkWell(
-                          onTap: () {
-                            _nameController.text = suggestion.name;
-                            _nameController.selection =
-                                TextSelection.fromPosition(
-                                  TextPosition(offset: suggestion.name.length),
-                                );
-                            formNotifier.onSelectSuggestion(suggestion);
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              border: isLast
-                                  ? null
-                                  : const Border(
-                                      bottom: BorderSide(
-                                        color: AppColors.slate100,
-                                      ),
-                                    ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  suggestion.isFromMaster
-                                      ? LucideIcons.sparkles
-                                      : LucideIcons.history,
-                                  size: 16,
-                                  color: suggestion.isFromMaster
-                                      ? AppColors.primary
-                                      : AppColors.slate400,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        suggestion.name,
-                                        style: AppTextStyles.bodyMedium
-                                            .copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.slate800,
-                                            ),
-                                      ),
-                                      if (suggestion.matchedAlias != null &&
-                                          suggestion.matchedAlias!.isNotEmpty)
-                                        Text(
-                                          'Tên khác: ${suggestion.matchedAlias}',
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: AppColors.primary,
-                                            fontSize: 11,
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                if (suggestion.defaultUnit.isNotEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.slate50,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: AppColors.slate100,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      suggestion.defaultUnit,
-                                      style: AppTextStyles.caption.copyWith(
-                                        color: AppColors.slate500,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
+                top: 0,
+                left: 20.w,
+                right: 20.w,
+                child: CompositedTransformFollower(
+                  link: _nameFieldLink,
+                  showWhenUnlinked: false,
+                  targetAnchor: Alignment.bottomLeft,
+                  offset: Offset(0, 6.h),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: FoodSuggestionDropdown(
+                      suggestions: formState.suggestions,
+                      onSelected: (suggestion) {
+                        // Update the form first so the controller listener
+                        // sees the same name and does not search again.
+                        formNotifier.onSelectSuggestion(suggestion);
+                        _nameController.text = suggestion.name;
+                        _nameController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: suggestion.name.length),
                         );
-                      }).toList(),
+                        _nameFocusNode.unfocus();
+                      },
                     ),
                   ),
                 ),

@@ -10,6 +10,8 @@ import '../../../../shared/components/app_header.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
 import '../providers/notification_settings_provider.dart';
 
+/// Notification settings: push toggle, expiry-alert rules and daily reminder time.
+/// Values are persisted via [NotificationSettingsNotifier].
 class NotificationSettingsPage extends ConsumerWidget {
   const NotificationSettingsPage({super.key});
 
@@ -185,6 +187,7 @@ class NotificationSettingsPage extends ConsumerWidget {
     );
   }
 
+  // Small layout helpers shared by the sections.
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: EdgeInsets.only(left: 4.w, bottom: 8.h),

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 import 'package:foora/core/constants/app_enums.dart';
 
 /// Pure domain entity representing an in-app notification.
@@ -25,6 +25,7 @@ class AppNotification {
     required this.createdAt,
   });
 
+  /// Returns a copy with the given fields replaced.
   AppNotification copyWith({
     String? id,
     String? householdId,

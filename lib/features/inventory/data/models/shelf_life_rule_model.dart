@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/entities/shelf_life_rule.dart';
 
+/// Data model for a shelf-life rule: how many days a food/category lasts
+/// in a given storage location (fridge, freezer, pantry).
 class ShelfLifeRuleModel extends ShelfLifeRule {
   const ShelfLifeRuleModel({
     required super.id,
@@ -14,6 +16,7 @@ class ShelfLifeRuleModel extends ShelfLifeRule {
     required super.updatedAt,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory ShelfLifeRuleModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -21,6 +24,7 @@ class ShelfLifeRuleModel extends ShelfLifeRule {
     return ShelfLifeRuleModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a model from a raw map.
   factory ShelfLifeRuleModel.fromJson(Map<String, dynamic> json, {String? id}) {
     return ShelfLifeRuleModel(
       id: id ?? json['id'] as String? ?? json['ruleId'] as String? ?? '',
@@ -34,6 +38,7 @@ class ShelfLifeRuleModel extends ShelfLifeRule {
     );
   }
 
+  /// Serializes to a Firestore map.
   Map<String, dynamic> toFirestore() {
     return {
       'foodId': foodId,
@@ -46,6 +51,7 @@ class ShelfLifeRuleModel extends ShelfLifeRule {
     };
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -59,6 +65,7 @@ class ShelfLifeRuleModel extends ShelfLifeRule {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; falls back to now.
   static DateTime _parseDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

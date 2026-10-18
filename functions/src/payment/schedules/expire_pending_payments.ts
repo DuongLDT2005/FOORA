@@ -1,7 +1,9 @@
 import {FieldValue} from "firebase-admin/firestore";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {db, REGION} from "../../config/firebase";
+import * as logger from "firebase-functions/logger";
 import {Collections} from "../../constants/collections";
+import {MembershipService} from "../../membership/services/membership_service";
 
 export const expirePendingPayments = onSchedule(
   {
@@ -42,20 +44,31 @@ export const expirePendingPayments = onSchedule(
 
     if (!subscriptions.empty) {
       const subscriptionBatch = db.batch();
+      const affectedUserIds = new Set<string>();
       for (const subscription of subscriptions.docs) {
         subscriptionBatch.update(subscription.ref, {
           status: "expired",
           updatedAt: FieldValue.serverTimestamp(),
         });
         const userRef = subscription.ref.parent.parent;
-        if (userRef !== null) {
-          subscriptionBatch.update(userRef, {
-            membershipId: "free",
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-        }
+        if (userRef !== null) affectedUserIds.add(userRef.id);
       }
       await subscriptionBatch.commit();
+
+      // Recompute the derived cache: only downgrade users with no other
+      // active subscription.
+      const results = await Promise.allSettled(
+        [...affectedUserIds].map((uid) =>
+          MembershipService.syncMembershipCache(uid))
+      );
+      results.forEach((result, index) => {
+        if (result.status === "rejected") {
+          logger.error(
+            "[expirePendingPayments] membership cache sync failed",
+            {uid: [...affectedUserIds][index], error: result.reason}
+          );
+        }
+      });
     }
   }
 );

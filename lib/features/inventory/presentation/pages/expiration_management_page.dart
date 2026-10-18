@@ -4,11 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_enums.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/expiration_list_provider.dart';
 import '../providers/inventory_provider.dart';
 import '../widgets/expiration_group_header.dart';
@@ -16,42 +16,35 @@ import '../widgets/expiration_item_card.dart';
 import '../widgets/expiration_stats_board.dart';
 import '../../domain/entities/inventory_item.dart';
 
+/// Expiry management screen. Groups items into Expired / Today / Tomorrow /
+/// Upcoming / Safe and lets the user sort, swipe-delete or bulk-remove expired food.
 class ExpirationManagementPage extends ConsumerWidget {
   const ExpirationManagementPage({super.key});
 
-  void _onSwipeDelete(
+  /// Marks a single swiped item as discarded.
+  Future<void> _onSwipeDelete(
     BuildContext context,
     WidgetRef ref,
     InventoryItem item,
   ) async {
-    final user = ref.read(currentUserProvider);
-    final householdId = user?.activeHouseholdId;
-    if (householdId == null) return;
     try {
-      final updatedItem = item.copyWith(
-        status: InventoryItemStatus.discarded,
-        updatedAt: DateTime.now(),
-      );
-      await ref
-          .read(updateInventoryItemUseCaseProvider)
-          .call(updatedItem, householdId: householdId);
-    } catch (e) {
+      await ref.read(inventoryStatusControllerProvider).changeStatus([
+        item.id,
+      ], InventoryItemStatus.discarded);
+    } on Failure catch (failure) {
       if (context.mounted) {
-        ToastHelper.show(context, 'Lỗi khi xoá thực phẩm: $e', isError: true);
+        ToastHelper.show(context, failure.message, isError: true);
       }
     }
   }
 
-  void _onDeleteAllExpired(
+  /// Asks for confirmation, then discards every expired item in one batch.
+  Future<void> _onDeleteAllExpired(
     BuildContext context,
     WidgetRef ref,
     List<InventoryItem> expiredItems,
   ) async {
     if (expiredItems.isEmpty) return;
-
-    final user = ref.read(currentUserProvider);
-    final householdId = user?.activeHouseholdId;
-    if (householdId == null) return;
 
     final confirmed = await DialogHelper.showDeleteDialog(
       context,
@@ -60,27 +53,24 @@ class ExpirationManagementPage extends ConsumerWidget {
           'Thao tác này sẽ chuyển ${expiredItems.length} món sang trạng thái Đã hỏng. Bạn có chắc chắn?',
       confirmText: 'Xóa tất cả',
     );
+    if (confirmed != true || !context.mounted) return;
 
-    if (confirmed == true && context.mounted) {
-      try {
-        final itemIds = expiredItems.map((e) => e.id).toList();
-        await ref
-            .read(batchUpdateInventoryStatusUseCaseProvider)
-            .call(
-              itemIds,
-              InventoryItemStatus.discarded,
-              householdId: householdId,
-            );
-        if (context.mounted) {
-          ToastHelper.show(
-            context,
-            'Đã xóa ${expiredItems.length} thực phẩm quá hạn',
+    try {
+      await ref
+          .read(inventoryStatusControllerProvider)
+          .changeStatus(
+            expiredItems.map((e) => e.id).toList(),
+            InventoryItemStatus.discarded,
           );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ToastHelper.show(context, 'Lỗi khi xóa hàng loạt: $e', isError: true);
-        }
+      if (context.mounted) {
+        ToastHelper.show(
+          context,
+          'Đã xóa ${expiredItems.length} thực phẩm quá hạn',
+        );
+      }
+    } on Failure catch (failure) {
+      if (context.mounted) {
+        ToastHelper.show(context, failure.message, isError: true);
       }
     }
   }
@@ -91,6 +81,7 @@ class ExpirationManagementPage extends ConsumerWidget {
     final categories = ref.watch(foodCategoriesProvider).valueOrNull ?? [];
     final locations = ref.watch(storageLocationsProvider).valueOrNull ?? [];
 
+    // Resolve category / location ids to display names.
     String getCategoryName(String id) {
       final match = categories.where((c) => c.id == id);
       return match.isNotEmpty ? match.first.name : 'Chưa phân loại';

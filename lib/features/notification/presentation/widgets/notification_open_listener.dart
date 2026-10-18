@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/routes/app_router.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/utils/app_logger.dart';
 
 /// Builds the in-app location opened from an FCM payload.
 ///
@@ -29,9 +29,11 @@ String notificationOpenLocation(Map<String, String> data) {
   ).toString();
 }
 
+/// Push-open events as plain data payloads, so the UI never touches the
+/// Firebase Messaging SDK directly.
 class PushOpenSource {
-  final Future<RemoteMessage?> Function() getInitialMessage;
-  final Stream<RemoteMessage> onMessageOpenedApp;
+  final Future<Map<String, String>?> Function() getInitialMessage;
+  final Stream<Map<String, String>> onMessageOpenedApp;
 
   const PushOpenSource({
     required this.getInitialMessage,
@@ -42,8 +44,8 @@ class PushOpenSource {
 final pushOpenSourceProvider = Provider<PushOpenSource>((ref) {
   final service = ref.watch(notificationServiceProvider);
   return PushOpenSource(
-    getInitialMessage: service.getInitialMessage,
-    onMessageOpenedApp: service.onMessageOpenedApp,
+    getInitialMessage: service.getInitialMessageData,
+    onMessageOpenedApp: service.onMessageOpenedAppData,
   );
 });
 
@@ -59,18 +61,23 @@ class NotificationOpenListener extends ConsumerStatefulWidget {
 
 class _NotificationOpenListenerState
     extends ConsumerState<NotificationOpenListener> {
-  StreamSubscription<RemoteMessage>? _openedSub;
+  StreamSubscription<Map<String, String>>? _openedSub;
 
   @override
   void initState() {
     super.initState();
     final source = ref.read(pushOpenSourceProvider);
-    source.getInitialMessage().then((message) {
-      if (!mounted || message == null) {
-        return;
-      }
-      _open(message);
-    });
+    source
+        .getInitialMessage()
+        .then((data) {
+          if (!mounted || data == null) {
+            return;
+          }
+          _open(data);
+        })
+        .catchError((Object e, StackTrace st) {
+          AppLogger.e('Could not read the launching push message', e, st);
+        });
     _openedSub = source.onMessageOpenedApp.listen(_open);
   }
 
@@ -80,10 +87,7 @@ class _NotificationOpenListenerState
     super.dispose();
   }
 
-  void _open(RemoteMessage message) {
-    final data = message.data.map(
-      (key, value) => MapEntry(key, value.toString()),
-    );
+  void _open(Map<String, String> data) {
     ref.read(routerProvider).push(notificationOpenLocation(data));
   }
 

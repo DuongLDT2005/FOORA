@@ -5,6 +5,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
 
+/// Card used in the horizontal "Ưu tiên sử dụng" (use first) carousel on Home.
+/// Shows the food image, an expiry badge and a freshness progress bar.
 class HomeHorizontalItemCard extends StatelessWidget {
   final InventoryItem item;
   final VoidCallback onTap;

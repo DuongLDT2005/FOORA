@@ -3,6 +3,7 @@ import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {HttpsError} from "firebase-functions/v2/https";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {MembershipIds} from "../../membership/services/entitlement";
 import {AuthenticatedUser, PaymentStatus} from "../../types";
 import {throwInvalidArgument, throwNotFound} from "../../utils/errors";
 import {paymentExpiryMinutes} from "../config";
@@ -33,7 +34,7 @@ export class PaymentService {
     user: AuthenticatedUser,
     membershipId: string
   ): Promise<PaymentOrderResult> {
-    if (!membershipId || membershipId !== "premium") {
+    if (!membershipId || membershipId !== MembershipIds.PREMIUM) {
       throwInvalidArgument("Only the Premium membership can be purchased.");
     }
 

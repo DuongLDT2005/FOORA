@@ -3,6 +3,8 @@ import 'package:foora/core/constants/app_enums.dart';
 
 import '../../domain/entities/device.dart';
 
+/// Data model for a registered device (`users/{userId}/devices/{deviceId}`)
+/// holding its FCM token and platform.
 class DeviceModel extends Device {
   const DeviceModel({
     required super.id,
@@ -13,6 +15,7 @@ class DeviceModel extends Device {
     required super.updatedAt,
   });
 
+  /// Builds a model from a Firestore snapshot.
   factory DeviceModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -20,6 +23,7 @@ class DeviceModel extends Device {
     return DeviceModel.fromJson(data, id: doc.id);
   }
 
+  /// Builds a model from a raw map.
   factory DeviceModel.fromJson(Map<String, dynamic> json, {String? id}) {
     return DeviceModel(
       id: id ?? json['id'] as String? ?? json['deviceId'] as String? ?? '',
@@ -31,6 +35,7 @@ class DeviceModel extends Device {
     );
   }
 
+  /// Serializes to a Firestore map.
   Map<String, dynamic> toFirestore() {
     return {
       'fcmToken': fcmToken,
@@ -41,6 +46,7 @@ class DeviceModel extends Device {
     };
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -52,6 +58,7 @@ class DeviceModel extends Device {
     };
   }
 
+  /// Accepts a Timestamp, ISO string or epoch millis; falls back to now.
   static DateTime _parseDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

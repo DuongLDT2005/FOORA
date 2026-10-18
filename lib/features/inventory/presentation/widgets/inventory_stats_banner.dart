@@ -8,6 +8,7 @@ import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/inventory_list_provider.dart';
 
+/// Banner summarising how many items are expiring soon or already expired.
 class InventoryStatsBanner extends ConsumerWidget {
   const InventoryStatsBanner({super.key});
 
@@ -88,6 +89,7 @@ class InventoryStatsBanner extends ConsumerWidget {
     );
   }
 
+  /// Builds the banner sentence with the counts highlighted.
   List<TextSpan> _buildMessageTextSpans(int expiringSoon, int expired) {
     List<TextSpan> spans = [const TextSpan(text: 'Tủ đang có ')];
 
