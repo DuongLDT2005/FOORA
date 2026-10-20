@@ -8,6 +8,7 @@ abstract class StatisticsRemoteDataSource {
   Future<List<StatusChangeRecord>> getStatusChangeRecords({
     required String householdId,
     required DateTime from,
+    DateTime? to,
     int limit,
   });
 }
@@ -24,10 +25,11 @@ class StatisticsRemoteDataSourceImpl implements StatisticsRemoteDataSource {
   Future<List<StatusChangeRecord>> getStatusChangeRecords({
     required String householdId,
     required DateTime from,
+    DateTime? to,
     int limit = 2000,
   }) async {
     try {
-      final snapshot = await firestore
+      Query<Map<String, dynamic>> query = firestore
           .collection(FirestoreConstants.households)
           .doc(householdId)
           .collection(FirestoreConstants.inventoryItems)
@@ -35,7 +37,16 @@ class StatisticsRemoteDataSourceImpl implements StatisticsRemoteDataSource {
           .where(
             'statusChangedAt',
             isGreaterThanOrEqualTo: Timestamp.fromDate(from),
-          )
+          );
+
+      if (to != null) {
+        query = query.where(
+          'statusChangedAt',
+          isLessThanOrEqualTo: Timestamp.fromDate(to),
+        );
+      }
+
+      final snapshot = await query
           .orderBy('statusChangedAt')
           .limit(limit)
           .get();
@@ -56,7 +67,12 @@ class StatisticsRemoteDataSourceImpl implements StatisticsRemoteDataSource {
         final records =
             fallbackSnapshot.docs
                 .map(StatusChangeRecordModel.fromFirestore)
-                .where((r) => !r.statusChangedAt.isBefore(from))
+                .where((r) {
+                  final at = r.statusChangedAt;
+                  if (at.isBefore(from)) return false;
+                  if (to != null && at.isAfter(to)) return false;
+                  return true;
+                })
                 .toList()
               ..sort((a, b) => a.statusChangedAt.compareTo(b.statusChangedAt));
 

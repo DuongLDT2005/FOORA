@@ -8,14 +8,14 @@ import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../domain/entities/waste_statistics.dart';
 import '../providers/waste_statistics_provider.dart';
-import '../widgets/monthly_waste_bar_chart.dart';
-import '../widgets/period_selector.dart';
+import '../widgets/date_range_selector.dart';
 import '../widgets/top_wasted_foods_list.dart';
 import '../widgets/waste_ratio_pie_chart.dart';
 import '../widgets/waste_summary_cards.dart';
 
 /// Waste Statistics page accessible from the Profile menu and the HomeStatsBoard.
-/// Displays per-month consumed/discarded counts, waste rate %, and top-5 wasted foods.
+/// Displays consumed/discarded counts, waste rate %, and top-5 wasted foods
+/// for a user-selected custom date range.
 class WasteStatisticsPage extends ConsumerStatefulWidget {
   const WasteStatisticsPage({super.key});
 
@@ -25,18 +25,31 @@ class WasteStatisticsPage extends ConsumerStatefulWidget {
 }
 
 class _WasteStatisticsPageState extends ConsumerState<WasteStatisticsPage> {
-  int _selectedMonths = 6; // default period
+  late DateTime _startDate;
+  late DateTime _endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    // Default to the past 30 days
+    _startDate = now.subtract(const Duration(days: 29));
+    _endDate = now;
+  }
+
+  DateRangeParam get _currentRange =>
+      DateRangeParam(startDate: _startDate, endDate: _endDate);
 
   @override
   Widget build(BuildContext context) {
-    final statsAsync = ref.watch(wasteStatisticsProvider(_selectedMonths));
+    final statsAsync = ref.watch(wasteStatisticsProvider(_currentRange));
 
     return SubpageLayout(
       header: AppHeader(title: 'Thống kê lãng phí'),
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: () async {
-          ref.invalidate(wasteStatisticsProvider(_selectedMonths));
+          ref.invalidate(wasteStatisticsProvider(_currentRange));
           await Future<void>.delayed(const Duration(milliseconds: 300));
         },
         child: SingleChildScrollView(
@@ -45,23 +58,25 @@ class _WasteStatisticsPageState extends ConsumerState<WasteStatisticsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              PeriodSelector(
-                selectedMonths: _selectedMonths,
-                onChanged: (months) {
-                  setState(() => _selectedMonths = months);
+              DateRangeSelector(
+                startDate: _startDate,
+                endDate: _endDate,
+                onDateRangeChanged: (start, end) {
+                  setState(() {
+                    _startDate = start;
+                    _endDate = end;
+                  });
                 },
               ),
               statsAsync.when(
-                data: (stats) =>
-                    _StatsBody(stats: stats, months: _selectedMonths),
+                data: (stats) => _StatsBody(stats: stats),
                 loading: () => _ShimmerSkeleton(),
                 error: (e, _) => Padding(
                   padding: EdgeInsets.only(top: 48.h),
                   child: ErrorStateWidget(
                     message: 'Không thể tải dữ liệu thống kê.',
-                    onRetry: () => ref.invalidate(
-                      wasteStatisticsProvider(_selectedMonths),
-                    ),
+                    onRetry: () =>
+                        ref.invalidate(wasteStatisticsProvider(_currentRange)),
                   ),
                 ),
               ),
@@ -77,10 +92,9 @@ class _WasteStatisticsPageState extends ConsumerState<WasteStatisticsPage> {
 // ─── Body when data loaded ───────────────────────────────────────────────────
 
 class _StatsBody extends StatelessWidget {
-  const _StatsBody({required this.stats, required this.months});
+  const _StatsBody({required this.stats});
 
   final WasteStatistics stats;
-  final int months;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +103,6 @@ class _StatsBody extends StatelessWidget {
       children: [
         WasteSummaryCards(stats: stats),
         WasteRatioPieChart(stats: stats),
-        MonthlyWasteBarChart(monthly: stats.monthly, months: months),
         TopWastedFoodsList(topWasted: stats.topWasted),
         if (!stats.hasData) const _EmptyHint(),
         if (stats.totalResolved >= 2000) _LimitNotice(),
@@ -111,13 +124,13 @@ class _EmptyHint extends StatelessWidget {
         child: Column(
           children: [
             Icon(
-              Icons.bar_chart_rounded,
+              Icons.pie_chart_outline_rounded,
               size: 56.r,
               color: AppColors.slate200,
             ),
             SizedBox(height: 12.h),
             Text(
-              'Chưa có dữ liệu trong kỳ này',
+              'Chưa có dữ liệu trong khoảng thời gian này',
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
@@ -160,9 +173,7 @@ class _ShimmerSkeleton extends StatelessWidget {
       children: [
         _SkeletonBox(height: 90.h),
         SizedBox(height: 14.h),
-        _SkeletonBox(height: 160.h),
-        SizedBox(height: 14.h),
-        _SkeletonBox(height: 240.h),
+        _SkeletonBox(height: 180.h),
         SizedBox(height: 14.h),
         _SkeletonBox(height: 200.h),
       ],

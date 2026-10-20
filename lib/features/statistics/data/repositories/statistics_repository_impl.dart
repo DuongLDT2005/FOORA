@@ -11,11 +11,13 @@ class StatisticsRepositoryImpl implements StatisticsRepository {
   Future<List<StatusChangeRecord>> getStatusChangeRecords({
     required String householdId,
     required DateTime from,
+    DateTime? to,
     int limit = 2000,
   }) {
     return dataSource.getStatusChangeRecords(
       householdId: householdId,
       from: from,
+      to: to,
       limit: limit,
     );
   }

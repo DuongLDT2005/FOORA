@@ -12,21 +12,38 @@ class GetStatusChangeRecords {
   static const int _maxRecords = 2000;
   static const Duration _vnOffset = Duration(hours: 7);
 
-  /// Returns all consumed/discarded records from the past [months] months
-  /// (inclusive of the current calendar month in Vietnam time).
+  /// Returns all consumed/discarded records within the given period.
+  /// If [from] is provided, uses [from] and optional [to].
+  /// Otherwise falls back to the past [months] months in Vietnam time.
   Future<List<StatusChangeRecord>> call({
     required String householdId,
-    required int months,
+    DateTime? from,
+    DateTime? to,
+    int? months,
   }) {
-    final nowVn = DateTime.now().toUtc().add(_vnOffset);
-    // Start of the first month of the period, in Vietnam time.
-    final startVn = DateTime(nowVn.year, nowVn.month - (months - 1), 1);
-    // Convert that midnight-VN boundary to UTC for the Firestore query.
-    final startUtc = startVn.subtract(_vnOffset);
+    DateTime startUtc;
+    DateTime? toUtc;
+
+    if (from != null) {
+      startUtc = from.isUtc ? from : from.toUtc();
+      if (to != null) {
+        toUtc = to.isUtc ? to : to.toUtc();
+      }
+    } else {
+      final effectiveMonths = months ?? 6;
+      final nowVn = DateTime.now().toUtc().add(_vnOffset);
+      final startVn = DateTime(
+        nowVn.year,
+        nowVn.month - (effectiveMonths - 1),
+        1,
+      );
+      startUtc = startVn.subtract(_vnOffset);
+    }
 
     return _repository.getStatusChangeRecords(
       householdId: householdId,
       from: startUtc,
+      to: toUtc,
       limit: _maxRecords,
     );
   }

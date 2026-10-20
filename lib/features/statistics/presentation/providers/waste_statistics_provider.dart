@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/firebase/firebase_providers.dart';
@@ -8,6 +9,37 @@ import '../../domain/entities/waste_statistics.dart';
 import '../../domain/usecases/compute_waste_statistics.dart';
 import '../../domain/usecases/get_status_change_records.dart';
 
+/// Parameter object identifying a date range filter for [wasteStatisticsProvider].
+@immutable
+class DateRangeParam {
+  const DateRangeParam({required this.startDate, required this.endDate});
+
+  final DateTime startDate;
+  final DateTime endDate;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DateRangeParam &&
+          runtimeType == other.runtimeType &&
+          startDate.year == other.startDate.year &&
+          startDate.month == other.startDate.month &&
+          startDate.day == other.startDate.day &&
+          endDate.year == other.endDate.year &&
+          endDate.month == other.endDate.month &&
+          endDate.day == other.endDate.day;
+
+  @override
+  int get hashCode => Object.hash(
+    startDate.year,
+    startDate.month,
+    startDate.day,
+    endDate.year,
+    endDate.month,
+    endDate.day,
+  );
+}
+
 /// Internal provider that assembles the repository from Firestore.
 final _statisticsRepositoryProvider = Provider<StatisticsRepositoryImpl>((ref) {
   final firestore = ref.watch(firestoreProvider);
@@ -16,11 +48,11 @@ final _statisticsRepositoryProvider = Provider<StatisticsRepositoryImpl>((ref) {
   );
 });
 
-/// Fetches and computes [WasteStatistics] for the given number of months.
-/// Uses [FutureProvider.family] so each period is cached independently, and
+/// Fetches and computes [WasteStatistics] for the given [DateRangeParam].
+/// Uses [FutureProvider.family] so each range is cached independently, and
 /// [autoDispose] so resources are freed when the page is left.
 final wasteStatisticsProvider = FutureProvider.autoDispose
-    .family<WasteStatistics, int>((ref, months) async {
+    .family<WasteStatistics, DateRangeParam>((ref, range) async {
       final user = ref.watch(currentUserProvider);
       final householdId = user?.activeHouseholdId;
 
@@ -33,14 +65,35 @@ final wasteStatisticsProvider = FutureProvider.autoDispose
       final getRecords = GetStatusChangeRecords(repository);
       final compute = const ComputeWasteStatistics();
 
+      // Normalize start of day and end of day
+      final start = DateTime(
+        range.startDate.year,
+        range.startDate.month,
+        range.startDate.day,
+        0,
+        0,
+        0,
+      );
+      final end = DateTime(
+        range.endDate.year,
+        range.endDate.month,
+        range.endDate.day,
+        23,
+        59,
+        59,
+        999,
+      );
+
       final records = await getRecords(
         householdId: householdId,
-        months: months,
+        from: start,
+        to: end,
       );
 
       return compute(
         records: records,
+        startDate: start,
+        endDate: end,
         nowUtc: DateTime.now().toUtc(),
-        months: months,
       );
     });

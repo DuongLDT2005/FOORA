@@ -9,6 +9,7 @@ abstract class StatisticsRepository {
   Future<List<StatusChangeRecord>> getStatusChangeRecords({
     required String householdId,
     required DateTime from,
+    DateTime? to,
     int limit,
   });
 }

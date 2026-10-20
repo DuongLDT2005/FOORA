@@ -4,25 +4,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/features/statistics/domain/entities/waste_statistics.dart';
 import 'package:foora/features/statistics/presentation/pages/waste_statistics_page.dart';
 import 'package:foora/features/statistics/presentation/providers/waste_statistics_provider.dart';
-import 'package:foora/features/statistics/presentation/widgets/period_selector.dart';
+import 'package:foora/features/statistics/presentation/widgets/date_range_selector.dart';
 import 'package:foora/features/statistics/presentation/widgets/waste_summary_cards.dart';
 
 import '../../helpers/test_helpers.dart';
 
 void main() {
-  group('PeriodSelector Widget Tests', () {
-    testWidgets('renders all period options and calls onChanged when clicked', (
-      tester,
-    ) async {
-      int selected = 6;
+  group('DateRangeSelector Widget Tests', () {
+    testWidgets('renders date range and quick preset chips', (tester) async {
+      DateTime start = DateTime(2026, 9, 20);
+      DateTime end = DateTime(2026, 10, 20);
+
       await tester.pumpWidget(
         makeTestableWidget(
           StatefulBuilder(
             builder: (context, setState) {
-              return PeriodSelector(
-                selectedMonths: selected,
-                onChanged: (val) {
-                  setState(() => selected = val);
+              return DateRangeSelector(
+                startDate: start,
+                endDate: end,
+                onDateRangeChanged: (s, e) {
+                  setState(() {
+                    start = s;
+                    end = e;
+                  });
                 },
               );
             },
@@ -31,14 +35,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('3 tháng'), findsOneWidget);
-      expect(find.text('6 tháng'), findsOneWidget);
-      expect(find.text('12 tháng'), findsOneWidget);
+      expect(find.text('Khoảng thời gian'), findsOneWidget);
+      expect(find.text('20/09/2026 - 20/10/2026'), findsOneWidget);
+      expect(find.text('7 ngày qua'), findsOneWidget);
+      expect(find.text('30 ngày qua'), findsOneWidget);
+      expect(find.text('Tháng này'), findsOneWidget);
+      expect(find.text('3 tháng qua'), findsOneWidget);
 
-      await tester.tap(find.text('12 tháng'));
+      await tester.tap(find.text('7 ngày qua'));
       await tester.pumpAndSettle();
-
-      expect(selected, 12);
+      // start has been updated to 6 days ago
+      expect(end.difference(start).inDays, inInclusiveRange(5, 7));
     });
   });
 
@@ -87,21 +94,16 @@ void main() {
       expect(find.text('15'), findsOneWidget);
       expect(find.text('5'), findsOneWidget);
       expect(find.text('25.0%'), findsOneWidget);
-      expect(find.text('3 lô quá hạn'), findsOneWidget);
+      expect(find.textContaining('3 lô bị vứt do quá hạn'), findsOneWidget);
     });
   });
 
   group('WasteStatisticsPage Widget Tests', () {
-    testWidgets('renders page with loaded data', (tester) async {
+    testWidgets('renders page with loaded data without bar chart', (
+      tester,
+    ) async {
       const stats = WasteStatistics(
-        monthly: [
-          MonthlyWaste(year: 2026, month: 5, consumed: 10, discarded: 2),
-          MonthlyWaste(year: 2026, month: 6, consumed: 8, discarded: 1),
-          MonthlyWaste(year: 2026, month: 7, consumed: 16, discarded: 3),
-          MonthlyWaste(year: 2026, month: 8, consumed: 9, discarded: 0),
-          MonthlyWaste(year: 2026, month: 9, consumed: 15, discarded: 4),
-          MonthlyWaste(year: 2026, month: 10, consumed: 11, discarded: 2),
-        ],
+        monthly: [],
         totalConsumed: 69,
         totalDiscarded: 12,
         discardedAfterExpiry: 5,
@@ -117,11 +119,17 @@ void main() {
         wasteRatePercent: 14.8,
       );
 
+      final now = DateTime.now();
+      final defaultRange = DateRangeParam(
+        startDate: now.subtract(const Duration(days: 29)),
+        endDate: now,
+      );
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             wasteStatisticsProvider(
-              6,
+              defaultRange,
             ).overrideWith((ref) => Future.value(stats)),
           ],
           child: makeTestableWidget(const WasteStatisticsPage()),
@@ -133,7 +141,9 @@ void main() {
       expect(find.text('69'), findsOneWidget);
       expect(find.text('14.8%'), findsNWidgets(2));
       expect(find.text('Táo Envy'), findsOneWidget);
-      expect(find.text('Tiêu thụ theo tháng'), findsOneWidget);
+      // Bar chart is removed, Pie chart is present
+      expect(find.text('Tiêu thụ theo tháng'), findsNothing);
+      expect(find.text('Tỷ lệ tổng quan'), findsOneWidget);
       expect(find.text('Hay bị vứt nhất'), findsOneWidget);
     });
   });

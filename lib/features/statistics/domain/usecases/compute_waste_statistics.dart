@@ -13,16 +13,21 @@ class ComputeWasteStatistics {
 
   /// [nowUtc] — current time in UTC (injected for deterministic testing).
   /// [months] — 3, 6, or 12 calendar months to include (including current).
+  /// Computes [WasteStatistics] from [records].
+  /// Supports custom [startDate] and [endDate] range boundaries, or falls back to
+  /// [months] (defaults to 6 if neither is specified).
   WasteStatistics call({
     required List<StatusChangeRecord> records,
-    required DateTime nowUtc,
-    required int months,
+    DateTime? startDate,
+    DateTime? endDate,
+    DateTime? nowUtc,
+    int? months,
   }) {
-    final nowVn = nowUtc.add(_vnOffset);
+    final nowVn = (nowUtc ?? DateTime.now().toUtc()).add(_vnOffset);
 
-    // Build an ordered list of (year, month) buckets for the period.
-    // Index 0 = oldest; last index = current month.
-    final buckets = _buildBuckets(nowVn, months);
+    // If months is specified, build monthly buckets; otherwise empty list.
+    final hasMonths = months != null && months > 0;
+    final buckets = hasMonths ? _buildBuckets(nowVn, months) : <_MonthKey>[];
     final bucketMap = <_MonthKey, _MutableBucket>{};
     for (final b in buckets) {
       bucketMap[b] = _MutableBucket();
@@ -36,16 +41,26 @@ class ComputeWasteStatistics {
     final groupCounts = <String, _FoodGroup>{};
 
     for (final record in records) {
-      final changedVn = record.statusChangedAt.toUtc().add(_vnOffset);
+      final changedUtc = record.statusChangedAt.toUtc();
+      if (startDate != null && changedUtc.isBefore(startDate.toUtc())) {
+        continue;
+      }
+      if (endDate != null && changedUtc.isAfter(endDate.toUtc())) {
+        continue;
+      }
+
+      final changedVn = changedUtc.add(_vnOffset);
       final key = _MonthKey(changedVn.year, changedVn.month);
       final bucket = bucketMap[key];
-      if (bucket == null) continue; // outside the requested period
+      if (hasMonths && bucket == null) {
+        continue; // outside the requested month buckets
+      }
 
       if (record.status == InventoryItemStatus.consumed) {
-        bucket.consumed++;
+        bucket?.consumed++;
         totalConsumed++;
       } else if (record.status == InventoryItemStatus.discarded) {
-        bucket.discarded++;
+        bucket?.discarded++;
         totalDiscarded++;
 
         if (record.isDiscardedAfterExpiry) discardedAfterExpiry++;

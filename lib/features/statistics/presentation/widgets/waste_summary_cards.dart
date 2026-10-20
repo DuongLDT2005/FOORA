@@ -6,6 +6,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../domain/entities/waste_statistics.dart';
 
 /// Three summary metric cards: consumed count, discarded count, waste rate %.
+/// Balanced with equal height, uniform layout, and aligned baselines.
 class WasteSummaryCards extends StatelessWidget {
   const WasteSummaryCards({super.key, required this.stats});
 
@@ -22,45 +23,77 @@ class WasteSummaryCards extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(bottom: 20.h),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _SummaryCard(
-              label: 'Đã dùng',
-              value: '${stats.totalConsumed}',
-              unit: 'lô',
-              icon: LucideIcons.checkCircle,
-              color: AppColors.emerald500,
-              bgColor: AppColors.emerald50,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _SummaryCard(
+                    label: 'Đã dùng',
+                    value: '${stats.totalConsumed}',
+                    unit: 'lô',
+                    icon: LucideIcons.checkCircle,
+                    color: AppColors.emerald500,
+                    bgColor: AppColors.emerald50,
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: _SummaryCard(
+                    label: 'Đã vứt',
+                    value: '${stats.totalDiscarded}',
+                    unit: 'lô',
+                    icon: LucideIcons.trash2,
+                    color: AppColors.red500,
+                    bgColor: AppColors.red50,
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: _SummaryCard(
+                    label: 'Lãng phí',
+                    value: rateText,
+                    unit: '',
+                    icon: LucideIcons.pieChart,
+                    color: rateColor,
+                    bgColor: (stats.wasteRatePercent ?? 0) > 20
+                        ? AppColors.red50
+                        : AppColors.emerald50,
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: _SummaryCard(
-              label: 'Đã vứt',
-              value: '${stats.totalDiscarded}',
-              unit: 'lô',
-              subtitle: stats.discardedAfterExpiry > 0
-                  ? '${stats.discardedAfterExpiry} lô quá hạn'
-                  : null,
-              icon: LucideIcons.trash2,
-              color: AppColors.red500,
-              bgColor: AppColors.red50,
+          if (stats.discardedAfterExpiry > 0) ...[
+            SizedBox(height: 10.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                color: AppColors.red50.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: AppColors.red100),
+              ),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.info, size: 14.r, color: AppColors.red500),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      'Trong đó có ${stats.discardedAfterExpiry} lô bị vứt do quá hạn',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.red500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: _SummaryCard(
-              label: 'Lãng phí',
-              value: rateText,
-              unit: '',
-              icon: LucideIcons.pieChart,
-              color: rateColor,
-              bgColor: (stats.wasteRatePercent ?? 0) > 20
-                  ? AppColors.red50
-                  : AppColors.emerald50,
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -75,7 +108,6 @@ class _SummaryCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.bgColor,
-    this.subtitle,
   });
 
   final String label;
@@ -84,12 +116,11 @@ class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final Color bgColor;
-  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(12.r),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
@@ -104,6 +135,7 @@ class _SummaryCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
             width: 32.r,
@@ -114,55 +146,53 @@ class _SummaryCard extends StatelessWidget {
             ),
             child: Icon(icon, color: color, size: 16.r),
           ),
-          SizedBox(height: 8.h),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: 'Lexend',
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w900,
-                    color: color,
-                  ),
-                ),
-                if (unit.isNotEmpty) ...[
-                  SizedBox(width: 2.w),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 3.h),
-                    child: Text(
-                      unit,
+          SizedBox(height: 10.h),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      value,
                       style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppColors.slate400,
+                        fontFamily: 'Lexend',
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w900,
+                        color: color,
                       ),
                     ),
-                  ),
-                ],
-              ],
-            ),
+                    if (unit.isNotEmpty) ...[
+                      SizedBox(width: 2.w),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 2.h),
+                        child: Text(
+                          unit,
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.slate400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.slate400,
+                ),
+              ),
+            ],
           ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.slate400,
-            ),
-          ),
-          if (subtitle != null) ...[
-            SizedBox(height: 4.h),
-            Text(
-              subtitle!,
-              style: TextStyle(fontSize: 9.sp, color: AppColors.red500),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
         ],
       ),
     );
