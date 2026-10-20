@@ -9,12 +9,14 @@ class HomeStatsBoard extends StatelessWidget {
   final int totalCount;
   final int expiringSoonCount;
   final int expiredCount;
+  final VoidCallback? onExpiredTap;
 
   const HomeStatsBoard({
     super.key,
     required this.totalCount,
     required this.expiringSoonCount,
     required this.expiredCount,
+    this.onExpiredTap,
   });
 
   @override
@@ -49,6 +51,7 @@ class HomeStatsBoard extends StatelessWidget {
             icon: LucideIcons.refreshCw,
             color: AppColors.red500,
             bgColor: AppColors.red50,
+            onTap: onExpiredTap,
           ),
         ],
       ),
@@ -63,68 +66,77 @@ class HomeStatsBoard extends StatelessWidget {
     required IconData icon,
     required Color color,
     required Color bgColor,
+    VoidCallback? onTap,
   }) {
-    return Expanded(
-      child: Container(
-        height: 112.h, // approx h-28
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: AppColors.slate100),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32.w,
-                  height: 32.w,
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Icon(icon, color: color, size: 16.sp),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    count.toString(),
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w900,
-                      color: title == 'Tổng sản phẩm'
-                          ? AppColors.slate800
-                          : color,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 10.sp, // ~12px in html
-                fontWeight: FontWeight.w700,
-                color: AppColors.slate400,
-              ),
-            ),
-          ],
-        ),
+    final card = Container(
+      height: 112.h, // approx h-28
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.slate100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32.w,
+                height: 32.w,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(icon, color: color, size: 16.sp),
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontFamily: 'Lexend',
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w900,
+                    color: title == 'Tổng sản phẩm'
+                        ? AppColors.slate800
+                        : color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 10.sp, // ~12px in html
+              fontWeight: FontWeight.w700,
+              color: AppColors.slate400,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Expanded(
+      child: onTap != null
+          ? GestureDetector(
+              onTap: onTap,
+              behavior: HitTestBehavior.opaque,
+              child: card,
+            )
+          : card,
     );
   }
 }

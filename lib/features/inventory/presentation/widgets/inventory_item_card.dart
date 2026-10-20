@@ -19,7 +19,8 @@ class InventoryItemCard extends StatelessWidget {
   final FoodCategory? category;
   final String storageLocationId; // 'fridge' or 'freezer'
   final DateTime expirationDate;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
+  final Future<bool?> Function()? onConfirmDelete;
   final VoidCallback onTap;
 
   const InventoryItemCard({
@@ -33,7 +34,8 @@ class InventoryItemCard extends StatelessWidget {
     this.category,
     required this.storageLocationId,
     required this.expirationDate,
-    required this.onDelete,
+    this.onDelete,
+    this.onConfirmDelete,
     required this.onTap,
   });
 
@@ -54,7 +56,13 @@ class InventoryItemCard extends StatelessWidget {
       child: Dismissible(
         key: Key(id),
         direction: DismissDirection.endToStart,
-        onDismissed: (_) => onDelete(),
+        confirmDismiss: (_) async {
+          if (onConfirmDelete != null) {
+            return await onConfirmDelete!();
+          }
+          onDelete?.call();
+          return false;
+        },
         background: Container(
           alignment: Alignment.centerRight,
           padding: EdgeInsets.only(right: 20.w),

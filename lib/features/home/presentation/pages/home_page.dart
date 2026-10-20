@@ -68,6 +68,7 @@ class HomePage extends ConsumerWidget {
                 totalCount: totalCount,
                 expiringSoonCount: expiringSoonCount,
                 expiredCount: expiredCount,
+                onExpiredTap: () => context.push(AppRouteNames.wasteStatistics),
               ),
 
               if (totalCount == 0)
