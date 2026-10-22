@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/waste_statistics.dart';
 
 /// Pie chart showing the share of consumed vs. discarded batches.
@@ -85,7 +85,7 @@ class WasteRatioPieChart extends StatelessWidget {
                                     fontFamily: 'Lexend',
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w900,
-                                    color: (stats.wasteRatePercent ?? 0) > 20
+                                    color: stats.isHighWaste
                                         ? AppColors.red500
                                         : AppColors.emerald500,
                                   ),
@@ -93,7 +93,7 @@ class WasteRatioPieChart extends StatelessWidget {
                                 Text(
                                   'lãng phí',
                                   style: TextStyle(
-                                    fontSize: 9.sp,
+                                    fontSize: 12.sp,
                                     color: AppColors.slate400,
                                   ),
                                 ),

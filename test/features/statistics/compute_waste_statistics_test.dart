@@ -205,5 +205,59 @@ void main() {
       expect(stats.totalDiscarded, 0);
       expect(stats.hasData, isFalse);
     });
+
+    StatusChangeRecord record(String id, InventoryItemStatus status) =>
+        StatusChangeRecord(
+          id: id,
+          name: 'Rau $id',
+          normalizedName: 'rau $id',
+          categoryId: 'vegetable',
+          status: status,
+          statusChangedAt: DateTime.utc(2026, 10, 10),
+          expirationDate: DateTime.utc(2026, 10, 20),
+        );
+
+    test('filters by startDate/endDate when no months are given', () {
+      final stats = useCase(
+        records: [record('a', InventoryItemStatus.consumed)],
+        startDate: DateTime.utc(2026, 10, 11),
+        endDate: DateTime.utc(2026, 10, 31),
+      );
+      expect(stats.hasData, isFalse);
+      expect(stats.monthly, isEmpty);
+    });
+
+    test('marks result truncated only when the record limit is reached', () {
+      final records = [
+        record('a', InventoryItemStatus.consumed),
+        record('b', InventoryItemStatus.discarded),
+      ];
+      expect(useCase(records: records, recordLimit: 2).isTruncated, isTrue);
+      expect(useCase(records: records, recordLimit: 3).isTruncated, isFalse);
+      expect(useCase(records: records).isTruncated, isFalse);
+    });
+
+    test('flags high waste only above 20%', () {
+      // 1 of 5 discarded = 20.0% -> not high.
+      final atThreshold = useCase(
+        records: [
+          for (var i = 0; i < 4; i++)
+            record('c$i', InventoryItemStatus.consumed),
+          record('d', InventoryItemStatus.discarded),
+        ],
+      );
+      expect(atThreshold.wasteRatePercent, 20.0);
+      expect(atThreshold.isHighWaste, isFalse);
+
+      // 1 of 4 discarded = 25.0% -> high.
+      final above = useCase(
+        records: [
+          for (var i = 0; i < 3; i++)
+            record('c$i', InventoryItemStatus.consumed),
+          record('d', InventoryItemStatus.discarded),
+        ],
+      );
+      expect(above.isHighWaste, isTrue);
+    });
   });
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/waste_statistics.dart';
 import '../../../inventory/presentation/widgets/food_image_avatar.dart';
 
@@ -85,7 +85,7 @@ class _TopFoodRow extends StatelessWidget {
             child: Text(
               '$rank',
               style: TextStyle(
-                fontSize: 11.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w900,
                 color: rankColor,
               ),
@@ -122,7 +122,7 @@ class _TopFoodRow extends StatelessWidget {
                     Text(
                       '${food.count} lần · ${pct.toStringAsFixed(0)}%',
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                         color: AppColors.red500,
                       ),

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foora/features/statistics/domain/entities/stats_period.dart';
 import 'package:foora/features/statistics/domain/entities/waste_statistics.dart';
 import 'package:foora/features/statistics/presentation/pages/waste_statistics_page.dart';
 import 'package:foora/features/statistics/presentation/providers/waste_statistics_provider.dart';
@@ -119,10 +122,10 @@ void main() {
         wasteRatePercent: 14.8,
       );
 
-      final now = DateTime.now();
+      final today = StatsPeriod.todayVn();
       final defaultRange = DateRangeParam(
-        startDate: now.subtract(const Duration(days: 29)),
-        endDate: now,
+        startDate: DateTime(today.year, today.month, today.day - 29),
+        endDate: today,
       );
 
       await tester.pumpWidget(
@@ -145,6 +148,74 @@ void main() {
       expect(find.text('Tiêu thụ theo tháng'), findsNothing);
       expect(find.text('Tỷ lệ tổng quan'), findsOneWidget);
       expect(find.text('Hay bị vứt nhất'), findsOneWidget);
+      expect(find.textContaining('lô gần nhất'), findsNothing);
+    });
+
+    Widget pageWith(FutureOr<WasteStatistics> Function(DateRangeParam) build) {
+      return ProviderScope(
+        overrides: [
+          wasteStatisticsProvider.overrideWith((ref, range) => build(range)),
+        ],
+        child: makeTestableWidget(const WasteStatisticsPage()),
+      );
+    }
+
+    testWidgets('shows the empty state instead of zero cards', (tester) async {
+      await tester.pumpWidget(pageWith((_) => WasteStatistics.empty));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Chưa có dữ liệu trong khoảng thời gian này'),
+        findsOneWidget,
+      );
+      expect(find.byType(WasteSummaryCards), findsNothing);
+    });
+
+    testWidgets('shows the limit notice when the result is truncated', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        pageWith(
+          (_) => const WasteStatistics(
+            monthly: [],
+            totalConsumed: 1500,
+            totalDiscarded: 500,
+            discardedAfterExpiry: 0,
+            topWasted: [],
+            wasteRatePercent: 25.0,
+            isTruncated: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('2000 lô gần nhất'), findsOneWidget);
+    });
+
+    testWidgets('changing the date range requests a new provider key', (
+      tester,
+    ) async {
+      final requested = <DateRangeParam>[];
+      await tester.pumpWidget(
+        pageWith((range) {
+          requested.add(range);
+          return WasteStatistics.empty;
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('7 ngày qua'));
+      await tester.pumpAndSettle();
+
+      final today = StatsPeriod.todayVn();
+      expect(requested, hasLength(2));
+      expect(
+        requested.last,
+        DateRangeParam(
+          startDate: DateTime(today.year, today.month, today.day - 6),
+          endDate: today,
+        ),
+      );
     });
   });
 }

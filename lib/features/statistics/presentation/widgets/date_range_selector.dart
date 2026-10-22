@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/utils/date_formatter.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/date_formatter.dart';
+import '../../domain/entities/stats_period.dart';
 
 /// Interactive date range picker selector for the Waste Statistics page.
 /// Allows the user to select custom start and end dates via a calendar dialog
@@ -21,15 +22,15 @@ class DateRangeSelector extends StatelessWidget {
   final void Function(DateTime start, DateTime end) onDateRangeChanged;
 
   Future<void> _pickDateRange(BuildContext context) async {
-    final now = DateTime.now();
+    // Statistics only cover the past, so the picker stops at today.
+    final today = StatsPeriod.todayVn();
+    final end = endDate.isAfter(today) ? today : endDate;
+    final start = startDate.isAfter(end) ? end : startDate;
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
-      lastDate: DateTime(now.year + 1),
-      initialDateRange: DateTimeRange(
-        start: startDate.isAfter(now) ? now : startDate,
-        end: endDate.isAfter(DateTime(now.year + 1)) ? now : endDate,
-      ),
+      lastDate: today,
+      initialDateRange: DateTimeRange(start: start, end: end),
       locale: const Locale('vi', 'VN'),
       saveText: 'Áp dụng',
       helpText: 'Chọn khoảng thời gian thống kê',
@@ -139,7 +140,7 @@ class DateRangeSelector extends StatelessWidget {
                           Text(
                             'Thời gian áp dụng',
                             style: TextStyle(
-                              fontSize: 10.sp,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
                               color: AppColors.slate400,
                             ),
@@ -172,7 +173,7 @@ class DateRangeSelector extends StatelessWidget {
                           Text(
                             'Chọn lịch',
                             style: TextStyle(
-                              fontSize: 11.sp,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
                               color: AppColors.slate600,
                             ),
@@ -199,10 +200,10 @@ class DateRangeSelector extends StatelessWidget {
                 _QuickChip(
                   label: '7 ngày qua',
                   onTap: () {
-                    final now = DateTime.now();
+                    final today = StatsPeriod.todayVn();
                     onDateRangeChanged(
-                      now.subtract(const Duration(days: 6)),
-                      now,
+                      DateTime(today.year, today.month, today.day - 6),
+                      today,
                     );
                   },
                 ),
@@ -210,10 +211,10 @@ class DateRangeSelector extends StatelessWidget {
                 _QuickChip(
                   label: '30 ngày qua',
                   onTap: () {
-                    final now = DateTime.now();
+                    final today = StatsPeriod.todayVn();
                     onDateRangeChanged(
-                      now.subtract(const Duration(days: 29)),
-                      now,
+                      DateTime(today.year, today.month, today.day - 29),
+                      today,
                     );
                   },
                 ),
@@ -221,18 +222,21 @@ class DateRangeSelector extends StatelessWidget {
                 _QuickChip(
                   label: 'Tháng này',
                   onTap: () {
-                    final now = DateTime.now();
-                    onDateRangeChanged(DateTime(now.year, now.month, 1), now);
+                    final today = StatsPeriod.todayVn();
+                    onDateRangeChanged(
+                      DateTime(today.year, today.month, 1),
+                      today,
+                    );
                   },
                 ),
                 SizedBox(width: 6.w),
                 _QuickChip(
                   label: '3 tháng qua',
                   onTap: () {
-                    final now = DateTime.now();
+                    final today = StatsPeriod.todayVn();
                     onDateRangeChanged(
-                      DateTime(now.year, now.month - 2, 1),
-                      now,
+                      DateTime(today.year, today.month - 2, 1),
+                      today,
                     );
                   },
                 ),
@@ -266,7 +270,7 @@ class _QuickChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 11.sp,
+            fontSize: 12.sp,
             fontWeight: FontWeight.w500,
             color: AppColors.slate600,
           ),

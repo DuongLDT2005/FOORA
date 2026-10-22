@@ -1,6 +1,6 @@
+import '../../../../core/constants/app_enums.dart';
 import '../entities/status_change_record.dart';
 import '../entities/waste_statistics.dart';
-import '../../../../core/constants/app_enums.dart';
 
 /// Pure-Dart use case that computes [WasteStatistics] from a flat list of
 /// [StatusChangeRecord]s. Contains no Flutter or Firebase dependencies and
@@ -11,17 +11,19 @@ class ComputeWasteStatistics {
   static const Duration _vnOffset = Duration(hours: 7);
   static const int _maxTopFoods = 5;
 
-  /// [nowUtc] — current time in UTC (injected for deterministic testing).
-  /// [months] — 3, 6, or 12 calendar months to include (including current).
   /// Computes [WasteStatistics] from [records].
-  /// Supports custom [startDate] and [endDate] range boundaries, or falls back to
-  /// [months] (defaults to 6 if neither is specified).
+  /// [startDate] / [endDate] — optional inclusive range boundaries.
+  /// [nowUtc] — current time in UTC (injected for deterministic testing).
+  /// [months] — when set, also builds that many monthly buckets (including
+  /// the current month) and ignores records outside them.
+  /// [recordLimit] — the fetch limit; reaching it marks the result truncated.
   WasteStatistics call({
     required List<StatusChangeRecord> records,
     DateTime? startDate,
     DateTime? endDate,
     DateTime? nowUtc,
     int? months,
+    int? recordLimit,
   }) {
     final nowVn = (nowUtc ?? DateTime.now().toUtc()).add(_vnOffset);
 
@@ -129,6 +131,7 @@ class ComputeWasteStatistics {
       discardedAfterExpiry: discardedAfterExpiry,
       topWasted: topWasted,
       wasteRatePercent: wasteRatePercent,
+      isTruncated: recordLimit != null && records.length >= recordLimit,
     );
   }
 

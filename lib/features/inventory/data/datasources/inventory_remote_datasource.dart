@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-import '../../../../core/constants/app_enums.dart';
 import '../../../../core/constants/firestore_constants.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/utils/string_utils.dart';
@@ -140,11 +139,13 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   }
 
   /// Writes the edited item directly to Firestore.
+  /// Runs in a transaction so the stored status can be compared with the new
+  /// one: `statusChangedAt` is stamped only when the status actually changes
+  /// (Firestore rules reject a status change without it).
   @override
   Future<void> updateInventoryItem({
     required String householdId,
     required InventoryItemModel item,
-    String? previousStatus,
   }) async {
     try {
       final docRef = firestore
@@ -156,23 +157,19 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
       // `createdAt` and `source` are immutable after creation (Firestore rules).
       final data = item.toFirestore()
         ..remove('createdAt')
-        ..remove('source');
+        ..remove('source')
+        // Preserve the stored value; it is only set below on a status change.
+        ..remove('statusChangedAt');
       data['updatedAt'] = FieldValue.serverTimestamp();
 
-      // Write statusChangedAt whenever status transitions to consumed/discarded.
-      final isTerminalStatus =
-          item.status == InventoryItemStatus.consumed ||
-          item.status == InventoryItemStatus.discarded;
-      final statusChanged =
-          previousStatus != null && previousStatus != item.status.value;
-      if (isTerminalStatus && statusChanged) {
-        data['statusChangedAt'] = FieldValue.serverTimestamp();
-      } else {
-        // Preserve existing value; do not overwrite when status did not change.
-        data.remove('statusChangedAt');
-      }
-
-      await docRef.update(data);
+      await firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+        final storedStatus = snapshot.data()?['status'] as String?;
+        if (storedStatus != item.status.value) {
+          data['statusChangedAt'] = FieldValue.serverTimestamp();
+        }
+        transaction.update(docRef, data);
+      });
     } on FirebaseException catch (e) {
       throw ServerException.fromFirebase(e);
     } catch (e) {

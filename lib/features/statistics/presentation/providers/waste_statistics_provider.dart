@@ -5,11 +5,13 @@ import '../../../../core/firebase/firebase_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/statistics_remote_datasource.dart';
 import '../../data/repositories/statistics_repository_impl.dart';
+import '../../domain/entities/stats_period.dart';
 import '../../domain/entities/waste_statistics.dart';
 import '../../domain/usecases/compute_waste_statistics.dart';
 import '../../domain/usecases/get_status_change_records.dart';
 
 /// Parameter object identifying a date range filter for [wasteStatisticsProvider].
+/// Only the calendar days matter; times of day are ignored.
 @immutable
 class DateRangeParam {
   const DateRangeParam({required this.startDate, required this.endDate});
@@ -53,8 +55,11 @@ final _statisticsRepositoryProvider = Provider<StatisticsRepositoryImpl>((ref) {
 /// [autoDispose] so resources are freed when the page is left.
 final wasteStatisticsProvider = FutureProvider.autoDispose
     .family<WasteStatistics, DateRangeParam>((ref, range) async {
-      final user = ref.watch(currentUserProvider);
-      final householdId = user?.activeHouseholdId;
+      // Only rebuild when the active household changes, not on every
+      // unrelated update of the user profile.
+      final householdId = ref.watch(
+        currentUserProvider.select((user) => user?.activeHouseholdId),
+      );
 
       if (householdId == null || householdId.isEmpty) {
         // No household linked yet — return empty statistics.
@@ -63,37 +68,24 @@ final wasteStatisticsProvider = FutureProvider.autoDispose
 
       final repository = ref.watch(_statisticsRepositoryProvider);
       final getRecords = GetStatusChangeRecords(repository);
-      final compute = const ComputeWasteStatistics();
+      const compute = ComputeWasteStatistics();
 
-      // Normalize start of day and end of day
-      final start = DateTime(
-        range.startDate.year,
-        range.startDate.month,
-        range.startDate.day,
-        0,
-        0,
-        0,
-      );
-      final end = DateTime(
-        range.endDate.year,
-        range.endDate.month,
-        range.endDate.day,
-        23,
-        59,
-        59,
-        999,
+      // Calendar days are interpreted in Vietnam time, regardless of the
+      // device time zone.
+      final period = StatsPeriod.fromCalendarDays(
+        startDay: range.startDate,
+        endDay: range.endDate,
       );
 
       final records = await getRecords(
         householdId: householdId,
-        from: start,
-        to: end,
+        period: period,
       );
 
       return compute(
         records: records,
-        startDate: start,
-        endDate: end,
-        nowUtc: DateTime.now().toUtc(),
+        startDate: period.startUtc,
+        endDate: period.endUtc,
+        recordLimit: GetStatusChangeRecords.maxRecords,
       );
     });

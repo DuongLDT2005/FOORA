@@ -21,7 +21,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {"fieldPath": "status", "order": "ASCENDING"},
-        {"fieldPath": "statusChangedAt", "order": "ASCENDING"}
+        {"fieldPath": "statusChangedAt", "order": "DESCENDING"}
       ]
     }
   ],

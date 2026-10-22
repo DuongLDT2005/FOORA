@@ -58,7 +58,11 @@ class WasteStatistics {
     required this.discardedAfterExpiry,
     required this.topWasted,
     this.wasteRatePercent,
+    this.isTruncated = false,
   });
+
+  /// Waste rates above this value are flagged as high.
+  static const double highWasteThresholdPercent = 20;
 
   /// Sorted from oldest to newest; length == number of months requested.
   final List<MonthlyWaste> monthly;
@@ -73,6 +77,12 @@ class WasteStatistics {
 
   /// Null when no consumed+discarded items exist (denominator is zero).
   final double? wasteRatePercent;
+
+  /// True when the record limit was reached, so older records in the period
+  /// were not counted.
+  final bool isTruncated;
+
+  bool get isHighWaste => (wasteRatePercent ?? 0) > highWasteThresholdPercent;
 
   int get totalResolved => totalConsumed + totalDiscarded;
   bool get hasData => totalResolved > 0;

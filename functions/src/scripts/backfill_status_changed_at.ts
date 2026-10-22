@@ -15,14 +15,38 @@
  * Max 400 docs per batch to stay within Firestore limits.
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import * as admin from "firebase-admin";
 
 const isProd = process.argv.includes("--prod");
 
+/** Same lookup as seed_firestore.ts: a service-account key next to functions/. */
+function getServiceAccountCredential(): admin.ServiceAccount | null {
+  const possiblePaths = [
+    path.join(__dirname, "../../serviceAccountKey.json"),
+    path.join(process.cwd(), "serviceAccountKey.json"),
+    path.join(process.cwd(), "service-account.json"),
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      console.log(`Using service account key at: ${p}`);
+      return JSON.parse(fs.readFileSync(p, "utf-8"));
+    }
+  }
+  return null;
+}
+
 if (isProd) {
-  // In production, Application Default Credentials are used automatically.
-  admin.initializeApp();
-  console.log("Running against PRODUCTION Firestore.");
+  // Prefer a service-account key; fall back to Application Default Credentials.
+  const serviceAccount = getServiceAccountCredential();
+  const projectId = process.env.GCLOUD_PROJECT || "foora-app";
+  admin.initializeApp(
+    serviceAccount ?
+      {credential: admin.credential.cert(serviceAccount), projectId} :
+      {projectId},
+  );
+  console.log(`Running against PRODUCTION Firestore (${projectId}).`);
 } else {
   // Point to the local Firestore emulator.
   process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
