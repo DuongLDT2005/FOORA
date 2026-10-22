@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_enums.dart';
 import '../../../../core/errors/failures.dart';
@@ -9,6 +10,8 @@ import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
+import '../../../household/presentation/providers/household_provider.dart';
+import '../../../household/presentation/widgets/household_switch_bottom_sheet.dart';
 import '../providers/inventory_list_provider.dart';
 import '../providers/inventory_provider.dart';
 import '../widgets/category_filter_list.dart';
@@ -80,13 +83,36 @@ class InventoryPage extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Kho thực phẩm',
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.slate800,
+                  GestureDetector(
+                    onTap: () => HouseholdSwitchBottomSheet.show(context),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 190.w),
+                          child: Text(
+                            ref
+                                    .watch(currentHouseholdStreamProvider)
+                                    .valueOrNull
+                                    ?.name ??
+                                'Kho thực phẩm',
+                            style: TextStyle(
+                              fontFamily: 'Lexend',
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.slate800,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        Icon(
+                          LucideIcons.chevronDown,
+                          size: 18.r,
+                          color: AppColors.slate500,
+                        ),
+                      ],
                     ),
                   ),
                   // Manage expiry button

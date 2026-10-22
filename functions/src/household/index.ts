@@ -1,3 +1,12 @@
 // Feature module: household
-export {};
-
+export * from "./callables/generate_invitation";
+export * from "./callables/get_invitation_info";
+export * from "./callables/join_household";
+export * from "./callables/revoke_invitation";
+export * from "./callables/get_active_invitation";
+export * from "./callables/remove_member";
+export * from "./callables/leave_household";
+export * from "./callables/switch_household";
+export * from "./callables/update_household_name";
+export * from "./callables/get_household_members";
+export * from "./services/household_service";

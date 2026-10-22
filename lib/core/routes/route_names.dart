@@ -22,6 +22,7 @@ class AppRouteNames {
   static const String helpCenter = '/profile/help-center';
   static const String contactUs = '/profile/contact';
   static const String reportBug = '/profile/report-bug';
+  static const String household = '/profile/household';
   static const String membership = '/membership';
   static const String paymentHistory = '/payment-history';
   static const String paymentQr = '/payment/:paymentId';

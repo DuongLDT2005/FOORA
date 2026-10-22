@@ -1,1 +1,1 @@
-// TODO: Implement invite_member.dart
+export 'generate_household_invitation.dart';

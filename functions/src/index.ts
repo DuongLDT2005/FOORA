@@ -19,5 +19,6 @@ export * from "./notification";
 export * from "./inventory";
 export * from "./receipt";
 export * from "./payment";
+export * from "./household";
 
 

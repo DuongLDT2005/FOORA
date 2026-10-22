@@ -9,6 +9,7 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/widgets/auth_shell_scaffold.dart';
 import '../../features/inventory/domain/entities/inventory_item.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/household/presentation/pages/household_page.dart';
 import '../../features/inventory/presentation/pages/inventory_page.dart';
 import '../../features/inventory/presentation/pages/item_form_page.dart';
 import '../../features/inventory/presentation/pages/expiration_management_page.dart';
@@ -173,6 +174,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouteNames.reportBug,
         name: 'reportBug',
         builder: (context, state) => const ReportBugPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.household,
+        name: 'household',
+        builder: (context, state) => const HouseholdPage(),
       ),
       GoRoute(
         path: AppRouteNames.membership,
