@@ -11,6 +11,8 @@ import '../../../../shared/components/app_header.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../household/presentation/providers/household_provider.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
 import '../../../membership/domain/entities/membership_plan.dart';
 import '../../../membership/domain/entities/subscription.dart';
@@ -134,6 +136,16 @@ class _FreeMembershipView extends ConsumerWidget {
         ref.watch(receiptQuotaProvider).valueOrNull?.scansUsed ?? 0;
     final foodLimit = plan.foodLimit;
     final scanLimit = plan.receiptScanQuota;
+    // A shared household uses its owner's plan for the food limit, so this
+    // user's own limit does not apply while another member's kitchen is active.
+    final userId = ref.watch(currentUserProvider)?.id;
+    final activeHousehold = ref
+        .watch(currentHouseholdStreamProvider)
+        .valueOrNull;
+    final usesOwnerPlan =
+        activeHousehold != null &&
+        userId != null &&
+        !activeHousehold.isOwner(userId);
 
     return SubpageLayout(
       header: AppHeader.membership(onBack: onBack, isPremium: false),
@@ -154,9 +166,12 @@ class _FreeMembershipView extends ConsumerWidget {
               iconColor: AppColors.primary,
               title: 'Số lượng thực phẩm',
               used: foodCount,
-              limit: foodLimit,
+              limit: usesOwnerPlan ? null : foodLimit,
               unit: 'món',
-              description: foodLimit == null
+              description: usesOwnerPlan
+                  ? 'Tủ lạnh "${activeHousehold.name}" đang lưu $foodCount món, '
+                        'hạn mức tính theo gói của chủ gia đình'
+                  : foodLimit == null
                   ? 'Bạn đang lưu $foodCount món thực phẩm'
                   : 'Bạn đã dùng $foodCount/$foodLimit hạn mức lưu trữ thực phẩm',
             ),
@@ -175,17 +190,23 @@ class _FreeMembershipView extends ConsumerWidget {
             SizedBox(height: 24.h),
             const MembershipSectionLabel('FREE BAO GỒM'),
             SizedBox(height: 12.h),
-            FreeBenefitsCard(foodLimit: foodLimit, scanLimit: scanLimit),
+            FreeBenefitsCard(
+              foodLimit: foodLimit,
+              scanLimit: scanLimit,
+              memberLimit: plan.memberLimit,
+            ),
             SizedBox(height: 24.h),
             const MembershipSectionLabel('PREMIUM CÓ GÌ KHÁC?'),
             SizedBox(height: 12.h),
-            const PremiumBenefitsList(),
+            PremiumBenefitsList(memberLimit: premiumPlan?.memberLimit),
             SizedBox(height: 24.h),
             const MembershipSectionLabel('SO SÁNH GÓI'),
             SizedBox(height: 12.h),
             PlanComparisonCard(
               freeFoodLimit: foodLimit,
               freeScanLimit: scanLimit,
+              freeMemberLimit: plan.memberLimit,
+              premiumMemberLimit: premiumPlan?.memberLimit,
             ),
           ],
         ),
@@ -230,7 +251,7 @@ class _PremiumMembershipView extends StatelessWidget {
             SizedBox(height: 24.h),
             const MembershipSectionLabel('QUYỀN LỢI PREMIUM'),
             SizedBox(height: 12.h),
-            const PremiumBenefitsList(),
+            PremiumBenefitsList(memberLimit: plan.memberLimit),
           ],
         ),
       ),

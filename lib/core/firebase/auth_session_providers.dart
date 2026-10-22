@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../constants/firestore_constants.dart';
+import '../utils/stream_utils.dart';
 import 'firebase_providers.dart';
 
 /// Raw technical stream of current user's document snapshot from Firestore
@@ -12,7 +13,9 @@ final currentUserDocStreamProvider =
       final auth = ref.watch(firebaseAuthProvider);
       final firestore = ref.watch(firestoreProvider);
 
-      return auth.authStateChanges().asyncExpand((user) {
+      // switchLatest drops the previous account's listener on every auth
+      // change; asyncExpand waited for it forever and kept a stale role.
+      return switchLatest(auth.authStateChanges(), (user) {
         if (user == null) {
           return Stream.value(null);
         }

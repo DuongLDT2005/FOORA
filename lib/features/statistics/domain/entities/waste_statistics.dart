@@ -34,6 +34,7 @@ class TopWastedFood {
     required this.categoryId,
     required this.count,
     required this.percentOfDiscarded,
+    this.photoUrl,
   });
 
   /// Either a master foodId or a normalizedName (fallback).
@@ -46,6 +47,10 @@ class TopWastedFood {
 
   /// Percentage of this food's discards relative to all discards in period.
   final double percentOfDiscarded;
+
+  /// Photo of the most recently discarded batch that has one; `null` shows
+  /// the category icon instead.
+  final String? photoUrl;
 }
 
 /// Full waste-statistics result for a selected period.

@@ -171,3 +171,36 @@ enum PaymentStatus {
     );
   }
 }
+
+/// Household member role: 'owner' or 'member'
+enum HouseholdRole {
+  owner('owner'),
+  member('member');
+
+  final String value;
+  const HouseholdRole(this.value);
+
+  static HouseholdRole fromString(String? value) {
+    return HouseholdRole.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => HouseholdRole.member,
+    );
+  }
+}
+
+/// Household invitation status: 'active', 'revoked', 'expired'
+enum HouseholdInvitationStatus {
+  active('active'),
+  revoked('revoked'),
+  expired('expired');
+
+  final String value;
+  const HouseholdInvitationStatus(this.value);
+
+  static HouseholdInvitationStatus fromString(String? value) {
+    return HouseholdInvitationStatus.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => HouseholdInvitationStatus.active,
+    );
+  }
+}

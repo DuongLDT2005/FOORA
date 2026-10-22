@@ -22,6 +22,15 @@ class AppBottomSheet extends StatelessWidget {
     this.footer,
   });
 
+  /// Space taken by the keyboard when open, otherwise by the system gesture
+  /// bar / home indicator (the sheet now reaches the screen's bottom edge).
+  static double _bottomInset(BuildContext context) {
+    final media = MediaQuery.of(context);
+    return media.viewInsets.bottom > 0
+        ? media.viewInsets.bottom
+        : media.viewPadding.bottom;
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -85,9 +94,12 @@ class AppBottomSheet extends StatelessWidget {
               // Content
               Flexible(
                 child: SingleChildScrollView(
+                  // Dragging the content closes the virtual keyboard.
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: EdgeInsets.only(
                     bottom: (footer == null
-                        ? MediaQuery.of(context).viewInsets.bottom + 20.h
+                        ? _bottomInset(context) + 20.h
                         : 8.h),
                     left: 20.w,
                     right: 20.w,
@@ -99,7 +111,7 @@ class AppBottomSheet extends StatelessWidget {
               if (footer != null)
                 Padding(
                   padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 16.h,
+                    bottom: _bottomInset(context) + 16.h,
                     left: 20.w,
                     right: 20.w,
                   ),

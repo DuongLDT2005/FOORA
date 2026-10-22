@@ -86,7 +86,7 @@ service cloud.firestore {
       // activeItemCount counter are backend-managed.
       allow create, delete: if false;
       allow update: if isAuthenticated()
-        && request.auth.uid in resource.data.members
+        && request.auth.uid == resource.data.ownerId
         && changedKeys().hasOnly(['name', 'updatedAt'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
@@ -157,6 +157,16 @@ service cloud.firestore {
     }
 
     match /payment_provider_transactions/{transactionId} {
+      allow read, write: if false;
+    }
+
+    // Household Invitations: Managed exclusively by backend Cloud Functions
+    match /household_invitations/{invitationId} {
+      allow read, write: if false;
+    }
+
+    // Wrong invite-code counters (anti-enumeration): backend only
+    match /invite_attempts/{userId} {
       allow read, write: if false;
     }
 

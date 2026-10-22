@@ -28,6 +28,12 @@ service firebase.storage {
       allow delete: if isOwner(userId);
     }
 
+    // Seed food photos: public read; only uploaded by the admin script.
+    match /foods/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Deny every path that is not explicitly authorized above.
     match /{allPaths=**} {
       allow read, write: if false;

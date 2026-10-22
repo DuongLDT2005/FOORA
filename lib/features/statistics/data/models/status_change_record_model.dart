@@ -16,6 +16,7 @@ class StatusChangeRecordModel extends StatusChangeRecord {
     required super.status,
     required super.statusChangedAt,
     required super.expirationDate,
+    super.photoUrl,
   });
 
   factory StatusChangeRecordModel.fromFirestore(
@@ -50,6 +51,7 @@ class StatusChangeRecordModel extends StatusChangeRecord {
       status: InventoryItemStatus.fromString(json['status'] as String?),
       statusChangedAt: statusChangedAt,
       expirationDate: _parseDt(json['expirationDate']) ?? DateTime.now(),
+      photoUrl: json['photoUrl'] as String?,
     );
   }
 

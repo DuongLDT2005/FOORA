@@ -9,6 +9,7 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../household/presentation/providers/household_provider.dart';
 import '../providers/home_provider.dart';
 import '../widgets/home_greeting_header.dart';
 import '../widgets/home_horizontal_item_card.dart';
@@ -63,7 +64,13 @@ class HomePage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. Inventory Summary (Greeting + Stats)
-              HomeGreetingHeader(firstName: firstName),
+              HomeGreetingHeader(
+                firstName: firstName,
+                householdName: ref
+                    .watch(currentHouseholdStreamProvider)
+                    .valueOrNull
+                    ?.name,
+              ),
               HomeStatsBoard(
                 totalCount: totalCount,
                 expiringSoonCount: expiringSoonCount,

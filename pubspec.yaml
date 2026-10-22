@@ -55,6 +55,7 @@ dependencies:
   image_picker: ^1.1.2
   flutter_screenutil: ^5.9.3
   qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.2
   camera: ^0.12.1
   fl_chart: ^1.2.0
   # Pure-Dart helpers for the domain layer (no Flutter dependency).

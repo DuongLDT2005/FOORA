@@ -8,6 +8,8 @@ class MembershipPlan {
   final int? durationDays; // null = lifetime/unlimited, 30 = monthly
   final int? foodLimit; // 50 for Free, null = unlimited
   final int? receiptScanQuota; // 5/month for Free, null = unlimited
+  final int?
+  memberLimit; // People per owned household (owner included), null = unlimited
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -20,6 +22,7 @@ class MembershipPlan {
     this.durationDays,
     this.foodLimit,
     this.receiptScanQuota,
+    this.memberLimit,
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,
@@ -40,6 +43,7 @@ class MembershipPlan {
         other.durationDays == durationDays &&
         other.foodLimit == foodLimit &&
         other.receiptScanQuota == receiptScanQuota &&
+        other.memberLimit == memberLimit &&
         other.isActive == isActive &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
@@ -54,6 +58,7 @@ class MembershipPlan {
     durationDays,
     foodLimit,
     receiptScanQuota,
+    memberLimit,
     isActive,
     createdAt,
     updatedAt,

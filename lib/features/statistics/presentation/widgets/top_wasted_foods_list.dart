@@ -94,6 +94,7 @@ class _TopFoodRow extends StatelessWidget {
           SizedBox(width: 10.w),
           // Food avatar
           FoodImageAvatar(
+            photoUrl: food.photoUrl,
             categoryId: food.categoryId,
             size: 36,
             borderRadius: 10,

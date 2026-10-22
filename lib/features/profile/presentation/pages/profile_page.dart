@@ -11,6 +11,7 @@ import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../household/presentation/providers/household_provider.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/change_password_dialog.dart';
 import '../widgets/profile_avatar.dart';
@@ -76,8 +77,20 @@ class ProfilePage extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      showDivider: false,
+                      showDivider: true,
                       onTap: () => context.push(AppRouteNames.myMembership),
+                    ),
+                    ProfileMenuTile(
+                      icon: LucideIcons.home,
+                      iconColor: AppColors.emerald600,
+                      iconBgColor: AppColors.emerald50,
+                      title: 'Quản lý gia đình',
+                      subtitle: ref
+                          .watch(currentHouseholdStreamProvider)
+                          .valueOrNull
+                          ?.name,
+                      showDivider: true,
+                      onTap: () => context.push(AppRouteNames.household),
                     ),
                     ProfileMenuTile(
                       icon: Icons.bar_chart_rounded,

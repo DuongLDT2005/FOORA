@@ -8,8 +8,11 @@ import {resolveMembershipId} from "./entitlement";
 /** Limits configured in `memberships/{membershipId}`; `null` = unlimited. */
 export interface MembershipLimits {
   membershipId: string;
+  name: string;
   foodLimit: number | null;
   receiptScanQuota: number | null;
+  /** Max people in a household owned by this plan, owner included. */
+  memberLimit: number | null;
 }
 
 /**
@@ -59,9 +62,12 @@ export class MembershipService {
     }
     return {
       membershipId,
+      name: typeof data.name === "string" ? data.name : membershipId,
       foodLimit: typeof data.foodLimit === "number" ? data.foodLimit : null,
       receiptScanQuota: typeof data.receiptScanQuota === "number" ?
         data.receiptScanQuota : null,
+      memberLimit: typeof data.memberLimit === "number" ?
+        data.memberLimit : null,
     };
   }
 

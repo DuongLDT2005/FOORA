@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
@@ -37,33 +39,69 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   /// the Firebase auth state changes, or `null` after sign-out.
   @override
   Stream<UserModel?> get authStateChanges {
-    return firebaseAuth.authStateChanges().asyncExpand((fbUser) {
-      if (fbUser == null) {
-        return Stream.value(null);
-      }
-      return firestore
-          .collection(FirestoreConstants.users)
-          .doc(fbUser.uid)
-          .snapshots()
-          .asyncMap((snapshot) async {
-            if (!snapshot.exists || snapshot.data() == null) {
-              return UserModel(
-                id: fbUser.uid,
-                fullName: fbUser.displayName ?? '',
-                email: fbUser.email ?? '',
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              );
-            }
-            final userModel = UserModel.fromFirestore(snapshot);
-            if (!userModel.isActive) {
-              await firebaseAuth.signOut();
-              return null;
-            }
-            await _syncVerifiedEmail(fbUser, userModel.email);
-            return userModel;
-          });
-    });
+    // Switch to the new account's profile listener on every auth change.
+    // `asyncExpand` waited for the previous listener to finish, but Firestore
+    // snapshot streams never complete (on web they stay open even after the
+    // permission-denied error at sign-out), so the next account's events were
+    // queued forever and screens kept querying the old household.
+    late final StreamController<UserModel?> controller;
+    StreamSubscription<fb.User?>? authSub;
+    StreamSubscription<UserModel?>? profileSub;
+
+    controller = StreamController<UserModel?>(
+      onListen: () {
+        authSub = firebaseAuth.authStateChanges().listen((fbUser) {
+          final previous = profileSub;
+          profileSub = null;
+          previous?.cancel();
+
+          if (fbUser == null) {
+            controller.add(null);
+            return;
+          }
+          profileSub = _watchProfile(fbUser).listen(
+            controller.add,
+            onError: (Object error, StackTrace stackTrace) {
+              // The listener of an account that just signed out fails with
+              // permission-denied; that is expected, not an app error.
+              if (firebaseAuth.currentUser?.uid != fbUser.uid) return;
+              controller.addError(error, stackTrace);
+            },
+          );
+        }, onError: controller.addError);
+      },
+      onCancel: () async {
+        await profileSub?.cancel();
+        await authSub?.cancel();
+      },
+    );
+    return controller.stream;
+  }
+
+  /// Live profile of [fbUser], merged from `users/{uid}`.
+  Stream<UserModel?> _watchProfile(fb.User fbUser) {
+    return firestore
+        .collection(FirestoreConstants.users)
+        .doc(fbUser.uid)
+        .snapshots()
+        .asyncMap((snapshot) async {
+          if (!snapshot.exists || snapshot.data() == null) {
+            return UserModel(
+              id: fbUser.uid,
+              fullName: fbUser.displayName ?? '',
+              email: fbUser.email ?? '',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+          }
+          final userModel = UserModel.fromFirestore(snapshot);
+          if (!userModel.isActive) {
+            await firebaseAuth.signOut();
+            return null;
+          }
+          await _syncVerifiedEmail(fbUser, userModel.email);
+          return userModel;
+        });
   }
 
   /// Copies the Auth email into `users/{uid}.email` once Firebase Auth has
