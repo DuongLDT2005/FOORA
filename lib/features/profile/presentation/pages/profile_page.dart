@@ -89,8 +89,16 @@ class ProfilePage extends ConsumerWidget {
                           .watch(currentHouseholdStreamProvider)
                           .valueOrNull
                           ?.name,
-                      showDivider: false,
+                      showDivider: true,
                       onTap: () => context.push(AppRouteNames.household),
+                    ),
+                    ProfileMenuTile(
+                      icon: Icons.bar_chart_rounded,
+                      iconColor: AppColors.emerald600,
+                      iconBgColor: AppColors.emerald50,
+                      title: 'Thống kê lãng phí',
+                      showDivider: false,
+                      onTap: () => context.push(AppRouteNames.wasteStatistics),
                     ),
                   ],
                 ),

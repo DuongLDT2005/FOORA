@@ -26,29 +26,35 @@ class InventoryPage extends ConsumerWidget {
   const InventoryPage({super.key});
 
   /// Asks whether the item was used up or thrown away, then updates it.
-  Future<void> _onRemoveItem(
+  Future<bool> _onRemoveItem(
     BuildContext context,
     WidgetRef ref,
     String itemId,
   ) async {
     final status = await DialogHelper.showChoiceDialog<InventoryItemStatus>(
       context,
-      title: 'Xóa thực phẩm',
+      title: 'Cập nhật trạng thái',
       message: 'Bạn đã sử dụng hết hay vứt bỏ thực phẩm này?',
       confirmText: 'Đã dùng',
       confirmValue: InventoryItemStatus.consumed,
+      confirmIcon: LucideIcons.utensils,
       secondaryText: 'Vứt bỏ',
       secondaryValue: InventoryItemStatus.discarded,
+      secondaryIcon: LucideIcons.trash2,
+      cancelText: 'Giữ lại trong tủ',
+      icon: LucideIcons.salad,
     );
-    if (status == null) return;
+    if (status == null) return false;
     try {
       await ref.read(inventoryStatusControllerProvider).changeStatus([
         itemId,
       ], status);
+      return true;
     } on Failure catch (failure) {
       if (context.mounted) {
         ToastHelper.show(context, failure.message, isError: true);
       }
+      return false;
     }
   }
 
@@ -245,7 +251,7 @@ class InventoryPage extends ConsumerWidget {
                                     category: category,
                                     storageLocationId: item.storageLocationId,
                                     expirationDate: item.expirationDate,
-                                    onDelete: () =>
+                                    onConfirmDelete: () =>
                                         _onRemoveItem(context, ref, item.id),
                                     onTap: () {
                                       context.push(

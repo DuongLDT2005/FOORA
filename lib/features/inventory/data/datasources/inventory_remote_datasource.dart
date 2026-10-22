@@ -139,6 +139,9 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   }
 
   /// Writes the edited item directly to Firestore.
+  /// Runs in a transaction so the stored status can be compared with the new
+  /// one: `statusChangedAt` is stamped only when the status actually changes
+  /// (Firestore rules reject a status change without it).
   @override
   Future<void> updateInventoryItem({
     required String householdId,
@@ -154,10 +157,19 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
       // `createdAt` and `source` are immutable after creation (Firestore rules).
       final data = item.toFirestore()
         ..remove('createdAt')
-        ..remove('source');
+        ..remove('source')
+        // Preserve the stored value; it is only set below on a status change.
+        ..remove('statusChangedAt');
       data['updatedAt'] = FieldValue.serverTimestamp();
 
-      await docRef.update(data);
+      await firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+        final storedStatus = snapshot.data()?['status'] as String?;
+        if (storedStatus != item.status.value) {
+          data['statusChangedAt'] = FieldValue.serverTimestamp();
+        }
+        transaction.update(docRef, data);
+      });
     } on FirebaseException catch (e) {
       throw ServerException.fromFirebase(e);
     } catch (e) {
@@ -167,6 +179,7 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   }
 
   /// Uses a [WriteBatch] so all status changes succeed or fail together.
+  /// Also writes [statusChangedAt] so that waste statistics can bucket by month.
   @override
   Future<void> batchUpdateInventoryStatus({
     required String householdId,
@@ -174,6 +187,8 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
     required String status,
   }) async {
     if (itemIds.isEmpty) return;
+
+    final isTerminalStatus = status == 'consumed' || status == 'discarded';
 
     try {
       final batch = firestore.batch();
@@ -187,6 +202,7 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
         batch.update(docRef, {
           'status': status,
           'updatedAt': FieldValue.serverTimestamp(),
+          if (isTerminalStatus) 'statusChangedAt': FieldValue.serverTimestamp(),
         });
       }
 

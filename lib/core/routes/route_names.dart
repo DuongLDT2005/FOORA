@@ -25,6 +25,7 @@ class AppRouteNames {
   static const String household = '/profile/household';
   static const String membership = '/membership';
   static const String paymentHistory = '/payment-history';
+  static const String wasteStatistics = '/statistics/waste';
   static const String paymentQr = '/payment/:paymentId';
   static const String paymentResult = '/payment/:paymentId/result';
 

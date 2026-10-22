@@ -198,6 +198,7 @@ export class InventoryService {
         source: input.source || "manual",
         status: "active",
         photoUrl: resolvedPhotoUrl,
+        statusChangedAt: serverTimestamp,
         createdAt: serverTimestamp,
         updatedAt: serverTimestamp,
       });
@@ -330,6 +331,7 @@ export class InventoryService {
           source: prep.input.source || "receipt_scan",
           status: "active",
           photoUrl: prep.photoUrl || null,
+          statusChangedAt: serverTimestamp,
           createdAt: serverTimestamp,
           updatedAt: serverTimestamp,
         });

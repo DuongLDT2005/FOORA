@@ -84,6 +84,9 @@ class StatisticCard extends StatelessWidget {
   final Color iconColor;
   final IconData icon;
 
+  /// Optional formatted value (e.g. "25.0%") shown instead of [count].
+  final String? value;
+
   const StatisticCard({
     super.key,
     required this.title,
@@ -91,6 +94,7 @@ class StatisticCard extends StatelessWidget {
     required this.bgColor,
     required this.iconColor,
     required this.icon,
+    this.value,
   });
 
   factory StatisticCard.good(int count) => StatisticCard(
@@ -133,13 +137,20 @@ class StatisticCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Icon(icon, color: iconColor, size: 20.r),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Lexend',
-                  color: iconColor,
+              SizedBox(width: 4.w),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    value ?? '$count',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Lexend',
+                      color: iconColor,
+                    ),
+                  ),
                 ),
               ),
             ],

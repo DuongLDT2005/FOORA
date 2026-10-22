@@ -297,10 +297,11 @@ households/{householdId}/inventory_items/{inventoryItemId}
 | `photoUrl`            | String    |       No | Food photo URL (from master food, or null to fallback to category icon)           |
 | `source`              | String    |      Yes | Source of inventory item: `manual` or `receipt_scan`                               |
 | `status`              | String    |      Yes | Item lifecycle status: `active`, `consumed`, `discarded`                           |
+| `statusChangedAt`     | Timestamp |       No | Timestamp when status transitioned to `consumed`/`discarded` (for Waste Statistics) |
 | `createdAt`           | Timestamp |      Yes | Creation time                                                                      |
 | `updatedAt`           | Timestamp |      Yes | Last update                                                                        |
 
-> **Security Rules**: Client **không** được tạo hoặc xóa `inventory_items` trực tiếp; món mới phải đi qua callable `addInventoryItem` / `batchAddInventoryItems` để backend kiểm tra `foodLimit`. Thành viên household chỉ được cập nhật các field nội dung (`name`, `quantity`, `unit`, `remainingPercentage`, `storageLocationId`, `purchaseDate`, `expirationDate`, `categoryId`, `foodId`, `normalizedName`, `photoUrl`, `status`, `updatedAt`) và không được chuyển một món `consumed`/`discarded` về lại `active`.
+> **Security Rules**: Client **không** được tạo hoặc xóa `inventory_items` trực tiếp; món mới phải đi qua callable `addInventoryItem` / `batchAddInventoryItems` để backend kiểm tra `foodLimit`. Thành viên household chỉ được cập nhật các field nội dung (`name`, `quantity`, `unit`, `remainingPercentage`, `storageLocationId`, `purchaseDate`, `expirationDate`, `categoryId`, `foodId`, `normalizedName`, `photoUrl`, `status`, `statusChangedAt`, `updatedAt`) và không được chuyển một món `consumed`/`discarded` về lại `active`. Khi cập nhật `status`, `statusChangedAt` phải bằng `request.time`.
 
 > **Cơ chế Vòng đời & Tự động gợi ý món (Autocomplete & Lifecycle)**:
 >
