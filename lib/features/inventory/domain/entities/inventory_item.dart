@@ -22,6 +22,9 @@ class InventoryItem {
   final String? photoUrl;
   final InventoryItemSource source;
   final InventoryItemStatus status;
+  // Tracks the exact timestamp when status changed to consumed/discarded.
+  // Used for monthly waste statistics bucketing (Vietnam time UTC+7).
+  final DateTime? statusChangedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -40,6 +43,7 @@ class InventoryItem {
     this.photoUrl,
     this.source = InventoryItemSource.manual,
     this.status = InventoryItemStatus.active,
+    this.statusChangedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -58,6 +62,7 @@ class InventoryItem {
     int? remainingPercentage,
     String? storageLocationId,
     DateTime? purchaseDate,
+    DateTime? statusChangedAt,
     DateTime? expirationDate,
     String? photoUrl,
     InventoryItemSource? source,
@@ -80,6 +85,7 @@ class InventoryItem {
       photoUrl: photoUrl ?? this.photoUrl,
       source: source ?? this.source,
       status: status ?? this.status,
+      statusChangedAt: statusChangedAt ?? this.statusChangedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -103,6 +109,7 @@ class InventoryItem {
         other.photoUrl == photoUrl &&
         other.source == source &&
         other.status == status &&
+        other.statusChangedAt == statusChangedAt &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -123,6 +130,7 @@ class InventoryItem {
     photoUrl,
     source,
     status,
+    statusChangedAt,
     createdAt,
     updatedAt,
   );

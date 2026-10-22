@@ -147,7 +147,24 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
+              surface: Colors.white,
               onSurface: AppColors.slate800,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: Colors.white,
+              headerBackgroundColor: AppColors.primary,
+              headerForegroundColor: Colors.white,
+              todayForegroundColor: const WidgetStatePropertyAll(
+                AppColors.primary,
+              ),
+              todayBorder: const BorderSide(color: AppColors.primary),
+              confirmButtonStyle: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              cancelButtonStyle: TextButton.styleFrom(
+                foregroundColor: AppColors.slate600,
+              ),
             ),
           ),
           child: child!,

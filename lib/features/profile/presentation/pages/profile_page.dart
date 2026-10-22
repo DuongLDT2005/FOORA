@@ -79,6 +79,14 @@ class ProfilePage extends ConsumerWidget {
                       showDivider: false,
                       onTap: () => context.push(AppRouteNames.myMembership),
                     ),
+                    ProfileMenuTile(
+                      icon: Icons.bar_chart_rounded,
+                      iconColor: AppColors.emerald600,
+                      iconBgColor: AppColors.emerald50,
+                      title: 'Thống kê lãng phí',
+                      showDivider: false,
+                      onTap: () => context.push(AppRouteNames.wasteStatistics),
+                    ),
                   ],
                 ),
                 // Settings & security section

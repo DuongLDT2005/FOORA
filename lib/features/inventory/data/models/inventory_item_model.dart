@@ -22,6 +22,7 @@ class InventoryItemModel extends InventoryItem {
     super.photoUrl,
     super.source = InventoryItemSource.manual,
     super.status = InventoryItemStatus.active,
+    super.statusChangedAt,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -58,6 +59,7 @@ class InventoryItemModel extends InventoryItem {
       photoUrl: json['photoUrl'] as String?,
       source: InventoryItemSource.fromString(json['source'] as String?),
       status: InventoryItemStatus.fromString(json['status'] as String?),
+      statusChangedAt: _parseDateTimeNullable(json['statusChangedAt']),
       createdAt: _parseDateTime(json['createdAt']),
       updatedAt: _parseDateTime(json['updatedAt']),
     );
@@ -80,6 +82,7 @@ class InventoryItemModel extends InventoryItem {
       photoUrl: item.photoUrl,
       source: item.source,
       status: item.status,
+      statusChangedAt: item.statusChangedAt,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     );
@@ -101,6 +104,9 @@ class InventoryItemModel extends InventoryItem {
       'photoUrl': photoUrl,
       'source': source.value,
       'status': status.value,
+      'statusChangedAt': statusChangedAt != null
+          ? Timestamp.fromDate(statusChangedAt!)
+          : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -123,6 +129,7 @@ class InventoryItemModel extends InventoryItem {
       'photoUrl': photoUrl,
       'source': source.value,
       'status': status.value,
+      'statusChangedAt': statusChangedAt?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -138,5 +145,15 @@ class InventoryItemModel extends InventoryItem {
       return DateTime.fromMillisecondsSinceEpoch(value);
     }
     return DateTime.now();
+  }
+
+  /// Nullable variant for optional timestamp fields like [statusChangedAt].
+  /// Returns null if the field is absent or unrecognised (safe fallback).
+  static DateTime? _parseDateTimeNullable(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value);
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
   }
 }

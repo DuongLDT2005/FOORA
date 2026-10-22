@@ -38,7 +38,7 @@ Index (`firestore.indexes.json`):
 ```json
 { "collectionGroup": "inventory_items", "queryScope": "COLLECTION",
   "fields": [ {"fieldPath": "status", "order": "ASCENDING"},
-              {"fieldPath": "statusChangedAt", "order": "ASCENDING"} ] }
+              {"fieldPath": "statusChangedAt", "order": "DESCENDING"} ] }
 ```
 
 ## 3. Định nghĩa số liệu (ghi vào báo cáo đúng như này)
@@ -74,7 +74,7 @@ statistics/
     └── widgets/{period_selector.dart, waste_summary_cards.dart,
                  monthly_waste_bar_chart.dart, waste_ratio_pie_chart.dart, top_wasted_foods_list.dart}
 ```
-Route: `AppRouteNames.wasteStatistics = '/profile/waste-statistics'`. Điểm vào: Profile menu "Thống kê lãng phí" + chạm vào `HomeStatsBoard`.
+Route: `AppRouteNames.wasteStatistics = '/statistics/waste'`. Điểm vào: Profile menu "Thống kê lãng phí" + chạm vào `HomeStatsBoard`.
 
 ### 4.2 Datasource
 
@@ -84,11 +84,16 @@ firestore
   .collection(FirestoreConstants.inventoryItems)
   .where('status', whereIn: ['consumed', 'discarded'])
   .where('statusChangedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(fromUtc))
-  .orderBy('statusChangedAt')
+  .orderBy('statusChangedAt', descending: true) // newest first
   .limit(2000)
   .get();
 ```
+Sắp xếp **giảm dần** để khi chạm giới hạn thì phần bị bỏ là các lô cũ nhất trong kỳ.
+Không có nhánh fallback khi thiếu index: lỗi `failed-precondition` được đổi thành `ServerException` → `Failure` như các feature khác,
+nên phải deploy index trước (`firebase deploy --only firestore:indexes`).
+Lưu ý: Firestore không trả doc **thiếu** `statusChangedAt` cho điều kiện `>=`, nên dữ liệu cũ chỉ xuất hiện sau khi chạy backfill.
 `fromUtc` = 00:00 ngày 1 của tháng đầu kỳ theo giờ VN, đổi sang UTC (VN = UTC+7, không có DST → `DateTime.utc(y, m, 1).subtract(const Duration(hours: 7))`).
+Quy đổi ngày lịch VN → mốc UTC nằm ở entity `StatsPeriod` (domain); không dùng múi giờ của thiết bị (emulator thường chạy UTC).
 Dùng `get()` (không stream) – thống kê không cần realtime; pull-to-refresh để tải lại. Đạt 2000 doc → hiển thị ghi chú "Chỉ tính 2000 lô gần nhất".
 
 ### 4.3 Use case `ComputeWasteStatistics` (thuần)
@@ -131,7 +136,8 @@ Unit test bắt buộc: tháng trống được fill 0; biên tháng theo giờ 
 
 - Unit: `ComputeWasteStatistics` (mục 4.3), model parse `statusChangedAt` thiếu (dùng `updatedAt` fallback trong model để không crash nếu chưa backfill).
 - Widget: trang hiển thị 3 summary card với fake provider; trạng thái trống; đổi segment gọi provider với key mới.
-- Rules: client đổi `status` mà không set `statusChangedAt` → bị từ chối.
+- Rules: client đổi `status` mà không set `statusChangedAt` → bị từ chối
+  (`functions/test/rules/inventory_items.rules.test.js`, chạy `cd functions && npm run test:rules`).
 - Thủ công: swipe vứt 2 món, dùng 3 món → biểu đồ tháng hiện tại 3/2, tỷ lệ 40%.
 
 ## 6. Cập nhật tài liệu

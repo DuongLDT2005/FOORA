@@ -64,6 +64,8 @@ class DialogHelper {
     required T secondaryValue,
     String cancelText = 'Hủy',
     IconData icon = Icons.help_outline,
+    IconData? confirmIcon,
+    IconData? secondaryIcon,
   }) {
     return showDialog<T>(
       context: context,
@@ -74,6 +76,8 @@ class DialogHelper {
         cancelText: cancelText,
         secondaryText: secondaryText,
         icon: icon,
+        confirmIcon: confirmIcon,
+        secondaryIcon: secondaryIcon,
         onConfirm: () => Navigator.of(context).pop(confirmValue),
         onSecondary: () => Navigator.of(context).pop(secondaryValue),
         onCancel: () => Navigator.of(context).pop(),

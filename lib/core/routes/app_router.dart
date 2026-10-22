@@ -18,6 +18,7 @@ import '../../features/payment/presentation/pages/payment_page.dart';
 import '../../features/payment/presentation/pages/payment_qr_page.dart';
 import '../../features/payment/presentation/pages/payment_result_page.dart';
 import '../../features/profile/presentation/pages/contact_us_page.dart';
+import '../../features/statistics/presentation/pages/waste_statistics_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/help_center_page.dart';
 import '../../features/profile/presentation/pages/my_membership_page.dart';
@@ -183,6 +184,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouteNames.paymentHistory,
         name: 'paymentHistory',
         builder: (context, state) => const PaymentHistoryPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.wasteStatistics,
+        name: 'wasteStatistics',
+        builder: (context, state) => const WasteStatisticsPage(),
       ),
       GoRoute(
         path: AppRouteNames.paymentResult,
