@@ -33,6 +33,13 @@ Firestore
 │       ├── ai_usage
 │       │   └── current
 │       │
+│       ├── ai_chats
+│       │   └── {messageId}
+│       ├── ai_requests
+│       │   └── {requestId}
+│       ├── ai_usage_days
+│       │   └── {YYYY-MM-DD}
+│       │
 │       └── payments
 │           └── {paymentId}
 │
@@ -121,6 +128,7 @@ memberships/{membershipId}
 | `foodLimit`        | Number               |      Yes | Maximum number of inventory items                 |
 | `receiptScanQuota` | Number               |      Yes | Maximum receipt scans per month; null = unlimited |
 | `memberLimit`      | Number               |      Yes | Max people in a household the user owns (owner included); null = unlimited (still capped at 20) |
+| `aiAssistantDailyQuota` | Number \| null | Yes | Maximum successful assistant requests per Vietnam day; null = unlimited |
 | `isActive`         | Boolean              |      Yes | Membership availability                           |
 | `createdAt`        | Timestamp            |      Yes | Creation time                                     |
 | `updatedAt`        | Timestamp            |      Yes | Last update                                       |
@@ -137,6 +145,7 @@ MVP memberships:
     "foodLimit": 30,
     "receiptScanQuota": 5,
     "memberLimit": 3,
+    "aiAssistantDailyQuota": 10,
     "isActive": true
   },
   "premium": {
@@ -147,6 +156,7 @@ MVP memberships:
     "foodLimit": null,
     "receiptScanQuota": null,
     "memberLimit": 10,
+    "aiAssistantDailyQuota": null,
     "isActive": true
   }
 }
@@ -495,6 +505,14 @@ users/{userId}/ai_usage/current
 | `updatedAt`       | Timestamp |      Yes | Last usage update time          |
 
 ---
+
+## 15.1 AI assistant chat, requests, and daily usage
+
+- `users/{userId}/ai_chats/{messageId}`: server-written conversation records. Fields: `householdId`, `requestId`, `content`, `isUser`, `createdAt`; user messages also have `inputMode` (`text` or `voice`); assistant messages also have `model`, `actions`, and `recipes`. Owners may read, but only Cloud Functions may write.
+- `users/{userId}/ai_requests/{requestId}`: server-only idempotency record. Fields: `payloadHash`, `householdId`, `status` (`pending`, `completed`, `failed`), `quotaDay`, `quotaReserved`, `attemptId`, `leaseExpiresAt`, `result`, `updatedAt`.
+- `users/{userId}/ai_usage_days/{YYYY-MM-DD}`: server-written daily counter with `used` and `updatedAt`; owners may read. Day boundaries use `Asia/Ho_Chi_Minh`. Receipt usage in `ai_usage/current` remains separate.
+
+The initial chat backend only returns read-only inventory answers. `actions` and `recipes` are empty until their later phases are implemented and validated.
 
 # 16. Collection: subscriptions
 

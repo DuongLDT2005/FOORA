@@ -224,6 +224,7 @@ export async function seedFirestore() {
       foodLimit: 30,
       receiptScanQuota: 5,
       memberLimit: 3, // Owner + 2 members
+      aiAssistantDailyQuota: 10,
       isActive: true,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -242,6 +243,7 @@ export async function seedFirestore() {
       foodLimit: null, // Unlimited items
       receiptScanQuota: null,
       memberLimit: 10, // Owner + 9 members
+      aiAssistantDailyQuota: null,
       isActive: true,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),

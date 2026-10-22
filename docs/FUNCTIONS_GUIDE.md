@@ -43,7 +43,7 @@ Tài liệu này cung cấp bản thiết kế cấu trúc chi tiết của **t�
 2. **Nghiệp vụ nằm ở Service (Fat Services)**: Mọi xử lý Firestore, AI, IAP validation đều phải được đóng gói thành các class hoặc hàm service riêng biệt trong thư mục `services/`.
 3. **Bắt buộc `handleFunctionError` trả về `never`**: Mọi helper ném lỗi và hàm bắt lỗi nội bộ đều phải trả về `never` để TypeScript hiểu luồng thực thi chấm dứt ngay tại đó.
 4. **Không bao giờ hardcode**: Mọi tên collection, status, role đều phải import từ `constants/collections.ts` và `types/index.ts`.
-5. **Quyền gói lấy từ subscription**: Mọi kiểm tra gói/hạn mức (`foodLimit`, `receiptScanQuota`) dùng `MembershipService.resolveMembershipId` + `MembershipService.getLimits`; không đọc `users.membershipId` (chỉ là cache) và không có giá trị fallback cứng — thiếu cấu hình `memberships` sẽ trả lỗi `failed-precondition`.
+5. **Quyền gói lấy từ subscription**: Mọi kiểm tra gói/hạn mức (`foodLimit`, `receiptScanQuota`, `aiAssistantDailyQuota`) dùng `MembershipService.resolveMembershipId` + `MembershipService.getLimits`; không đọc `users.membershipId` (chỉ là cache) và không có giá trị fallback cứng — thiếu cấu hình `memberships` sẽ trả lỗi `failed-precondition`.
 
 ---
 
@@ -84,11 +84,11 @@ functions/src/
 │
 ├── ai/                             # 4. AI ASSISTANT MODULE
 │   ├── callables/
-│   │   ├── chat_with_assistant.ts  # Callable trò chuyện AI gợi ý món ăn, tra cứu dinh dưỡng
-│   │   └── get_ai_quota.ts         # Callable kiểm tra số lượt quét/chat còn lại trong tháng
+│   │   └── ai_assistant.ts         # Callable chat AI chỉ đọc kho, text hoặc voice transcript
 │   ├── services/
-│   │   ├── ai_chat_service.ts      # Logic tương tác Gemini API & quản lý context
-│   │   └── quota_service.ts        # Logic kiểm tra & trừ quota trong users/{userId}/ai_usage/current
+│   │   └── ai_assistant_service.ts # Context kho, Gemini, quota ngày và idempotency
+│   ├── schedulers/
+│   │   └── cleanup_ai_requests.ts  # Hoàn quota request treo hết lease
 │   └── index.ts
 │
 ├── notification/                   # 5. NOTIFICATION MODULE
@@ -158,8 +158,7 @@ functions/src/
 | | `onInventoryItemMutation` | Firestore | `households/{householdId}/inventory_items/{itemId}` | Snapshot document update/delete | Lắng nghe `onUpdate` & `onDelete` (không bắt `onCreate` để tránh double count) đồng bộ `activeItemCount` khi đổi trạng thái sang `consumed`/`discarded`. |
 | | `checkExpiryDailyCron` | Scheduled | `0 7 * * *` (07:00 VN) | Không có (Tự động) | Quét các item sắp hết hạn (<= 3 ngày) / hết hạn (< 0 ngày) -> ghi `notifications`. |
 | **`receipt`** | `parseReceiptAi` | Callable | `onCall` | `{ ocrText: string; householdId: string }` | Trích xuất JSON danh sách thực phẩm (`name`, `quantity`, `unit`, `storageLocationId`). |
-| **`ai`** | `chatWithAssistant` | Callable | `onCall` | `{ prompt: string; householdId?: string }` | Trả về câu trả lời AI Markdown + cập nhật `receiptScanUsed` nếu cần. |
-| | `getAiQuota` | Callable | `onCall` | Không có | `{ period: '2026-09', used: 3, limit: 5, isUnlimited: false }`. |
+| **`ai`** | `aiAssistant` | Callable | `onCall` | `{ requestId, householdId, message, inputMode }` | Chat hỏi kho chỉ đọc; xác thực household, quota AI theo ngày Việt Nam và request idempotency; không dùng quota receipt. |
 | **`notification`** | `onNotificationCreated` | Firestore | `users/{userId}/notifications/{id}` | Snapshot document thông báo mới | Gửi tin nhắn FCM đến toàn bộ thiết bị đang active trong `users/{userId}/devices`. |
 | **`membership`** | `resetMonthlyQuotaCron` | Scheduled | `0 0 1 * *` (00:00 ngày 1) | Không có (Tự động) | Batch update reset `ai_usage/current.receiptScanUsed = 0` cho toàn bộ user Free. |
 | | `getMembershipInfo` | Callable | `onCall` | Không có | Thông tin chi tiết gói và hạn mức sử dụng. |

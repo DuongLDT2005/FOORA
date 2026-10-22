@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/auth_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/ai/presentation/pages/ai_chat_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/widgets/auth_shell_scaffold.dart';
 import '../../features/inventory/domain/entities/inventory_item.dart';
@@ -140,6 +141,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouteNames.notifications,
         name: 'notifications',
         builder: (context, state) => const NotificationPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.aiAssistant,
+        name: 'aiAssistant',
+        builder: (context, state) => const AiChatPage(),
       ),
       GoRoute(
         path: AppRouteNames.profileDetail,

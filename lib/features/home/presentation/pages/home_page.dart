@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -76,6 +77,59 @@ class HomePage extends ConsumerWidget {
                 expiringSoonCount: expiringSoonCount,
                 expiredCount: expiredCount,
                 onExpiredTap: () => context.push(AppRouteNames.wasteStatistics),
+              ),
+              SizedBox(height: 18.h),
+              Material(
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16.r),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16.r),
+                  onTap: () => context.push(AppRouteNames.aiAssistant),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 15.h,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          LucideIcons.sparkles,
+                          size: 21.r,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hỏi trợ lý FOORA',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.slate800,
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              Text(
+                                'Gõ hoặc nói để hỏi về thực phẩm trong tủ',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppColors.slate600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          size: 18.r,
+                          color: AppColors.slate500,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
 
               if (totalCount == 0)

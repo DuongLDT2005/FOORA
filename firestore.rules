@@ -72,6 +72,20 @@ service cloud.firestore {
         allow write: if false; // Managed by Cloud Functions
       }
 
+      match /ai_chats/{messageId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+
+      match /ai_requests/{requestId} {
+        allow read, write: if false;
+      }
+
+      match /ai_usage_days/{day} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+
       // Payments Subcollection
       match /payments/{paymentId} {
         allow read: if isOwner(userId);

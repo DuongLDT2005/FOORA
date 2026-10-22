@@ -1,6 +1,22 @@
 {
   "indexes": [
     {
+      "collectionGroup": "ai_requests",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "leaseExpiresAt", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "expirationDate", "order": "ASCENDING"}
+      ]
+    },
+    {
       "collectionGroup": "payments",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

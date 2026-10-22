@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>FOORA cần micro để chuyển lời nói của bạn thành câu hỏi cho trợ lý AI.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>FOORA cần nhận diện giọng nói để bạn có thể xem và sửa câu hỏi trước khi gửi.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
