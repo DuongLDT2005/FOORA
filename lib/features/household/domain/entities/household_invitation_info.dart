@@ -9,8 +9,13 @@ class HouseholdInvitationInfo {
   final String householdName;
   final String ownerName;
   final int memberCount;
+
+  /// Seats allowed by the owner's plan, owner included.
+  final int memberLimit;
   final bool alreadyMember;
   final DateTime expiresAt;
+
+  bool get isFull => memberCount >= memberLimit;
 
   const HouseholdInvitationInfo({
     required this.code,
@@ -18,6 +23,7 @@ class HouseholdInvitationInfo {
     required this.householdName,
     required this.ownerName,
     required this.memberCount,
+    required this.memberLimit,
     required this.alreadyMember,
     required this.expiresAt,
   });
@@ -31,6 +37,7 @@ class HouseholdInvitationInfo {
         other.householdName == householdName &&
         other.ownerName == ownerName &&
         other.memberCount == memberCount &&
+        other.memberLimit == memberLimit &&
         other.alreadyMember == alreadyMember &&
         other.expiresAt == expiresAt;
   }
@@ -42,6 +49,7 @@ class HouseholdInvitationInfo {
     householdName,
     ownerName,
     memberCount,
+    memberLimit,
     alreadyMember,
     expiresAt,
   );

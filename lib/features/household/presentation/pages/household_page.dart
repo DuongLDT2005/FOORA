@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_header.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
@@ -22,6 +23,7 @@ import '../providers/household_provider.dart';
 import '../widgets/edit_household_name_dialog.dart';
 import '../widgets/invite_dialog.dart';
 import '../widgets/join_household_bottom_sheet.dart';
+import '../widgets/household_seats_card.dart';
 import '../widgets/household_switch_bottom_sheet.dart';
 import '../widgets/member_list_item.dart';
 
@@ -161,7 +163,12 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
                 // 4. Leave Household Action (Only for non-owner members)
                 if (!isOwner) ...[
                   _isLeaving
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const Center(
+                          child: AppLoadingSpinner(
+                            size: 28,
+                            color: AppColors.red500,
+                          ),
+                        )
                       : DangerButton(
                           text: 'Rời khỏi gia đình này',
                           icon: LucideIcons.logOut,
@@ -187,7 +194,7 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
                           child: Text(
                             'Bạn là Chủ sở hữu của gia đình này. Bạn có toàn quyền quản lý thành viên và tạo mã lời mời.',
                             style: TextStyle(
-                              fontFamily: 'Inter',
+                              fontFamily: AppTextStyles.fontFamilySans,
                               fontSize: 12.sp,
                               color: AppColors.slate600,
                               height: 1.4,
@@ -244,7 +251,7 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
                     Text(
                       isOwner ? 'Gia đình bạn sở hữu' : 'Gia đình đã tham gia',
                       style: TextStyle(
-                        fontFamily: 'Inter',
+                        fontFamily: AppTextStyles.fontFamilySans,
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -254,38 +261,12 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
                 ),
               ),
               // Switch household button
-              GestureDetector(
+              _PillAction(
+                icon: LucideIcons.arrowLeftRight,
+                label: 'Đổi gia đình',
+                foreground: AppColors.primary,
+                background: AppColors.surfaceContainerLowest,
                 onTap: () => HouseholdSwitchBottomSheet.show(context),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 6.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.arrowLeftRight,
-                        size: 13.r,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'Đổi gia đình',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -298,7 +279,7 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
                 child: Text(
                   household.name,
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    fontFamily: AppTextStyles.fontFamilyHeadline,
                     fontSize: 22.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -359,7 +340,7 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Inter',
+              fontFamily: AppTextStyles.fontFamilySans,
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
               color: Colors.white,
@@ -382,7 +363,7 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
             Text(
               'THÀNH VIÊN GIA ĐÌNH',
               style: TextStyle(
-                fontFamily: 'Inter',
+                fontFamily: AppTextStyles.fontFamilySans,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.slate400,
@@ -390,48 +371,25 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
               ),
             ),
             if (isOwner)
-              GestureDetector(
+              _PillAction(
+                icon: LucideIcons.userPlus,
+                label: 'Mời thành viên',
+                foreground: AppColors.primary,
+                background: AppColors.primary.withValues(alpha: 0.08),
+                borderColor: AppColors.primary.withValues(alpha: 0.2),
                 onTap: () => InviteMemberBottomSheet.show(
                   context,
                   householdId: household.id,
                   householdName: household.name,
                 ),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 6.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14.r),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        LucideIcons.userPlus,
-                        size: 14.r,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'Mời thành viên',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
           ],
         ),
         SizedBox(height: 12.h),
+        if (isOwner) ...[
+          HouseholdSeatsCard(memberCount: household.members.length),
+          SizedBox(height: 12.h),
+        ],
 
         membersAsync.when(
           loading: () => SizedBox(
@@ -440,27 +398,10 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
               message: 'Đang tải danh sách thành viên...',
             ),
           ),
-          error: (err, _) => Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.h),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Không thể tải thành viên gia đình.',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13.sp,
-                      color: AppColors.red600,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () =>
-                      ref.invalidate(householdMembersProvider(household.id)),
-                  child: const Text('Thử lại'),
-                ),
-              ],
-            ),
+          error: (err, _) => ErrorStateWidget(
+            message: 'Không thể tải thành viên gia đình.',
+            onRetry: () =>
+                ref.invalidate(householdMembersProvider(household.id)),
           ),
           data: (members) {
             if (members.isEmpty) {
@@ -489,83 +430,125 @@ class _HouseholdPageState extends ConsumerState<HouseholdPage> {
   }
 
   Widget _buildJoinOtherCard() {
-    return Container(
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.slate100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    final radius = BorderRadius.circular(16.r);
+    return Material(
+      color: AppColors.surfaceContainerLowest,
+      borderRadius: radius,
+      child: InkWell(
+        borderRadius: radius,
+        onTap: () => JoinHouseholdBottomSheet.show(context),
+        child: Container(
+          padding: EdgeInsets.all(16.r),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(color: AppColors.slate100),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.r),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.keyRound,
-              size: 20.r,
-              color: AppColors.primary,
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Bạn có mã lời mời?',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.slate800,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12.r),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
-                SizedBox(height: 2.h),
+                child: Icon(
+                  LucideIcons.keyRound,
+                  size: 20.r,
+                  color: AppColors.primary,
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bạn có mã lời mời?',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.slate800,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      'Nhập mã hoặc quét QR từ người thân để dùng chung tủ lạnh.',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 12.sp,
+                        color: AppColors.slate500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 20.r,
+                color: AppColors.slate400,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small pill action with a mobile-friendly (44px) touch target and ink
+/// feedback, used for secondary header actions on this page.
+class _PillAction extends StatelessWidget {
+  const _PillAction({
+    required this.icon,
+    required this.label,
+    required this.foreground,
+    required this.background,
+    required this.onTap,
+    this.borderColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color foreground;
+  final Color background;
+  final Color? borderColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(22.r);
+    return Material(
+      color: background,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: borderColor == null
+            ? BorderSide.none
+            : BorderSide(color: borderColor!),
+      ),
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: 44.h),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 15.r, color: foreground),
+                SizedBox(width: 6.w),
                 Text(
-                  'Nhập mã từ người thân để tham gia tủ lạnh chung.',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12.sp,
-                    color: AppColors.slate500,
+                  label,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: foreground,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 8.w),
-          ElevatedButton(
-            onPressed: () => JoinHouseholdBottomSheet.show(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              elevation: 0,
-            ),
-            child: Text(
-              'Nhập mã',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

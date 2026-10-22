@@ -9,7 +9,6 @@ class HouseholdInvitationModel extends HouseholdInvitation {
     required super.householdId,
     required super.householdName,
     required super.expiresAt,
-    required super.shareUrl,
     super.status = HouseholdInvitationStatus.active,
   });
 
@@ -25,7 +24,6 @@ class HouseholdInvitationModel extends HouseholdInvitation {
       expiresAt: json['expiresAt'] != null
           ? DateTime.tryParse(json['expiresAt'] as String) ?? DateTime.now()
           : DateTime.now(),
-      shareUrl: json['shareUrl'] as String? ?? '',
       status: HouseholdInvitationStatus.fromString(json['status'] as String?),
     );
   }
@@ -37,7 +35,6 @@ class HouseholdInvitationModel extends HouseholdInvitation {
       'householdId': householdId,
       'householdName': householdName,
       'expiresAt': expiresAt.toIso8601String(),
-      'shareUrl': shareUrl,
       'status': status.value,
     };
   }

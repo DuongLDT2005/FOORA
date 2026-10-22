@@ -8,6 +8,7 @@ import '../../../../core/constants/app_enums.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
 import '../../../household/presentation/providers/household_provider.dart';
@@ -89,36 +90,40 @@ class InventoryPage extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  GestureDetector(
+                  InkWell(
+                    borderRadius: BorderRadius.circular(10.r),
                     onTap: () => HouseholdSwitchBottomSheet.show(context),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: 190.w),
-                          child: Text(
-                            ref
-                                    .watch(currentHouseholdStreamProvider)
-                                    .valueOrNull
-                                    ?.name ??
-                                'Kho thực phẩm',
-                            style: TextStyle(
-                              fontFamily: 'Lexend',
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.slate800,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6.h),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: 190.w),
+                            child: Text(
+                              ref
+                                      .watch(currentHouseholdStreamProvider)
+                                      .valueOrNull
+                                      ?.name ??
+                                  'Kho thực phẩm',
+                              style: TextStyle(
+                                fontFamily: AppTextStyles.fontFamilyHeadline,
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.slate800,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Icon(
-                          LucideIcons.chevronDown,
-                          size: 18.r,
-                          color: AppColors.slate500,
-                        ),
-                      ],
+                          SizedBox(width: 4.w),
+                          Icon(
+                            LucideIcons.chevronDown,
+                            size: 18.r,
+                            color: AppColors.slate500,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   // Manage expiry button

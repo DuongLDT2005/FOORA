@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/firebase/firebase_providers.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 import '../../domain/entities/bug_report.dart';
@@ -71,12 +72,14 @@ final deleteAccountUseCaseProvider = Provider<DeleteAccountUseCase>((ref) {
 
 /// Watches realtime Profile of the currently authenticated user
 final currentProfileStreamProvider = StreamProvider<Profile?>((ref) {
-  final authState = ref.watch(firebaseAuthProvider);
-  final user = authState.currentUser;
-  if (user == null) {
+  // Watch the uid (not the FirebaseAuth instance, which never changes) so the
+  // listener moves to the new account after a sign-out / sign-in; otherwise
+  // it keeps reading the previous user's document and gets permission-denied.
+  final uid = ref.watch(currentUserProvider.select((user) => user?.id));
+  if (uid == null) {
     return Stream.value(null);
   }
-  return ref.watch(watchProfileUseCaseProvider).call(user.uid);
+  return ref.watch(watchProfileUseCaseProvider).call(uid);
 });
 
 // --- Form & Action State Notifiers ---

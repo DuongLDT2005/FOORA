@@ -120,6 +120,7 @@ memberships/{membershipId}
 | `durationDays`     | Number               |      Yes | Membership duration                               |
 | `foodLimit`        | Number               |      Yes | Maximum number of inventory items                 |
 | `receiptScanQuota` | Number               |      Yes | Maximum receipt scans per month; null = unlimited |
+| `memberLimit`      | Number               |      Yes | Max people in a household the user owns (owner included); null = unlimited (still capped at 20) |
 | `isActive`         | Boolean              |      Yes | Membership availability                           |
 | `createdAt`        | Timestamp            |      Yes | Creation time                                     |
 | `updatedAt`        | Timestamp            |      Yes | Last update                                       |
@@ -135,6 +136,7 @@ MVP memberships:
     "durationDays": null,
     "foodLimit": 30,
     "receiptScanQuota": 5,
+    "memberLimit": 3,
     "isActive": true
   },
   "premium": {
@@ -144,6 +146,7 @@ MVP memberships:
     "durationDays": 30,
     "foodLimit": null,
     "receiptScanQuota": null,
+    "memberLimit": 10,
     "isActive": true
   }
 }
@@ -270,7 +273,36 @@ households/{householdId}
 > - Được quản lý an toàn và tự động cập nhật nguyên tử bằng Firestore Increment / Cloud Functions mỗi khi thêm món mới (+1), dùng hết/hủy món (-1).
 > - Giúp Client và Backend kiểm tra tức thì hạn mức món ăn (`foodLimit`, đọc từ `memberships/{membershipId}`) mà **không cần quét lại toàn bộ database hay đếm mảng (O(1) read thay vì O(N))**, tối ưu chi phí và tốc độ load.
 >
-> **Security Rules**: Household được tạo bởi Cloud Functions. Thành viên chỉ được sửa `name` và `updatedAt`; `members`, `ownerId`, `activeItemCount` là field do backend quản lý.
+> **Security Rules**: Household được tạo bởi Cloud Functions. Chỉ **owner** được sửa `name` và `updatedAt`; `members`, `ownerId`, `activeItemCount` là field do backend quản lý (join/leave/remove qua callable `household`).
+>
+> **Chia sẻ household (PLAN_05)**:
+>
+> - **D1** – `foodLimit` của household tính theo gói của **owner** (`MembershipService.resolveMembershipId(household.ownerId)`), không theo người thêm món.
+> - **D2** – Số người tối đa (kể cả owner) theo `memberships/{id}.memberLimit` của **owner**: Free **3**, Premium **10**; luôn bị chặn trần kỹ thuật **20** (`MAX_HOUSEHOLD_MEMBERS`). Household đầy → join bị từ chối (`failed-precondition`) và owner nhận notification gợi ý nâng cấp. Hạ gói không xóa thành viên hiện có, chỉ chặn người mới.
+> - **D3** – Mã mời hết hạn sau **7 ngày**; tạo mã mới sẽ thu hồi mã cũ.
+> - **D4** – Join household khác: household cũ giữ nguyên dữ liệu, chỉ đổi `users.activeHouseholdId`. Rời/bị xóa → quay về household mà user là `ownerId` (tạo mới nếu chưa có).
+
+## 8.1 Collection: household_invitations (server-only)
+
+**Path**: `household_invitations/{code}` – doc id chính là mã mời 6 ký tự (`ABCDEFGHJKMNPQRSTUVWXYZ23456789`, bỏ `0 O 1 I L`). QR trong app chỉ chứa đúng mã này.
+
+| Field           | Type      | Required | Description                                  |
+| --------------- | --------- | -------: | -------------------------------------------- |
+| `code`          | String    |      Yes | Trùng doc id                                 |
+| `householdId`   | String    |      Yes | Household được mời vào                       |
+| `householdName` | String    |      Yes | Tên household lúc tạo mã (snapshot)          |
+| `createdBy`     | String    |      Yes | uid owner                                    |
+| `status`        | String    |      Yes | `active`, `revoked`, `expired`               |
+| `useCount`      | Number    |      Yes | Số người đã join bằng mã                     |
+| `expiresAt`     | Timestamp |      Yes | `createdAt + 7 ngày`                         |
+| `createdAt`     | Timestamp |      Yes |                                              |
+| `updatedAt`     | Timestamp |      Yes |                                              |
+
+## 8.2 Collection: invite_attempts (server-only)
+
+**Path**: `invite_attempts/{userId}` – chống dò mã: `{ failedCount: Number, windowStart: Timestamp }`. Quá **10** lần nhập sai trong **1 giờ** → `resource-exhausted`; join thành công thì xóa doc.
+
+> **Security Rules**: cả hai collection `allow read, write: if false` (chỉ Admin SDK).
 
 ---
 

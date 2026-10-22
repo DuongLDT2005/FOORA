@@ -126,11 +126,12 @@ functions/src/
 │   └── index.ts
 │
 ├── household/                      # 8. HOUSEHOLD MODULE
-│   ├── callables/
-│   │   ├── create_household.ts     # [IN SCOPE] Callable tạo Household mới và set activeHouseholdId
-│   │   └── join_household.ts       # [HẠ TẦNG CHO SAU] Tham gia qua mã mời
+│   ├── callables/                  # 10 callable mỏng: generate/revoke/getActive invitation,
+│   │                               # getInvitationInfo, join, leave, removeMember, switch,
+│   │                               # updateHouseholdName, getHouseholdMembers
 │   ├── services/
-│   │   └── household_service.ts    # Logic quản lý thành viên, đảm bảo tính toàn vẹn dữ liệu
+│   │   ├── household_service.ts    # Transaction thành viên + mã mời, chống dò mã, notification
+│   │   └── invite_code.ts          # Pure: sinh / chuẩn hóa / validate mã 6 ký tự
 │   └── index.ts
 │
 ├── admin/                          # 9. ADMIN MODULE
@@ -166,8 +167,16 @@ functions/src/
 | | `cancelCasPaymentOrder` | Callable | `onCall` | `{ paymentId: string }` | Cancels a pending payment. |
 | | `casTransactionsWebhook` | HTTP | `onRequest` | Signed payOS webhook | Verifies the payOS checksum, reconciles and atomically activates Premium. |
 | | `expirePendingPayments` | Scheduled | Every 5 minutes | None | Expires overdue pending orders. |
-| **`household`** | `createHousehold` | Callable | `onCall` **[Scope Đợt Này]** | `{ name: string }` | Tạo document `households/{id}`, thêm user vào `members`, set `user.activeHouseholdId`. |
-| | `joinHousehold` | Callable | `onCall` **[Hạ Tầng Cho Sau]** | `{ householdId: string }` | Thêm user vào `households.members`, cập nhật `user.activeHouseholdId`. |
+| **`household`** | `generateHouseholdInvitation` | Callable | `onCall` (Owner) | `{ householdId }` | Tạo mã 6 ký tự (hạn cố định 7 ngày), thu hồi mã đang hiệu lực cũ. Trả `{ invitationId, code, householdId, householdName, expiresAt }`. |
+| | `getActiveHouseholdInvitation` | Callable | `onCall` (Owner) | `{ householdId }` | Mã đang hiệu lực hoặc `null` (tự đánh dấu `expired` khi quá hạn). |
+| | `revokeHouseholdInvitation` | Callable | `onCall` (Owner) | `{ householdId, invitationId }` | Thu hồi mã; kiểm tra mã thuộc đúng household. |
+| | `getHouseholdInvitationInfo` | Callable | `onCall` | `{ code }` | Xem trước tên nhà, chủ nhà, `memberCount`/`memberLimit`. Tính vào giới hạn nhập sai. |
+| | `joinHousehold` | Callable | `onCall` | `{ code }` | Transaction: kiểm tra mã, giới hạn thành viên theo `memberLimit` gói của owner (trần 20; đầy → `failed-precondition` + notification gợi ý nâng cấp cho owner), `arrayUnion`, set `activeHouseholdId`, `useCount + 1`, notification `system` cho owner. Đã là thành viên → chỉ chuyển sang nhà đó. Sai quá 10 lần/giờ → `resource-exhausted`. |
+| | `leaveHousehold` | Callable | `onCall` (Member) | `{ householdId }` | Owner không được rời. Member bị `arrayRemove`, `activeHouseholdId` về household user sở hữu (tạo mới nếu chưa có). |
+| | `removeHouseholdMember` | Callable | `onCall` (Owner) | `{ householdId, memberUserId }` | Như leave cho member đó + notification `system` cho người bị xóa. |
+| | `switchHousehold` | Callable | `onCall` (Member) | `{ householdId }` | Đổi `activeHouseholdId` sang household user đang là thành viên. |
+| | `updateHouseholdName` | Callable | `onCall` (Owner) | `{ householdId, name }` | Đổi tên 1..100 ký tự. |
+| | `getHouseholdMembers` | Callable | `onCall` (Member) | `{ householdId }` | `[{ id, fullName, avatarUrl, role, isCurrentUser }]` – không trả email. |
 | **`admin`** | `setUserRole` | Callable | `onCall` (Admin only) | `{ targetUid: string; role: 'admin' \| 'member' }` | Set Firebase Auth Custom Claims (`{admin: true}`) & cập nhật `users/{targetUid}.role`. |
 | | `toggleUserActive` | Callable | `onCall` (Admin only) | `{ targetUid: string; isActive: boolean }` | Gọi `auth.revokeRefreshTokens(targetUid)` + `auth.updateUser(targetUid, {disabled: !isActive})` + cập nhật `users/{targetUid}.isActive`. |
 | | `getSystemMetrics` | Callable | `onCall` (Admin only) | Không có | Tổng hợp: tổng số users, số gói premium active, số lượt quét AI trong tháng. |

@@ -199,7 +199,7 @@
         "rau muống hạt",
         "water spinach"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fwater-spinach.webp?alt=media&v=321a325fc6",
       "isActive": true
     },
     {
@@ -214,7 +214,7 @@
         "choy sum",
         "cải ngọt hữu cơ"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fchoy-sum.webp?alt=media&v=6553f37802",
       "isActive": true
     },
     {
@@ -229,7 +229,7 @@
         "bok choy",
         "cai chip"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598030304671-5aa1d6f21128?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fbok-choy.webp?alt=media&v=eaefa858dc",
       "isActive": true
     },
     {
@@ -244,7 +244,7 @@
         "cai be xanh",
         "mustard greens"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fmustard-greens.webp?alt=media&v=6be394b36b",
       "isActive": true
     },
     {
@@ -259,7 +259,7 @@
         "napa cabbage",
         "cải thảo"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598030304671-5aa1d6f21128?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fnapa-cabbage.webp?alt=media&v=a6140e740d",
       "isActive": true
     },
     {
@@ -274,7 +274,7 @@
         "cabbage",
         "bắp cải đà lạt"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598030304671-5aa1d6f21128?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fcabbage.webp?alt=media&v=41e049e845",
       "isActive": true
     },
     {
@@ -288,7 +288,7 @@
         "mồng tơi",
         "malabar spinach"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fmalabar-spinach.webp?alt=media&v=3e80993377",
       "isActive": true
     },
     {
@@ -302,7 +302,7 @@
         "bồ ngót",
         "rau ngót ta"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fkatuk.webp?alt=media&v=421d20b453",
       "isActive": true
     },
     {
@@ -317,7 +317,7 @@
         "dền cơm",
         "amaranth"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Famaranth.webp?alt=media&v=e6b69af3ba",
       "isActive": true
     },
     {
@@ -333,7 +333,7 @@
         "xà lách mỡ",
         "romaine"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1556801712-76c8eb07bbc9?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Flettuce.webp?alt=media&v=afaf95b9bf",
       "isActive": true
     },
     {
@@ -347,7 +347,7 @@
         "cải xoong",
         "watercress"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fwatercress.webp?alt=media&v=498905238c",
       "isActive": true
     },
     {
@@ -362,7 +362,7 @@
         "bông cải xanh",
         "súp lơ"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fbroccoli.webp?alt=media&v=06aa74e5cd",
       "isActive": true
     },
     {
@@ -376,7 +376,7 @@
         "sup lo trang",
         "bông cải trắng"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fcauliflower.webp?alt=media&v=2f23bd1f83",
       "isActive": true
     },
     {
@@ -391,7 +391,7 @@
         "tomato",
         "cà chua đà lạt"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Ftomato.webp?alt=media&v=d215ad42bf",
       "isActive": true
     },
     {
@@ -406,7 +406,7 @@
         "cucumber",
         "dưa chuột"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fcucumber.webp?alt=media&v=b844bc8af2",
       "isActive": true
     },
     {
@@ -421,7 +421,7 @@
         "carot",
         "củ cà rốt"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fcarrot.webp?alt=media&v=22a0e8b46a",
       "isActive": true
     },
     {
@@ -436,7 +436,7 @@
         "white radish",
         "daikon"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fwhite-radish.webp?alt=media&v=a670bf2645",
       "isActive": true
     },
     {
@@ -450,7 +450,7 @@
         "potato",
         "củ khoai tây"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fpotato.webp?alt=media&v=2307473ea3",
       "isActive": true
     },
     {
@@ -465,7 +465,7 @@
         "củ hành tây",
         "hành tây trắng"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1508747703725-719777637510?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fonion.webp?alt=media&v=291bf05181",
       "isActive": true
     },
     {
@@ -481,7 +481,7 @@
         "cu toi",
         "tỏi lý sơn"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1588615419958-4770a8d71ea4?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fgarlic.webp?alt=media&v=458f74a594",
       "isActive": true
     },
     {
@@ -497,7 +497,7 @@
         "hành hoa",
         "hành ngò"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1589135233689-d56d354b3913?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fscallion.webp?alt=media&v=71606c2608",
       "isActive": true
     },
     {
@@ -512,7 +512,7 @@
         "coriander",
         "ngò"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1589135233689-d56d354b3913?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fcoriander.webp?alt=media&v=9bfe1812a4",
       "isActive": true
     },
     {
@@ -527,7 +527,7 @@
         "culantro",
         "rau mùi tàu"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1589135233689-d56d354b3913?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fculantro.webp?alt=media&v=f490a54fe4",
       "isActive": true
     },
     {
@@ -542,7 +542,7 @@
         "củ gừng",
         "gừng tươi"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fginger.webp?alt=media&v=8782d91339",
       "isActive": true
     },
     {
@@ -558,7 +558,7 @@
         "ớt đỏ",
         "ot hiem"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1588252303782-cb80119abd6d?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Ffresh-chili.webp?alt=media&v=170f8bd174",
       "isActive": true
     },
     {
@@ -573,7 +573,7 @@
         "ớt ngọt",
         "ớt đà lạt"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fbell-pepper.webp?alt=media&v=128947b6c5",
       "isActive": true
     },
     {
@@ -587,7 +587,7 @@
         "kohlrabi",
         "củ su hào"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fkohlrabi.webp?alt=media&v=c843fceca1",
       "isActive": true
     },
     {
@@ -601,7 +601,7 @@
         "chayote",
         "quả su su"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fchayote.webp?alt=media&v=a18c634e40",
       "isActive": true
     },
     {
@@ -616,7 +616,7 @@
         "winter melon",
         "trái bí đao"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fwinter-melon.webp?alt=media&v=30c1cd96cc",
       "isActive": true
     },
     {
@@ -631,7 +631,7 @@
         "bí ngô",
         "trái bí đỏ"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1570586437263-ab629fccc818?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fpumpkin.webp?alt=media&v=09c9028ffc",
       "isActive": true
     },
     {
@@ -646,7 +646,7 @@
         "cà tím dài",
         "cà dái dê"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Feggplant.webp?alt=media&v=eb41dcc663",
       "isActive": true
     },
     {
@@ -661,7 +661,7 @@
         "bitter melon",
         "muop dang"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fbitter-melon.webp?alt=media&v=142130de1e",
       "isActive": true
     },
     {
@@ -676,7 +676,7 @@
         "sponge gourd",
         "trái mướp"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fsponge-gourd.webp?alt=media&v=d058dfc275",
       "isActive": true
     },
     {
@@ -690,7 +690,7 @@
         "okra",
         "trái đậu bắp"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fokra.webp?alt=media&v=0766f842f0",
       "isActive": true
     },
     {
@@ -705,7 +705,7 @@
         "green beans",
         "dau co ve"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fstring-beans.webp?alt=media&v=a9db8708c8",
       "isActive": true
     },
     {
@@ -734,7 +734,7 @@
         "enoki mushroom",
         "nấm kim châm tươi"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fenoki-mushroom.webp?alt=media&v=14933d1877",
       "isActive": true
     },
     {
@@ -749,7 +749,7 @@
         "nấm nâu",
         "nấm linh chi trắng"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fshimeji-mushroom.webp?alt=media&v=03158de1f2",
       "isActive": true
     },
     {
@@ -763,7 +763,7 @@
         "king oyster mushroom",
         "nấm đùi gà tươi"
       ],
-      "photoUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
+      "photoUrl": "https://firebasestorage.googleapis.com/v0/b/foora-app.firebasestorage.app/o/foods%2Fking-oyster-mushroom.webp?alt=media&v=e70c448a82",
       "isActive": true
     },
     {

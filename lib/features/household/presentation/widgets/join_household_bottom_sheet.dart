@@ -5,11 +5,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/helpers/bottom_sheet_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/entities/household_invitation_info.dart';
+import '../../domain/usecases/validate_invite_code.dart';
+import '../pages/household_qr_scan_page.dart';
 import '../providers/household_provider.dart';
 
 class JoinHouseholdBottomSheet extends ConsumerStatefulWidget {
@@ -37,15 +40,41 @@ class _JoinHouseholdBottomSheetState
   String? _errorMessage;
 
   @override
+  void initState() {
+    super.initState();
+    // Editing the code invalidates the preview of the previously checked one.
+    _codeController.addListener(_onCodeChanged);
+  }
+
+  void _onCodeChanged() {
+    final code = _previewInfo?.code;
+    if (code == null) return;
+    final typed = ref.read(validateInviteCodeUseCaseProvider)(
+      _codeController.text,
+    );
+    if (typed != code) setState(() => _previewInfo = null);
+  }
+
+  @override
   void dispose() {
+    _codeController.removeListener(_onCodeChanged);
     _codeController.dispose();
     super.dispose();
   }
 
   Future<void> _checkInvitation() async {
-    final code = _codeController.text.trim();
-    if (code.isEmpty) {
+    final raw = _codeController.text;
+    if (raw.trim().isEmpty) {
       setState(() => _errorMessage = 'Vui lòng nhập mã lời mời.');
+      return;
+    }
+    final code = ref.read(validateInviteCodeUseCaseProvider)(raw);
+    if (code == null) {
+      setState(
+        () => _errorMessage =
+            'Mã lời mời gồm ${ValidateInviteCodeUseCase.codeLength} ký tự '
+            '(chữ và số, không có 0, O, 1, I, L).',
+      );
       return;
     }
 
@@ -77,9 +106,16 @@ class _JoinHouseholdBottomSheetState
     }
   }
 
+  Future<void> _scanQr() async {
+    final code = await HouseholdQrScanPage.open(context);
+    if (code == null || !mounted) return;
+    _codeController.text = code;
+    await _checkInvitation();
+  }
+
   Future<void> _confirmJoin() async {
-    final code = _previewInfo?.code ?? _codeController.text.trim();
-    if (code.isEmpty) return;
+    final code = _previewInfo?.code;
+    if (code == null) return;
 
     setState(() => _isJoining = true);
     try {
@@ -104,142 +140,184 @@ class _JoinHouseholdBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Nhập mã lời mời được chủ gia đình chia sẻ để cùng quản lý tủ lạnh.',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13.sp,
-              color: AppColors.slate500,
-            ),
-          ),
-          SizedBox(height: 16.h),
-          AppTextField(
-            label: 'Mã lời mời',
-            placeholder: 'VD: FOORA-AB12CD',
-            controller: _codeController,
-            prefixIcon: Icon(
-              LucideIcons.keyRound,
-              size: 18.r,
-              color: AppColors.slate400,
-            ),
-            validator: (_) => _errorMessage,
-          ),
-          if (_errorMessage != null) ...[
-            SizedBox(height: 6.h),
+    // AppBottomSheet already pads horizontally; only add vertical spacing.
+    // Tapping outside the field closes the virtual keyboard.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             Text(
-              _errorMessage!,
+              'Nhập mã lời mời được chủ gia đình chia sẻ để cùng quản lý tủ lạnh.',
               style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12.sp,
-                color: AppColors.red600,
+                fontFamily: AppTextStyles.fontFamilySans,
+                fontSize: 13.sp,
+                color: AppColors.slate500,
               ),
             ),
-          ],
-          SizedBox(height: 16.h),
-
-          if (_previewInfo == null) ...[
-            PrimaryButton(
-              text: 'Kiểm tra mã',
-              isLoading: _isChecking,
-              onPressed: _checkInvitation,
+            SizedBox(height: 16.h),
+            AppTextField(
+              label: 'Mã lời mời',
+              placeholder: 'VD: AB3K7Q',
+              controller: _codeController,
+              prefixIcon: Icon(
+                LucideIcons.keyRound,
+                size: 18.r,
+                color: AppColors.slate400,
+              ),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (_previewInfo == null && !_isChecking) _checkInvitation();
+              },
             ),
-          ] else ...[
-            // Preview card
-            Container(
-              padding: EdgeInsets.all(16.r),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.2),
+            if (_errorMessage != null) ...[
+              SizedBox(height: 6.h),
+              Text(
+                _errorMessage!,
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamilySans,
+                  fontSize: 12.sp,
+                  color: AppColors.red600,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8.r),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          LucideIcons.home,
-                          size: 20.r,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _previewInfo!.householdName,
-                              style: TextStyle(
-                                fontFamily: 'Lexend',
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.slate800,
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              'Chủ hộ: ${_previewInfo!.ownerName} • ${_previewInfo!.memberCount} thành viên',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12.sp,
-                                color: AppColors.slate600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+            ],
+            SizedBox(height: 16.h),
+
+            if (_previewInfo == null) ...[
+              PrimaryButton(
+                text: 'Kiểm tra mã',
+                isLoading: _isChecking,
+                onPressed: _checkInvitation,
+              ),
+              SizedBox(height: 12.h),
+              AppButton.secondary(
+                label: 'Quét mã QR',
+                icon: LucideIcons.scanLine,
+                onPressed: _isChecking ? null : _scanQr,
+              ),
+            ] else ...[
+              // Preview card
+              Container(
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.2),
                   ),
-                  if (_previewInfo!.alreadyMember) ...[
-                    SizedBox(height: 12.h),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(
                       children: [
-                        Icon(
-                          LucideIcons.circleCheck,
-                          size: 16.r,
-                          color: AppColors.primary,
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          'Bạn đã là thành viên của gia đình này.',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
+                        Container(
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            LucideIcons.home,
+                            size: 20.r,
                             color: AppColors.primary,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _previewInfo!.householdName,
+                                style: TextStyle(
+                                  fontFamily: AppTextStyles.fontFamilyHeadline,
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.slate800,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                'Chủ hộ: ${_previewInfo!.ownerName} • '
+                                '${_previewInfo!.memberCount}/${_previewInfo!.memberLimit} thành viên',
+                                style: TextStyle(
+                                  fontFamily: AppTextStyles.fontFamilySans,
+                                  fontSize: 12.sp,
+                                  color: AppColors.slate600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                    if (_previewInfo!.alreadyMember) ...[
+                      SizedBox(height: 12.h),
+                      Row(
+                        children: [
+                          Icon(
+                            LucideIcons.circleCheck,
+                            size: 16.r,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            'Bạn đã là thành viên của gia đình này.',
+                            style: TextStyle(
+                              fontFamily: AppTextStyles.fontFamilySans,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            SizedBox(height: 20.h),
+              SizedBox(height: 12.h),
+              Text(
+                'Tủ lạnh hiện tại của bạn vẫn được giữ nguyên. Bạn có thể chuyển '
+                'lại bất cứ lúc nào từ mục "Đổi gia đình".',
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamilySans,
+                  fontSize: 12.sp,
+                  color: AppColors.slate500,
+                ),
+              ),
+              SizedBox(height: 20.h),
 
-            if (!_previewInfo!.alreadyMember)
+              if (_previewInfo!.isFull && !_previewInfo!.alreadyMember) ...[
+                Text(
+                  'Gia đình này đã đủ ${_previewInfo!.memberLimit} thành viên. '
+                  'Hãy nhờ chủ gia đình nâng cấp Premium để có thêm chỗ.',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamilySans,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.amber700,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+              ],
               PrimaryButton(
-                text: 'Xác nhận tham gia',
+                text: _previewInfo!.alreadyMember
+                    ? 'Chuyển sang gia đình này'
+                    : 'Xác nhận tham gia',
                 isLoading: _isJoining,
-                onPressed: _confirmJoin,
+                onPressed: _previewInfo!.isFull && !_previewInfo!.alreadyMember
+                    ? null
+                    : _confirmJoin,
               ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

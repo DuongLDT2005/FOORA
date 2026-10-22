@@ -18,7 +18,6 @@ abstract class HouseholdRemoteDataSource {
   });
   Future<HouseholdInvitationModel> generateInvitation({
     required String householdId,
-    int expiresInDays = 7,
   });
   Future<HouseholdInvitationModel?> getActiveInvitation(String householdId);
   Future<void> revokeInvitation({
@@ -54,7 +53,8 @@ class HouseholdRemoteDataSourceImpl implements HouseholdRemoteDataSource {
         .map((doc) {
           if (!doc.exists || doc.data() == null) return null;
           return HouseholdModel.fromFirestore(doc);
-        });
+        })
+        .handleError(_toServerException);
   }
 
   @override
@@ -68,7 +68,18 @@ class HouseholdRemoteDataSourceImpl implements HouseholdRemoteDataSource {
           return snapshot.docs
               .map((doc) => HouseholdModel.fromFirestore(doc))
               .toList();
-        });
+        })
+        .handleError(_toServerException);
+  }
+
+  Never _toServerException(Object error) {
+    if (error is FirebaseException) {
+      throw ServerException(
+        error.message ?? 'Không thể tải dữ liệu gia đình.',
+        error.code,
+      );
+    }
+    throw ServerException('Lỗi khi tải dữ liệu gia đình: $error');
   }
 
   @override
@@ -126,13 +137,11 @@ class HouseholdRemoteDataSourceImpl implements HouseholdRemoteDataSource {
   @override
   Future<HouseholdInvitationModel> generateInvitation({
     required String householdId,
-    int expiresInDays = 7,
   }) async {
     try {
       final callable = functions.httpsCallable('generateHouseholdInvitation');
       final response = await callable.call<Map<String, dynamic>>({
         'householdId': householdId,
-        'expiresInDays': expiresInDays,
       });
 
       final data = response.data;

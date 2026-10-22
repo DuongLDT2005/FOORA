@@ -76,7 +76,7 @@ export const batchAddInventoryItems = onCall<Partial<BatchAddPayload>>(
       // 1. Add batch to household inventory
       const result = await InventoryService.addBatchInventoryItemsWithLimitCheck(
         user.uid,
-        user.membershipId,
+        await InventoryService.resolveHouseholdMembershipId(householdId),
         householdId,
         items
       );

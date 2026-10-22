@@ -7,14 +7,18 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/helpers/bottom_sheet_helper.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/household_invitation.dart';
 import '../providers/household_provider.dart';
+import 'household_seats_card.dart';
 
 class InviteMemberBottomSheet extends ConsumerStatefulWidget {
   final String householdId;
@@ -71,6 +75,18 @@ class _InviteMemberBottomSheetState
     }
   }
 
+  Future<void> _regenerateInvitation() async {
+    final confirmed = await DialogHelper.showConfirmDialog(
+      context,
+      title: 'Tạo mã mới',
+      message:
+          'Mã hiện tại sẽ hết hiệu lực ngay. Người chưa tham gia cần dùng mã mới.',
+      confirmText: 'Tạo mã mới',
+    );
+    if (confirmed != true) return;
+    await _generateNewInvitation();
+  }
+
   Future<void> _revokeInvitation(String invitationId) async {
     final confirmed = await DialogHelper.showDeleteDialog(
       context,
@@ -110,90 +126,61 @@ class _InviteMemberBottomSheetState
     final invitationAsync = ref.watch(
       activeHouseholdInvitationProvider(widget.householdId),
     );
+    final household = ref.watch(currentHouseholdStreamProvider).valueOrNull;
+    final memberCount = household?.id == widget.householdId
+        ? household!.members.length
+        : null;
 
+    // AppBottomSheet already pads horizontally; only add vertical spacing.
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-      child: invitationAsync.when(
-        loading: () => SizedBox(
-          height: 240.h,
-          child: const LoadingWidget(message: 'Đang tải thông tin lời mời...'),
-        ),
-        error: (error, _) => Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h),
-          child: Column(
-            children: [
-              Text(
-                'Không thể tải mã lời mời.',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14.sp,
-                  color: AppColors.red600,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              PrimaryButton(
-                text: 'Thử lại',
-                onPressed: () => ref.invalidate(
-                  activeHouseholdInvitationProvider(widget.householdId),
-                ),
-              ),
-            ],
-          ),
-        ),
-        data: (invitation) {
-          if (invitation == null) {
-            return Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.h),
-              child: Column(
-                children: [
-                  Container(
-                    width: 64.r,
-                    height: 64.r,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      LucideIcons.userPlus,
-                      size: 28.r,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'Chưa có mã lời mời nào đang hoạt động',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.slate700,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Tạo mã mới để mời các thành viên tham gia gia đình "${widget.householdName}".',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13.sp,
-                      color: AppColors.slate500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 24.h),
-                  PrimaryButton(
-                    text: 'Tạo mã lời mời ngay',
-                    isLoading: _isGenerating,
-                    onPressed: _generateNewInvitation,
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return _buildActiveInvitationView(invitation);
-        },
+      padding: EdgeInsets.symmetric(vertical: 12.h),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (memberCount != null) ...[
+            HouseholdSeatsCard(
+              memberCount: memberCount,
+              closeBeforeUpgrade: true,
+            ),
+            SizedBox(height: 16.h),
+          ],
+          _buildInvitationBody(invitationAsync),
+        ],
       ),
+    );
+  }
+
+  Widget _buildInvitationBody(
+    AsyncValue<HouseholdInvitation?> invitationAsync,
+  ) {
+    return invitationAsync.when(
+      loading: () => SizedBox(
+        height: 240.h,
+        child: const LoadingWidget(message: 'Đang tải thông tin lời mời...'),
+      ),
+      error: (error, _) => ErrorStateWidget(
+        message: 'Không thể tải mã lời mời.',
+        onRetry: () => ref.invalidate(
+          activeHouseholdInvitationProvider(widget.householdId),
+        ),
+      ),
+      data: (invitation) {
+        if (invitation == null) {
+          return EmptyStateWidget(
+            icon: LucideIcons.userPlus,
+            title: 'Chưa có mã lời mời nào đang hoạt động',
+            subtitle:
+                'Tạo mã mới để mời các thành viên tham gia gia đình "${widget.householdName}".',
+            action: PrimaryButton(
+              text: 'Tạo mã lời mời ngay',
+              isLoading: _isGenerating,
+              onPressed: _generateNewInvitation,
+            ),
+          );
+        }
+
+        return _buildActiveInvitationView(invitation);
+      },
     );
   }
 
@@ -201,38 +188,28 @@ class _InviteMemberBottomSheetState
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // QR Code Card
+        // QR encodes only the 6-character code; the join sheet scans it.
         Container(
           padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20.r),
             border: Border.all(color: AppColors.slate200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Column(
             children: [
-              SizedBox(
-                width: 180.r,
-                height: 180.r,
-                child: QrImageView(
-                  data: invitation.code,
-                  version: QrVersions.auto,
-                  size: 180.r,
-                  backgroundColor: Colors.white,
-                ),
+              QrImageView(
+                data: invitation.code,
+                version: QrVersions.auto,
+                size: 180.r,
+                backgroundColor: Colors.white,
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 8.h),
               Text(
-                'Quét mã QR bằng ứng dụng FOORA',
+                'Người được mời mở "Tham gia gia đình" → "Quét mã QR"',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: AppTextStyles.fontFamilySans,
                   fontSize: 12.sp,
                   color: AppColors.slate500,
                 ),
@@ -240,7 +217,7 @@ class _InviteMemberBottomSheetState
             ],
           ),
         ),
-        SizedBox(height: 20.h),
+        SizedBox(height: 16.h),
 
         // Code Display & Copy Box
         Container(
@@ -260,7 +237,7 @@ class _InviteMemberBottomSheetState
                     Text(
                       'MÃ THAM GIA',
                       style: TextStyle(
-                        fontFamily: 'Inter',
+                        fontFamily: AppTextStyles.fontFamilySans,
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.slate400,
@@ -271,11 +248,11 @@ class _InviteMemberBottomSheetState
                     Text(
                       invitation.code,
                       style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 20.sp,
+                        fontFamily: AppTextStyles.fontFamilyHeadline,
+                        fontSize: 28.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
-                        letterSpacing: 1.5,
+                        letterSpacing: 6,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -284,21 +261,17 @@ class _InviteMemberBottomSheetState
                 ),
               ),
               SizedBox(width: 8.w),
-              GestureDetector(
-                onTap: () => _copyToClipboard(invitation.code, 'mã tham gia'),
-                child: Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Icon(
-                    LucideIcons.copy,
-                    size: 18.r,
-                    color: AppColors.primary,
+              IconButton(
+                tooltip: 'Sao chép mã',
+                onPressed: () =>
+                    _copyToClipboard(invitation.code, 'mã tham gia'),
+                icon: Icon(LucideIcons.copy, size: 20.r),
+                color: AppColors.primary,
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  minimumSize: Size(44.r, 44.r),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
               ),
@@ -316,7 +289,7 @@ class _InviteMemberBottomSheetState
             Text(
               'Hết hạn vào: ${DateFormatter.formatDate(invitation.expiresAt)}',
               style: TextStyle(
-                fontFamily: 'Inter',
+                fontFamily: AppTextStyles.fontFamilySans,
                 fontSize: 12.sp,
                 color: AppColors.slate500,
               ),
@@ -325,80 +298,21 @@ class _InviteMemberBottomSheetState
         ),
         SizedBox(height: 24.h),
 
-        // Actions: Copy Link & Revoke
-        Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 48.h,
-                child: ElevatedButton.icon(
-                  onPressed: () => _copyToClipboard(
-                    invitation.shareUrl,
-                    'liên kết tham gia',
-                  ),
-                  icon: Icon(LucideIcons.link, size: 16.r),
-                  label: Text(
-                    'Sao chép liên kết',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 8.w),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: SizedBox(
-                height: 48.h,
-                child: _isRevoking
-                    ? const Center(child: CircularProgressIndicator())
-                    : OutlinedButton.icon(
-                        onPressed: () => _revokeInvitation(invitation.id),
-                        icon: Icon(
-                          LucideIcons.ban,
-                          size: 16.r,
-                          color: AppColors.red500,
-                        ),
-                        label: Text(
-                          'Thu hồi mã',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.red500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor:
-                              AppColors.red500.withValues(alpha: 0.05),
-                          side: BorderSide(
-                            color: AppColors.red500.withValues(alpha: 0.2),
-                          ),
-                          padding: EdgeInsets.symmetric(horizontal: 8.w),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-              ),
-            ),
-          ],
+        // Stacked full-width actions: half-width buttons squeeze the labels
+        // on narrow phones.
+        AppButton.primary(
+          label: 'Tạo mã mới',
+          icon: LucideIcons.refreshCw,
+          isLoading: _isGenerating,
+          onPressed: _isRevoking ? null : _regenerateInvitation,
+        ),
+        SizedBox(height: 12.h),
+        DangerButton(
+          text: _isRevoking ? 'Đang thu hồi...' : 'Thu hồi mã',
+          icon: LucideIcons.ban,
+          onPressed: _isGenerating || _isRevoking
+              ? null
+              : () => _revokeInvitation(invitation.id),
         ),
       ],
     );

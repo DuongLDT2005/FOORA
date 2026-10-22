@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/household_member.dart';
 
 class MemberListItem extends StatelessWidget {
@@ -23,7 +24,7 @@ class MemberListItem extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.slate100),
         boxShadow: [
@@ -63,7 +64,7 @@ class MemberListItem extends StatelessWidget {
                 ? Text(
                     member.initials,
                     style: TextStyle(
-                      fontFamily: 'Lexend',
+                      fontFamily: AppTextStyles.fontFamilyHeadline,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                       color: member.isOwner
@@ -86,7 +87,7 @@ class MemberListItem extends StatelessWidget {
                       child: Text(
                         member.fullName,
                         style: TextStyle(
-                          fontFamily: 'Inter',
+                          fontFamily: AppTextStyles.fontFamilySans,
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.slate800,
@@ -109,7 +110,7 @@ class MemberListItem extends StatelessWidget {
                         child: Text(
                           'Bạn',
                           style: TextStyle(
-                            fontFamily: 'Inter',
+                            fontFamily: AppTextStyles.fontFamilySans,
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w500,
                             color: AppColors.slate600,
@@ -141,7 +142,7 @@ class MemberListItem extends StatelessWidget {
                       child: Text(
                         member.isOwner ? 'Chủ gia đình' : 'Thành viên',
                         style: TextStyle(
-                          fontFamily: 'Inter',
+                          fontFamily: AppTextStyles.fontFamilySans,
                           fontSize: 11.sp,
                           fontWeight: FontWeight.w600,
                           color: member.isOwner
@@ -150,21 +151,6 @@ class MemberListItem extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (member.email.isNotEmpty) ...[
-                      SizedBox(width: 8.w),
-                      Flexible(
-                        child: Text(
-                          member.email,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12.sp,
-                            color: AppColors.slate400,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ],

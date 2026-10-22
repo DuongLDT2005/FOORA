@@ -20,11 +20,9 @@ abstract class HouseholdRepository {
     required String name,
   });
 
-  /// Generates a new invitation for the household (Owner only).
-  Future<HouseholdInvitation> generateInvitation({
-    required String householdId,
-    int expiresInDays = 7,
-  });
+  /// Generates a new invitation for the household (Owner only). The code
+  /// lifetime is fixed by the backend.
+  Future<HouseholdInvitation> generateInvitation({required String householdId});
 
   /// Retrieves the currently active invitation for a household (Owner only).
   Future<HouseholdInvitation?> getActiveInvitation(String householdId);

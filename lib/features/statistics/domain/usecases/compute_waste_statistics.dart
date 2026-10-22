@@ -78,6 +78,15 @@ class ComputeWasteStatistics {
           group.name = record.name;
           group.categoryId = record.categoryId;
         }
+        // Use the newest batch that actually has a photo, so a photo-less
+        // latest batch does not hide an older batch's image.
+        final photo = record.photoUrl;
+        if (photo != null &&
+            photo.isNotEmpty &&
+            changedVn.isAfter(group.photoAt)) {
+          group.photoAt = changedVn;
+          group.photoUrl = photo;
+        }
       }
     }
 
@@ -117,6 +126,7 @@ class ComputeWasteStatistics {
             name: e.value.name,
             categoryId: e.value.categoryId,
             count: e.value.count,
+            photoUrl: e.value.photoUrl,
             percentOfDiscarded: totalDiscarded > 0
                 ? (e.value.count / totalDiscarded) * 100
                 : 0,
@@ -176,4 +186,6 @@ class _FoodGroup {
   String categoryId;
   int count = 0;
   DateTime latestAt = DateTime.fromMillisecondsSinceEpoch(0);
+  String? photoUrl;
+  DateTime photoAt = DateTime.fromMillisecondsSinceEpoch(0);
 }

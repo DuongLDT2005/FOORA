@@ -59,7 +59,7 @@ export const addInventoryItem = onCall<Partial<AddInventoryItemInput>>(
 
       const result = await InventoryService.addInventoryItemWithLimitCheck(
         user.uid,
-        user.membershipId,
+        await InventoryService.resolveHouseholdMembershipId(data.householdId),
         {
           householdId: data.householdId,
           name: data.name,

@@ -15,6 +15,7 @@ class StatusChangeRecord {
     required this.status,
     required this.statusChangedAt,
     required this.expirationDate,
+    this.photoUrl,
   });
 
   final String id;
@@ -32,6 +33,9 @@ class StatusChangeRecord {
 
   /// Used to determine whether the item was discarded after expiry.
   final DateTime expirationDate;
+
+  /// Item photo copied from the master food or uploaded by the user, if any.
+  final String? photoUrl;
 
   /// True when a discarded item was thrown away after its expiration date.
   bool get isDiscardedAfterExpiry =>

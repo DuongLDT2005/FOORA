@@ -8,6 +8,7 @@ class HouseholdInvitationInfoModel extends HouseholdInvitationInfo {
     required super.householdName,
     required super.ownerName,
     required super.memberCount,
+    required super.memberLimit,
     required super.alreadyMember,
     required super.expiresAt,
   });
@@ -19,6 +20,8 @@ class HouseholdInvitationInfoModel extends HouseholdInvitationInfo {
       householdName: json['householdName'] as String? ?? '',
       ownerName: json['ownerName'] as String? ?? 'Chủ gia đình',
       memberCount: (json['memberCount'] as num?)?.toInt() ?? 1,
+      // Older backends omit the limit; never treat the household as full then.
+      memberLimit: (json['memberLimit'] as num?)?.toInt() ?? 1 << 30,
       alreadyMember: json['alreadyMember'] as bool? ?? false,
       expiresAt: json['expiresAt'] != null
           ? DateTime.tryParse(json['expiresAt'] as String) ?? DateTime.now()
@@ -33,6 +36,7 @@ class HouseholdInvitationInfoModel extends HouseholdInvitationInfo {
       'householdName': householdName,
       'ownerName': ownerName,
       'memberCount': memberCount,
+      'memberLimit': memberLimit,
       'alreadyMember': alreadyMember,
       'expiresAt': expiresAt.toIso8601String(),
     };

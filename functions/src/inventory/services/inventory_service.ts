@@ -103,6 +103,27 @@ export class InventoryService {
   }
 
   /**
+   * Resolves the plan whose foodLimit applies to a household. Shared
+   * households use the owner's plan (PLAN_05 D1), so members never get a
+   * different limit than the owner for the same kitchen.
+   * @param {string} householdId Household id.
+   * @return {Promise<string>} Effective membership id of the owner.
+   */
+  static async resolveHouseholdMembershipId(
+    householdId: string
+  ): Promise<string> {
+    const householdDoc = await db
+      .collection(Collections.HOUSEHOLDS)
+      .doc(householdId)
+      .get();
+    const ownerId = householdDoc.data()?.ownerId;
+    if (!householdDoc.exists || typeof ownerId !== "string") {
+      throwNotFound("Hộ gia đình không tồn tại.");
+    }
+    return MembershipService.resolveMembershipId(ownerId);
+  }
+
+  /**
    * Atomic Firestore Transaction:
    * 1. Validates caller's membership foodLimit against current household activeItemCount
    * 2. Creates the inventory item document with status 'active' and auto normalizedName
@@ -178,7 +199,7 @@ export class InventoryService {
       // Check foodLimit restriction for Free accounts
       if (foodLimit !== null && currentActiveCount >= foodLimit) {
         throwResourceExhausted(
-          `Gói tài khoản của bạn đã đạt giới hạn tối đa (${foodLimit} món đang lưu trữ). ` +
+          `Tủ lạnh đã đạt giới hạn của gói chủ gia đình (${foodLimit} món đang lưu trữ). ` +
           "Vui lòng tiêu thụ thực phẩm hoặc nâng cấp lên gói Premium để không giới hạn!"
         );
       }
@@ -306,7 +327,7 @@ export class InventoryService {
       // Check foodLimit restriction for Free accounts
       if (foodLimit !== null && newTotal > foodLimit) {
         throwResourceExhausted(
-          `Gói tài khoản của bạn sẽ vượt quá giới hạn tối đa (${foodLimit} món). ` +
+          `Tủ lạnh sẽ vượt quá giới hạn của gói chủ gia đình (${foodLimit} món). ` +
           `Hiện tại: ${currentActiveCount}, chuẩn bị thêm: ${items.length}. ` +
           "Vui lòng nâng cấp lên gói Premium để không giới hạn kho lưu trữ!"
         );

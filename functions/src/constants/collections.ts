@@ -16,6 +16,7 @@ export const Collections = {
   PAYMENT_ORDER_LOCKS: "payment_order_locks",
   PAYMENT_PROVIDER_TRANSACTIONS: "payment_provider_transactions",
   HOUSEHOLD_INVITATIONS: "household_invitations",
+  INVITE_ATTEMPTS: "invite_attempts",
 
   // Users Subcollections (users/{userId}/...)
   SUBSCRIPTIONS: "subscriptions",

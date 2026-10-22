@@ -9,7 +9,6 @@ class HouseholdInvitation {
   final String householdId;
   final String householdName;
   final DateTime expiresAt;
-  final String shareUrl;
   final HouseholdInvitationStatus status;
 
   const HouseholdInvitation({
@@ -18,7 +17,6 @@ class HouseholdInvitation {
     required this.householdId,
     required this.householdName,
     required this.expiresAt,
-    required this.shareUrl,
     this.status = HouseholdInvitationStatus.active,
   });
 
@@ -33,18 +31,10 @@ class HouseholdInvitation {
         other.householdId == householdId &&
         other.householdName == householdName &&
         other.expiresAt == expiresAt &&
-        other.shareUrl == shareUrl &&
         other.status == status;
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    code,
-    householdId,
-    householdName,
-    expiresAt,
-    shareUrl,
-    status,
-  );
+  int get hashCode =>
+      Object.hash(id, code, householdId, householdName, expiresAt, status);
 }

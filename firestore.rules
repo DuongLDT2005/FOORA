@@ -165,6 +165,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Wrong invite-code counters (anti-enumeration): backend only
+    match /invite_attempts/{userId} {
+      allow read, write: if false;
+    }
+
     // Bug Reports collection
     match /bug_reports/{reportId} {
       allow create: if isAuthenticated()

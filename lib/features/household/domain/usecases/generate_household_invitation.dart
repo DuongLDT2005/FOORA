@@ -6,13 +6,7 @@ class GenerateHouseholdInvitationUseCase {
 
   const GenerateHouseholdInvitationUseCase(this._repository);
 
-  Future<HouseholdInvitation> call({
-    required String householdId,
-    int expiresInDays = 7,
-  }) {
-    return _repository.generateInvitation(
-      householdId: householdId,
-      expiresInDays: expiresInDays,
-    );
+  Future<HouseholdInvitation> call({required String householdId}) {
+    return _repository.generateInvitation(householdId: householdId);
   }
 }

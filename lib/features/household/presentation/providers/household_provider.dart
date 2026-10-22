@@ -22,6 +22,7 @@ import '../../domain/usecases/remove_member.dart';
 import '../../domain/usecases/revoke_household_invitation.dart';
 import '../../domain/usecases/switch_household.dart';
 import '../../domain/usecases/update_household_name.dart';
+import '../../domain/usecases/validate_invite_code.dart';
 
 // --- Data & Domain Providers ---
 
@@ -112,6 +113,10 @@ final switchHouseholdUseCaseProvider = Provider<SwitchHouseholdUseCase>((ref) {
   return SwitchHouseholdUseCase(ref.watch(householdRepositoryProvider));
 });
 
+final validateInviteCodeUseCaseProvider = Provider<ValidateInviteCodeUseCase>(
+  (ref) => const ValidateInviteCodeUseCase(),
+);
+
 // --- Stream & Future UI Providers ---
 
 /// Real-time stream of the current active household.
@@ -135,6 +140,16 @@ final userHouseholdsStreamProvider = StreamProvider<List<Household>>((ref) {
 final householdMembersProvider = FutureProvider.autoDispose
     .family<List<HouseholdMember>, String>((ref, householdId) async {
       if (householdId.isEmpty) return [];
+      // Refetch when the live member list changes (someone joined, left or
+      // was removed), so profiles never lag behind the household document.
+      ref.watch(
+        currentHouseholdStreamProvider.select((async) {
+          final household = async.valueOrNull;
+          return household?.id == householdId
+              ? household!.members.join(',')
+              : null;
+        }),
+      );
       return ref.watch(getHouseholdMembersUseCaseProvider)(householdId);
     });
 
@@ -171,14 +186,11 @@ class HouseholdController {
     }
   }
 
-  Future<HouseholdInvitation> generateInvitation(
-    String householdId, {
-    int expiresInDays = 7,
-  }) async {
+  Future<HouseholdInvitation> generateInvitation(String householdId) async {
     try {
       final invitation = await ref.read(
         generateHouseholdInvitationUseCaseProvider,
-      )(householdId: householdId, expiresInDays: expiresInDays);
+      )(householdId: householdId);
       ref.invalidate(activeHouseholdInvitationProvider(householdId));
       return invitation;
     } on Failure {

@@ -6,7 +6,6 @@ import '../../../../core/constants/app_enums.dart';
 class HouseholdMember {
   final String id;
   final String fullName;
-  final String email;
   final String? avatarUrl;
   final HouseholdRole role;
   final bool isCurrentUser;
@@ -14,7 +13,6 @@ class HouseholdMember {
   const HouseholdMember({
     required this.id,
     required this.fullName,
-    required this.email,
     this.avatarUrl,
     required this.role,
     this.isCurrentUser = false,
@@ -38,13 +36,11 @@ class HouseholdMember {
     return other is HouseholdMember &&
         other.id == id &&
         other.fullName == fullName &&
-        other.email == email &&
         other.avatarUrl == avatarUrl &&
         other.role == role &&
         other.isCurrentUser == isCurrentUser;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, fullName, email, avatarUrl, role, isCurrentUser);
+  int get hashCode => Object.hash(id, fullName, avatarUrl, role, isCurrentUser);
 }

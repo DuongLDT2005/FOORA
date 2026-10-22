@@ -12,11 +12,13 @@ class FreeBenefitsCard extends StatelessWidget {
     super.key,
     required this.foodLimit,
     required this.scanLimit,
+    this.memberLimit,
   });
 
   /// Limits of the Free plan from `memberships/free`; `null` = unlimited.
   final int? foodLimit;
   final int? scanLimit;
+  final int? memberLimit;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +34,9 @@ class FreeBenefitsCard extends StatelessWidget {
           ? 'Quét hóa đơn không giới hạn'
           : 'Quét hóa đơn (Giới hạn $scanLimit lần/tháng)',
       'Nhận thông báo hết hạn',
+      memberLimit == null
+          ? 'Chia sẻ tủ lạnh với gia đình'
+          : 'Chia sẻ tủ lạnh với tối đa $memberLimit người (kể cả bạn)',
     ];
 
     return Container(
@@ -87,27 +92,39 @@ class FreeBenefitsCard extends StatelessWidget {
 
 /// Grid of Premium benefits.
 class PremiumBenefitsList extends StatelessWidget {
-  const PremiumBenefitsList({super.key});
+  const PremiumBenefitsList({super.key, this.memberLimit});
+
+  /// Household seats of the Premium plan from `memberships/premium`.
+  final int? memberLimit;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
         _BenefitCard(
+          icon: LucideIcons.users,
+          title: memberLimit == null
+              ? 'Gia đình đông thành viên'
+              : 'Gia đình tới $memberLimit thành viên',
+          description:
+              'Mời thêm người thân cùng quản lý chung một tủ lạnh và danh sách mua sắm.',
+        ),
+        const SizedBox(height: 12),
+        const _BenefitCard(
           icon: LucideIcons.check,
           title: 'Lưu trữ thực phẩm không giới hạn',
           description:
               'Thêm bao nhiêu thực phẩm tuỳ thích mà không lo đầy kho lưu trữ.',
         ),
-        SizedBox(height: 12),
-        _BenefitCard(
+        const SizedBox(height: 12),
+        const _BenefitCard(
           icon: LucideIcons.sparkles,
           title: 'Quét hóa đơn không giới hạn',
           description:
               'Tự động nhận diện không giới hạn số lượng hóa đơn mua sắm.',
         ),
-        SizedBox(height: 12),
-        _BenefitCard(
+        const SizedBox(height: 12),
+        const _BenefitCard(
           icon: LucideIcons.sparkles,
           title: 'Tất cả tính năng của gói Free',
           description: 'Bao gồm thông báo hết hạn, quản lý các ngăn chứa,...',
@@ -183,11 +200,17 @@ class PlanComparisonCard extends StatelessWidget {
     super.key,
     required this.freeFoodLimit,
     required this.freeScanLimit,
+    this.freeMemberLimit,
+    this.premiumMemberLimit,
   });
 
   /// Free-plan limits from Firestore; `null` = unlimited.
   final int? freeFoodLimit;
   final int? freeScanLimit;
+
+  /// Household seats per plan (owner included); `null` = unlimited.
+  final int? freeMemberLimit;
+  final int? premiumMemberLimit;
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +257,17 @@ class PlanComparisonCard extends StatelessWidget {
                 : '$freeScanLimit lượt/tháng',
             freeIcon: freeScanLimit == null ? LucideIcons.infinity : null,
             premiumIcon: LucideIcons.infinity,
+          ),
+          _ComparisonRow(
+            label: 'Thành viên gia đình',
+            freeValue: freeMemberLimit == null
+                ? null
+                : 'Tối đa $freeMemberLimit',
+            freeIcon: freeMemberLimit == null ? LucideIcons.infinity : null,
+            premiumValue: premiumMemberLimit == null
+                ? null
+                : 'Tối đa $premiumMemberLimit',
+            premiumIcon: LucideIcons.infinity,
             last: true,
           ),
         ],
@@ -270,6 +304,7 @@ class _ComparisonRow extends StatelessWidget {
     required this.label,
     this.freeValue,
     this.freeIcon,
+    this.premiumValue,
     required this.premiumIcon,
     this.last = false,
   });
@@ -277,6 +312,9 @@ class _ComparisonRow extends StatelessWidget {
   final String label;
   final String? freeValue;
   final IconData? freeIcon;
+
+  /// Shown instead of [premiumIcon] when set.
+  final String? premiumValue;
   final IconData premiumIcon;
   final bool last;
 
@@ -315,7 +353,17 @@ class _ComparisonRow extends StatelessWidget {
                   ),
           ),
           Expanded(
-            child: Icon(premiumIcon, size: 18.r, color: AppColors.amber500),
+            child: premiumValue == null
+                ? Icon(premiumIcon, size: 18.r, color: AppColors.amber500)
+                : Text(
+                    premiumValue!,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.amber600,
+                    ),
+                  ),
           ),
         ],
       ),

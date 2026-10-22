@@ -1,19 +1,45 @@
-import * as crypto from "crypto";
-import {FieldPath, FieldValue, Timestamp} from "firebase-admin/firestore";
+import {
+  DocumentData,
+  DocumentReference,
+  FieldValue,
+  Timestamp,
+  Transaction,
+} from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {MembershipService} from "../../membership/services/membership_service";
 import {
   throwFailedPrecondition,
   throwInvalidArgument,
   throwNotFound,
   throwPermissionDenied,
+  throwResourceExhausted,
 } from "../../utils/errors";
+import {
+  generateInviteCode,
+  isValidInviteCode,
+  normalizeInviteCode,
+} from "./invite_code";
+
+/** Invitation lifetime (PLAN_05 D3). */
+export const INVITATION_TTL_DAYS = 7;
+/**
+ * Hard ceiling on members per household, applied even when a plan's
+ * `memberLimit` is null (unlimited) or misconfigured, to prevent abuse.
+ */
+export const MAX_HOUSEHOLD_MEMBERS = 20;
+/** Wrong invite codes allowed per window before the user is locked out. */
+export const MAX_FAILED_INVITE_ATTEMPTS = 10;
+export const INVITE_ATTEMPT_WINDOW_MS = 60 * 60 * 1000;
+/** Retries when a freshly generated code collides with an existing doc. */
+const CODE_GENERATION_ATTEMPTS = 5;
+
+const INVALID_CODE_MESSAGE = "Mã lời mời không hợp lệ hoặc không tồn tại.";
 
 export interface HouseholdMemberInfo {
   id: string;
   fullName: string;
-  email: string;
   avatarUrl: string | null;
   role: "owner" | "member";
   isCurrentUser: boolean;
@@ -25,7 +51,6 @@ export interface HouseholdInvitationResult {
   householdId: string;
   householdName: string;
   expiresAt: string;
-  shareUrl: string;
 }
 
 export interface HouseholdInvitationPreview {
@@ -34,141 +59,170 @@ export interface HouseholdInvitationPreview {
   householdName: string;
   ownerName: string;
   memberCount: number;
+  /** Seats allowed by the owner's plan (owner included). */
+  memberLimit: number;
   alreadyMember: boolean;
   expiresAt: string;
 }
 
+/** Member cap of a household, taken from its owner's plan (PLAN_05 D2). */
+interface HouseholdMemberLimit {
+  limit: number;
+  planName: string;
+}
+
+/** Outcome of validating an invitation document. */
+type InvitationCheck =
+  | {ok: true; data: DocumentData; expiresAt: Date}
+  | {ok: false; message: string; markExpired: boolean};
+
+/**
+ * Validates an invitation snapshot without throwing, so callers can count a
+ * failed attempt outside the transaction before surfacing the error.
+ * @param {DocumentData | undefined} data Invitation data, if the doc exists.
+ * @return {InvitationCheck} Validation outcome.
+ */
+function checkInvitation(data: DocumentData | undefined): InvitationCheck {
+  if (!data) {
+    return {ok: false, message: INVALID_CODE_MESSAGE, markExpired: false};
+  }
+  if (data.status !== "active") {
+    return {
+      ok: false,
+      message: data.status === "revoked" ?
+        "Mã lời mời này đã bị chủ gia đình thu hồi." :
+        "Mã lời mời này không còn hiệu lực.",
+      markExpired: false,
+    };
+  }
+  const expiresAt = (data.expiresAt as Timestamp).toDate();
+  if (expiresAt.getTime() <= Date.now()) {
+    return {ok: false, message: "Mã lời mời này đã hết hạn.", markExpired: true};
+  }
+  return {ok: true, data, expiresAt};
+}
+
 export class HouseholdService {
   /**
-   * Generates a new invitation code for a household.
-   * Only the Household Owner can generate invitations (BR-03).
+   * Generates a new invitation code and revokes the previous active one, so
+   * each household has at most one valid code. Owner only (BR-03).
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} householdId Target household.
+   * @return {Promise<HouseholdInvitationResult>} The new invitation.
    */
   static async createInvitation(
     callerUid: string,
-    householdId: string,
-    expiresInDays = 7
+    householdId: string
   ): Promise<HouseholdInvitationResult> {
     const householdRef = db.collection(Collections.HOUSEHOLDS).doc(householdId);
-    const householdSnap = await householdRef.get();
+    const invitations = db.collection(Collections.HOUSEHOLD_INVITATIONS);
+    const expiresAtDate = new Date(
+      Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000
+    );
 
-    if (!householdSnap.exists) {
-      throwNotFound("Không tìm thấy thông tin gia đình.");
-    }
+    const result = await db.runTransaction(async (tx) => {
+      // Reads first: Firestore transactions reject reads after writes.
+      const householdSnap = await tx.get(householdRef);
+      if (!householdSnap.exists) {
+        throwNotFound("Không tìm thấy thông tin gia đình.");
+      }
+      const householdData = householdSnap.data()!;
+      if (householdData.ownerId !== callerUid) {
+        throwPermissionDenied("Chỉ chủ gia đình mới có quyền tạo mã lời mời.");
+      }
 
-    const householdData = householdSnap.data()!;
-    if (householdData.ownerId !== callerUid) {
-      throwPermissionDenied("Chỉ chủ gia đình mới có quyền tạo mã lời mời.");
-    }
+      const activeSnap = await tx.get(
+        invitations
+          .where("householdId", "==", householdId)
+          .where("status", "==", "active")
+      );
 
-    // Revoke any existing active invitations for this household to keep a single active code
-    const existingActiveQuery = await db
-      .collection(Collections.HOUSEHOLD_INVITATIONS)
-      .where("householdId", "==", householdId)
-      .where("status", "==", "active")
-      .get();
+      // The code is the document id, so uniqueness is checked by reading it.
+      let codeRef: DocumentReference | null = null;
+      for (let i = 0; i < CODE_GENERATION_ATTEMPTS && !codeRef; i++) {
+        const candidate = invitations.doc(generateInviteCode());
+        if (!(await tx.get(candidate)).exists) {
+          codeRef = candidate;
+        }
+      }
+      if (!codeRef) {
+        throwFailedPrecondition("Không thể tạo mã lời mời, vui lòng thử lại.");
+      }
 
-    const batch = db.batch();
-    const serverTimestamp = FieldValue.serverTimestamp();
-    for (const doc of existingActiveQuery.docs) {
-      batch.update(doc.ref, {
-        status: "revoked",
+      const serverTimestamp = FieldValue.serverTimestamp();
+      for (const doc of activeSnap.docs) {
+        tx.update(doc.ref, {status: "revoked", updatedAt: serverTimestamp});
+      }
+
+      const householdName = householdData.name || "Gia đình FOORA";
+      tx.create(codeRef, {
+        code: codeRef.id,
+        householdId,
+        householdName,
+        createdBy: callerUid,
+        status: "active",
+        useCount: 0,
+        expiresAt: Timestamp.fromDate(expiresAtDate),
+        createdAt: serverTimestamp,
         updatedAt: serverTimestamp,
       });
-    }
 
-    // Generate unique 8-character uppercase alphanumeric code
-    const rawCode = crypto.randomBytes(4).toString("hex").toUpperCase();
-    const code = `FOORA-${rawCode}`;
-
-    const now = new Date();
-    const expiresAtDate = new Date(
-      now.getTime() + expiresInDays * 24 * 60 * 60 * 1000
-    );
-
-    const newInvitationRef = db.collection(Collections.HOUSEHOLD_INVITATIONS).doc();
-    const householdName = householdData.name || "Gia đình FOORA";
-
-    batch.set(newInvitationRef, {
-      code,
-      householdId,
-      householdName,
-      createdBy: callerUid,
-      status: "active",
-      expiresAt: Timestamp.fromDate(expiresAtDate),
-      createdAt: serverTimestamp,
-      updatedAt: serverTimestamp,
+      return {code: codeRef.id, householdName};
     });
 
-    await batch.commit();
-
     logger.info(
-      `[HouseholdService] User ${callerUid} created invitation ${code} for household ${householdId}`
+      `[HouseholdService] User ${callerUid} created invitation ` +
+      `${result.code} for household ${householdId}`
     );
 
-    const shareUrl = `https://foora.app/household/join?code=${code}`;
-
     return {
-      invitationId: newInvitationRef.id,
-      code,
+      invitationId: result.code,
+      code: result.code,
       householdId,
-      householdName,
+      householdName: result.householdName,
       expiresAt: expiresAtDate.toISOString(),
-      shareUrl,
     };
   }
 
   /**
-   * Retrieves invitation info for preview before the user accepts joining.
+   * Returns invitation details so the user can confirm before joining.
+   * Counts towards the wrong-code limit to prevent code enumeration.
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} rawCode Code as typed by the user.
+   * @return {Promise<HouseholdInvitationPreview>} Preview data.
    */
   static async getInvitationInfo(
     callerUid: string,
     rawCode: string
   ): Promise<HouseholdInvitationPreview> {
-    const code = rawCode.trim().toUpperCase();
-    if (!code) {
-      throwInvalidArgument("Mã lời mời không được để trống.");
+    await this.assertNotLockedOut(callerUid);
+    const code = await this.requireValidCodeFormat(callerUid, rawCode);
+
+    const invRef = db.collection(Collections.HOUSEHOLD_INVITATIONS).doc(code);
+    const invSnap = await invRef.get();
+    const check = checkInvitation(invSnap.data());
+    if (!check.ok) {
+      if (check.markExpired) {
+        await invRef.update({
+          status: "expired",
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      await this.recordFailedAttempt(callerUid);
+      throwNotFound(check.message);
     }
 
-    const querySnap = await db
-      .collection(Collections.HOUSEHOLD_INVITATIONS)
-      .where("code", "==", code)
-      .limit(1)
+    const householdSnap = await db
+      .collection(Collections.HOUSEHOLDS)
+      .doc(check.data.householdId)
       .get();
-
-    if (querySnap.empty) {
-      throwNotFound("Mã lời mời không hợp lệ hoặc không tồn tại.");
-    }
-
-    const invDoc = querySnap.docs[0];
-    const invData = invDoc.data();
-
-    if (invData.status !== "active") {
-      throwInvalidArgument(
-        invData.status === "revoked" ?
-          "Mã lời mời này đã bị chủ gia đình thu hồi." :
-          "Mã lời mời này không còn hiệu lực."
-      );
-    }
-
-    const expiresAt = (invData.expiresAt as Timestamp).toDate();
-    if (expiresAt.getTime() <= Date.now()) {
-      // Mark as expired in the background
-      await invDoc.ref.update({
-        status: "expired",
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      throwInvalidArgument("Mã lời mời này đã hết hạn.");
-    }
-
-    const householdRef = db.collection(Collections.HOUSEHOLDS).doc(invData.householdId);
-    const householdSnap = await householdRef.get();
     if (!householdSnap.exists) {
       throwNotFound("Gia đình liên kết với lời mời này không còn tồn tại.");
     }
 
     const householdData = householdSnap.data()!;
     const members: string[] = householdData.members || [];
-    const alreadyMember = members.includes(callerUid);
+    const {limit} = await this.getMemberLimit(householdData.ownerId);
 
     let ownerName = "Chủ gia đình";
     if (householdData.ownerId) {
@@ -176,137 +230,193 @@ export class HouseholdService {
         .collection(Collections.USERS)
         .doc(householdData.ownerId)
         .get();
-      if (ownerSnap.exists) {
-        ownerName = ownerSnap.data()?.fullName || ownerName;
-      }
+      ownerName = ownerSnap.data()?.fullName || ownerName;
     }
 
     return {
-      code: invData.code,
-      householdId: invData.householdId,
-      householdName: householdData.name || invData.householdName,
+      code,
+      householdId: check.data.householdId,
+      householdName: householdData.name || check.data.householdName,
       ownerName,
       memberCount: members.length,
-      alreadyMember,
-      expiresAt: expiresAt.toISOString(),
+      memberLimit: limit,
+      alreadyMember: members.includes(callerUid),
+      expiresAt: check.expiresAt.toISOString(),
     };
   }
 
   /**
-   * Joins a household using a valid invitation code (BR-04, BR-05, BR-06).
+   * Joins a household with an invitation code and makes it the active one.
+   * Re-joining a household the user already belongs to only switches to it.
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} rawCode Code as typed by the user.
+   * @return {Promise<object>} Joined household id and name.
    */
   static async joinHousehold(
     callerUid: string,
     rawCode: string
   ): Promise<{householdId: string; householdName: string}> {
-    const code = rawCode.trim().toUpperCase();
-    if (!code) {
-      throwInvalidArgument("Mã lời mời không được để trống.");
-    }
+    await this.assertNotLockedOut(callerUid);
+    const code = await this.requireValidCodeFormat(callerUid, rawCode);
 
-    const querySnap = await db
-      .collection(Collections.HOUSEHOLD_INVITATIONS)
-      .where("code", "==", code)
-      .limit(1)
-      .get();
-
-    if (querySnap.empty) {
-      throwNotFound("Mã lời mời không hợp lệ hoặc không tồn tại.");
-    }
-
-    const invDoc = querySnap.docs[0];
-    const invData = invDoc.data();
-
-    if (invData.status !== "active") {
-      throwInvalidArgument("Mã lời mời đã bị thu hồi hoặc không còn hiệu lực.");
-    }
-
-    const expiresAt = (invData.expiresAt as Timestamp).toDate();
-    if (expiresAt.getTime() <= Date.now()) {
-      await invDoc.ref.update({
-        status: "expired",
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      throwInvalidArgument("Mã lời mời đã hết hạn.");
-    }
-
-    const householdId: string = invData.householdId;
-    const householdRef = db.collection(Collections.HOUSEHOLDS).doc(householdId);
+    const invRef = db.collection(Collections.HOUSEHOLD_INVITATIONS).doc(code);
     const userRef = db.collection(Collections.USERS).doc(callerUid);
 
-    let householdName = "";
+    // The invitation is re-read inside the transaction so a concurrent revoke
+    // cannot let a user in after the owner disabled the code.
+    const outcome = await db.runTransaction(async (tx) => {
+      const invSnap = await tx.get(invRef);
+      const check = checkInvitation(invSnap.data());
+      if (!check.ok) {
+        if (check.markExpired) {
+          tx.update(invRef, {
+            status: "expired",
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+        return {joined: false as const, full: false as const, message: check.message};
+      }
 
-    await db.runTransaction(async (tx) => {
-      const householdSnap = await tx.get(householdRef);
+      const householdId: string = check.data.householdId;
+      const householdRef = db.collection(Collections.HOUSEHOLDS).doc(householdId);
+      const [householdSnap, userSnap] = await Promise.all([
+        tx.get(householdRef),
+        tx.get(userRef),
+      ]);
       if (!householdSnap.exists) {
         throwNotFound("Gia đình không tồn tại.");
       }
 
       const householdData = householdSnap.data()!;
-      householdName = householdData.name || "Gia đình FOORA";
+      const householdName: string = householdData.name || "Gia đình FOORA";
       const members: string[] = householdData.members || [];
-
-      if (members.includes(callerUid)) {
-        throwInvalidArgument("Bạn đã là thành viên của gia đình này.");
-      }
-
       const serverTimestamp = FieldValue.serverTimestamp();
 
-      // Add user to household members list
+      if (members.includes(callerUid)) {
+        tx.update(userRef, {
+          activeHouseholdId: householdId,
+          updatedAt: serverTimestamp,
+        });
+        return {joined: true as const, householdId, householdName};
+      }
+
+      const {limit, planName} = await this.getMemberLimit(householdData.ownerId);
+      if (members.length >= limit) {
+        // Existing members are never removed when a plan is downgraded;
+        // only new joins are blocked.
+        return {
+          joined: false as const,
+          full: true as const,
+          ownerId: householdData.ownerId as string,
+          householdId,
+          householdName,
+          memberName: (userSnap.data()?.fullName as string) || "Một người",
+          message:
+            `Gia đình này đã đủ ${limit} thành viên theo gói ${planName} ` +
+            "của chủ gia đình. Hãy nhờ chủ gia đình nâng cấp Premium để " +
+            "mời thêm thành viên.",
+        };
+      }
+
       tx.update(householdRef, {
         members: FieldValue.arrayUnion(callerUid),
         updatedAt: serverTimestamp,
       });
-
-      // Switch newly joined household as activeHouseholdId
+      tx.update(invRef, {
+        useCount: FieldValue.increment(1),
+        updatedAt: serverTimestamp,
+      });
       tx.update(userRef, {
         activeHouseholdId: householdId,
         updatedAt: serverTimestamp,
       });
+
+      if (householdData.ownerId) {
+        const memberName = userSnap.data()?.fullName || "Một thành viên mới";
+        this.createSystemNotification(tx, householdData.ownerId, householdId, {
+          title: "Thành viên mới",
+          message: `${memberName} đã tham gia "${householdName}".`,
+        });
+      }
+
+      return {joined: true as const, householdId, householdName};
     });
 
+    if (!outcome.joined && outcome.full) {
+      await this.notifyOwnerHouseholdFull(
+        outcome.ownerId,
+        outcome.householdId,
+        outcome.householdName,
+        callerUid,
+        outcome.memberName
+      );
+      throwFailedPrecondition(outcome.message);
+    }
+    if (!outcome.joined) {
+      await this.recordFailedAttempt(callerUid);
+      throwNotFound(outcome.message);
+    }
+
+    await this.clearFailedAttempts(callerUid);
     logger.info(
-      `[HouseholdService] User ${callerUid} successfully joined household ${householdId} (${householdName})`
+      `[HouseholdService] User ${callerUid} joined household ` +
+      `${outcome.householdId} (${outcome.householdName})`
     );
 
-    return {householdId, householdName};
+    return {householdId: outcome.householdId, householdName: outcome.householdName};
   }
 
   /**
-   * Revokes an active invitation.
-   * Only Household Owner can revoke invitations (BR-03).
+   * Revokes the household's invitation. Owner only (BR-03).
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} householdId Household owning the invitation.
+   * @param {string} invitationId Invitation id (the code).
+   * @return {Promise<void>}
    */
   static async revokeInvitation(
     callerUid: string,
     householdId: string,
     invitationId: string
   ): Promise<void> {
-    const householdSnap = await db.collection(Collections.HOUSEHOLDS).doc(householdId).get();
-    if (!householdSnap.exists) {
-      throwNotFound("Không tìm thấy thông tin gia đình.");
-    }
-    if (householdSnap.data()?.ownerId !== callerUid) {
-      throwPermissionDenied("Chỉ chủ gia đình mới có quyền thu hồi lời mời.");
-    }
-
+    const householdRef = db.collection(Collections.HOUSEHOLDS).doc(householdId);
     const invRef = db.collection(Collections.HOUSEHOLD_INVITATIONS).doc(invitationId);
-    const invSnap = await invRef.get();
-    if (!invSnap.exists) {
-      throwNotFound("Không tìm thấy lời mời.");
-    }
 
-    await invRef.update({
-      status: "revoked",
-      updatedAt: FieldValue.serverTimestamp(),
+    await db.runTransaction(async (tx) => {
+      const [householdSnap, invSnap] = await Promise.all([
+        tx.get(householdRef),
+        tx.get(invRef),
+      ]);
+      if (!householdSnap.exists) {
+        throwNotFound("Không tìm thấy thông tin gia đình.");
+      }
+      if (householdSnap.data()?.ownerId !== callerUid) {
+        throwPermissionDenied("Chỉ chủ gia đình mới có quyền thu hồi lời mời.");
+      }
+      // Never let an owner touch another household's invitation.
+      if (!invSnap.exists || invSnap.data()?.householdId !== householdId) {
+        throwNotFound("Không tìm thấy lời mời.");
+      }
+      if (invSnap.data()?.status !== "active") {
+        return;
+      }
+
+      tx.update(invRef, {
+        status: "revoked",
+        updatedAt: FieldValue.serverTimestamp(),
+      });
     });
 
     logger.info(
-      `[HouseholdService] Owner ${callerUid} revoked invitation ${invitationId} for household ${householdId}`
+      `[HouseholdService] Owner ${callerUid} revoked invitation ` +
+      `${invitationId} for household ${householdId}`
     );
   }
 
   /**
-   * Retrieves the current active invitation for a household if any.
+   * Returns the household's current valid invitation, if any. Owner only.
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} householdId Household id.
+   * @return {Promise<HouseholdInvitationResult | null>} Active invitation.
    */
   static async getActiveInvitation(
     callerUid: string,
@@ -347,16 +457,19 @@ export class HouseholdService {
       invitationId: invDoc.id,
       code: invData.code,
       householdId: invData.householdId,
-      householdName: invData.householdName || householdSnap.data()?.name || "",
+      householdName: householdSnap.data()?.name || invData.householdName || "",
       expiresAt: expiresAt.toISOString(),
-      shareUrl: `https://foora.app/household/join?code=${invData.code}`,
     };
   }
 
   /**
-   * Removes a member from the household.
-   * Only Household Owner can remove members (BR-04).
-   * Owner cannot remove themselves (BR-04, FR-05).
+   * Removes a member from the household. Owner only; the owner cannot remove
+   * themselves (BR-04). The removed member is moved back to their own
+   * household and notified.
+   * @param {string} callerUid Authenticated user id (owner).
+   * @param {string} householdId Household id.
+   * @param {string} memberUserId Member to remove.
+   * @return {Promise<void>}
    */
   static async removeMember(
     callerUid: string,
@@ -368,154 +481,70 @@ export class HouseholdService {
     }
 
     const householdRef = db.collection(Collections.HOUSEHOLDS).doc(householdId);
-    const householdSnap = await householdRef.get();
-    if (!householdSnap.exists) {
-      throwNotFound("Không tìm thấy thông tin gia đình.");
-    }
-
-    const householdData = householdSnap.data()!;
-    if (householdData.ownerId !== callerUid) {
-      throwPermissionDenied("Chỉ chủ gia đình mới có quyền xóa thành viên.");
-    }
-
-    const members: string[] = householdData.members || [];
-    if (!members.includes(memberUserId)) {
-      throwNotFound("Người dùng không thuộc gia đình này.");
-    }
-
-    const serverTimestamp = FieldValue.serverTimestamp();
-    const memberUserRef = db.collection(Collections.USERS).doc(memberUserId);
 
     await db.runTransaction(async (tx) => {
-      // 1. Remove member from household members list
-      tx.update(householdRef, {
-        members: FieldValue.arrayRemove(memberUserId),
-        updatedAt: serverTimestamp,
-      });
-
-      // 2. If the removed user's active household was this one, redirect them to another household
-      const memberUserSnap = await tx.get(memberUserRef);
-      if (
-        memberUserSnap.exists &&
-        memberUserSnap.data()?.activeHouseholdId === householdId
-      ) {
-        // Query other households the member belongs to
-        const otherHouseholdsSnap = await db
-          .collection(Collections.HOUSEHOLDS)
-          .where("members", "array-contains", memberUserId)
-          .limit(2)
-          .get();
-
-        const fallbackHousehold = otherHouseholdsSnap.docs.find(
-          (doc) => doc.id !== householdId
-        );
-
-        if (fallbackHousehold) {
-          tx.update(memberUserRef, {
-            activeHouseholdId: fallbackHousehold.id,
-            updatedAt: serverTimestamp,
-          });
-        } else {
-          // If no other household, create a new personal default household for the member
-          const newPersonalHouseholdRef = db.collection(Collections.HOUSEHOLDS).doc();
-          const memberName = memberUserSnap.data()?.fullName || "tôi";
-          tx.set(newPersonalHouseholdRef, {
-            name: `Tủ lạnh của ${memberName}`,
-            ownerId: memberUserId,
-            members: [memberUserId],
-            activeItemCount: 0,
-            createdAt: serverTimestamp,
-            updatedAt: serverTimestamp,
-          });
-
-          tx.update(memberUserRef, {
-            activeHouseholdId: newPersonalHouseholdRef.id,
-            updatedAt: serverTimestamp,
-          });
-        }
+      const householdSnap = await tx.get(householdRef);
+      if (!householdSnap.exists) {
+        throwNotFound("Không tìm thấy thông tin gia đình.");
       }
+
+      const householdData = householdSnap.data()!;
+      if (householdData.ownerId !== callerUid) {
+        throwPermissionDenied("Chỉ chủ gia đình mới có quyền xóa thành viên.");
+      }
+
+      const members: string[] = householdData.members || [];
+      if (!members.includes(memberUserId)) {
+        throwNotFound("Người dùng không thuộc gia đình này.");
+      }
+
+      await this.detachMember(tx, householdId, memberUserId);
+      this.createSystemNotification(tx, memberUserId, householdId, {
+        title: "Bạn đã bị xóa khỏi gia đình",
+        message:
+          `Chủ gia đình đã xóa bạn khỏi "${householdData.name || "gia đình"}". ` +
+          "Bạn đã được chuyển về tủ lạnh của mình.",
+      });
     });
 
     logger.info(
-      `[HouseholdService] Owner ${callerUid} removed member ${memberUserId} from household ${householdId}`
+      `[HouseholdService] Owner ${callerUid} removed member ` +
+      `${memberUserId} from household ${householdId}`
     );
   }
 
   /**
-   * Voluntary leave of a household by a member (FR-07, BR-12).
-   * Owner cannot leave without transferring ownership (BR-12).
+   * Voluntary leave by a non-owner member (FR-07). The owner cannot leave
+   * their own household. The user is moved back to their own household.
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} householdId Household to leave.
+   * @return {Promise<void>}
    */
   static async leaveHousehold(
     callerUid: string,
     householdId: string
   ): Promise<void> {
     const householdRef = db.collection(Collections.HOUSEHOLDS).doc(householdId);
-    const householdSnap = await householdRef.get();
-    if (!householdSnap.exists) {
-      throwNotFound("Không tìm thấy thông tin gia đình.");
-    }
-
-    const householdData = householdSnap.data()!;
-    if (householdData.ownerId === callerUid) {
-      throwFailedPrecondition(
-        "Chủ gia đình không thể rời gia đình. Bạn cần chuyển quyền sở hữu trước."
-      );
-    }
-
-    const members: string[] = householdData.members || [];
-    if (!members.includes(callerUid)) {
-      throwInvalidArgument("Bạn không phải là thành viên của gia đình này.");
-    }
-
-    const serverTimestamp = FieldValue.serverTimestamp();
-    const callerUserRef = db.collection(Collections.USERS).doc(callerUid);
 
     await db.runTransaction(async (tx) => {
-      // 1. Remove caller from members
-      tx.update(householdRef, {
-        members: FieldValue.arrayRemove(callerUid),
-        updatedAt: serverTimestamp,
-      });
-
-      // 2. If activeHousehold was this one, switch to another or recreate personal default
-      const callerUserSnap = await tx.get(callerUserRef);
-      if (
-        callerUserSnap.exists &&
-        callerUserSnap.data()?.activeHouseholdId === householdId
-      ) {
-        const otherHouseholdsSnap = await db
-          .collection(Collections.HOUSEHOLDS)
-          .where("members", "array-contains", callerUid)
-          .limit(2)
-          .get();
-
-        const fallback = otherHouseholdsSnap.docs.find(
-          (doc) => doc.id !== householdId
-        );
-
-        if (fallback) {
-          tx.update(callerUserRef, {
-            activeHouseholdId: fallback.id,
-            updatedAt: serverTimestamp,
-          });
-        } else {
-          const newHouseholdRef = db.collection(Collections.HOUSEHOLDS).doc();
-          const callerName = callerUserSnap.data()?.fullName || "tôi";
-          tx.set(newHouseholdRef, {
-            name: `Tủ lạnh của ${callerName}`,
-            ownerId: callerUid,
-            members: [callerUid],
-            activeItemCount: 0,
-            createdAt: serverTimestamp,
-            updatedAt: serverTimestamp,
-          });
-
-          tx.update(callerUserRef, {
-            activeHouseholdId: newHouseholdRef.id,
-            updatedAt: serverTimestamp,
-          });
-        }
+      const householdSnap = await tx.get(householdRef);
+      if (!householdSnap.exists) {
+        throwNotFound("Không tìm thấy thông tin gia đình.");
       }
+
+      const householdData = householdSnap.data()!;
+      if (householdData.ownerId === callerUid) {
+        throwFailedPrecondition(
+          "Chủ gia đình không thể rời khỏi gia đình của chính mình."
+        );
+      }
+
+      const members: string[] = householdData.members || [];
+      if (!members.includes(callerUid)) {
+        throwInvalidArgument("Bạn không phải là thành viên của gia đình này.");
+      }
+
+      await this.detachMember(tx, householdId, callerUid);
     });
 
     logger.info(
@@ -524,7 +553,10 @@ export class HouseholdService {
   }
 
   /**
-   * Switches the active household for the authenticated user (FR-08, BR-09).
+   * Switches the active household for the authenticated user (FR-08).
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} householdId Household to activate.
+   * @return {Promise<void>}
    */
   static async switchHousehold(
     callerUid: string,
@@ -552,8 +584,11 @@ export class HouseholdService {
   }
 
   /**
-   * Updates household name (FR-02).
-   * Only Household Owner can update name.
+   * Updates the household name (FR-02). Owner only.
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} householdId Household id.
+   * @param {string} rawName New name.
+   * @return {Promise<void>}
    */
   static async updateHouseholdName(
     callerUid: string,
@@ -586,8 +621,11 @@ export class HouseholdService {
   }
 
   /**
-   * Retrieves public profile list of all members in a household (FR-01, FR-05).
-   * Only members can view member list.
+   * Returns the public profile (name, avatar, role) of every member.
+   * Emails are never exposed to other members. Members only.
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} householdId Household id.
+   * @return {Promise<HouseholdMemberInfo[]>} Owner first, then caller.
    */
   static async getHouseholdMembers(
     callerUid: string,
@@ -606,44 +644,238 @@ export class HouseholdService {
       throwPermissionDenied("Bạn không có quyền xem danh sách thành viên của gia đình này.");
     }
 
-    if (members.length === 0) {
-      return [];
-    }
+    const userSnaps = await db.getAll(
+      ...members.map((uid) => db.collection(Collections.USERS).doc(uid))
+    );
 
-    // Fetch user profiles in batches of 30 (Firestore in constraint limit)
-    const memberProfiles: HouseholdMemberInfo[] = [];
-    const chunkSize = 30;
-
-    for (let i = 0; i < members.length; i += chunkSize) {
-      const chunk = members.slice(i, i + chunkSize);
-      const usersSnap = await db
-        .collection(Collections.USERS)
-        .where(FieldPath.documentId(), "in", chunk)
-        .get();
-
-      for (const userDoc of usersSnap.docs) {
-        const udata = userDoc.data();
-        const uid = userDoc.id;
-        memberProfiles.push({
-          id: uid,
+    const memberProfiles: HouseholdMemberInfo[] = userSnaps
+      .filter((snap) => snap.exists)
+      .map((snap) => {
+        const udata = snap.data()!;
+        return {
+          id: snap.id,
           fullName: udata.fullName || "Thành viên FOORA",
-          email: udata.email || "",
           avatarUrl: udata.avatarUrl || null,
-          role: uid === ownerId ? "owner" : "member",
-          isCurrentUser: uid === callerUid,
-        });
-      }
-    }
+          role: snap.id === ownerId ? "owner" : "member",
+          isCurrentUser: snap.id === callerUid,
+        };
+      });
 
-    // Sort: Owner first, then current user, then alphabetical by fullName
+    // Owner first, then the current user, then alphabetical by name.
     memberProfiles.sort((a, b) => {
-      if (a.role === "owner") return -1;
-      if (b.role === "owner") return 1;
-      if (a.isCurrentUser) return -1;
-      if (b.isCurrentUser) return 1;
+      if (a.role !== b.role) return a.role === "owner" ? -1 : 1;
+      if (a.isCurrentUser !== b.isCurrentUser) return a.isCurrentUser ? -1 : 1;
       return a.fullName.localeCompare(b.fullName);
     });
 
     return memberProfiles;
+  }
+
+  /**
+   * Removes `uid` from the household and, when it was their active one,
+   * points them back to the household they own (created if missing, same
+   * shape as onUserCreated). Performs all its reads before any write, so
+   * callers must finish their own reads first.
+   * @param {Transaction} tx Running transaction.
+   * @param {string} householdId Household being left.
+   * @param {string} uid Member leaving.
+   * @return {Promise<void>}
+   */
+  private static async detachMember(
+    tx: Transaction,
+    householdId: string,
+    uid: string
+  ): Promise<void> {
+    const householdRef = db.collection(Collections.HOUSEHOLDS).doc(householdId);
+    const userRef = db.collection(Collections.USERS).doc(uid);
+
+    const userSnap = await tx.get(userRef);
+    const needsNewActive =
+      userSnap.exists && userSnap.data()?.activeHouseholdId === householdId;
+    const ownHouseholdSnap = needsNewActive ?
+      await tx.get(
+        db.collection(Collections.HOUSEHOLDS).where("ownerId", "==", uid).limit(1)
+      ) :
+      null;
+
+    const serverTimestamp = FieldValue.serverTimestamp();
+    tx.update(householdRef, {
+      members: FieldValue.arrayRemove(uid),
+      updatedAt: serverTimestamp,
+    });
+
+    if (!needsNewActive) {
+      return;
+    }
+
+    let fallbackId = ownHouseholdSnap?.docs[0]?.id;
+    if (!fallbackId) {
+      const newHouseholdRef = db.collection(Collections.HOUSEHOLDS).doc();
+      const fullName = userSnap.data()?.fullName || "tôi";
+      tx.set(newHouseholdRef, {
+        name: `Tủ lạnh của ${fullName}`,
+        ownerId: uid,
+        members: [uid],
+        activeItemCount: 0,
+        createdAt: serverTimestamp,
+        updatedAt: serverTimestamp,
+      });
+      fallbackId = newHouseholdRef.id;
+    }
+
+    tx.update(userRef, {
+      activeHouseholdId: fallbackId,
+      updatedAt: serverTimestamp,
+    });
+  }
+
+  /**
+   * Queues a `system` notification; onNotificationNew delivers the push.
+   * @param {Transaction} tx Running transaction.
+   * @param {string} userId Recipient.
+   * @param {string} householdId Related household.
+   * @param {object} content Title and message.
+   */
+  private static createSystemNotification(
+    tx: Transaction,
+    userId: string,
+    householdId: string,
+    content: {title: string; message: string}
+  ): void {
+    const ref = db
+      .collection(Collections.USERS)
+      .doc(userId)
+      .collection(Collections.NOTIFICATIONS)
+      .doc();
+    tx.set(ref, {
+      householdId,
+      type: "system",
+      title: content.title,
+      message: content.message,
+      inventoryItemId: null,
+      isRead: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  /**
+   * Resolves how many people a household may hold from its owner's active
+   * plan (`memberships/{id}.memberLimit`), capped by MAX_HOUSEHOLD_MEMBERS.
+   * @param {string} ownerId Household owner uid.
+   * @return {Promise<HouseholdMemberLimit>} Seat limit and plan name.
+   */
+  private static async getMemberLimit(
+    ownerId: string
+  ): Promise<HouseholdMemberLimit> {
+    const membershipId = await MembershipService.resolveMembershipId(ownerId);
+    const {memberLimit, name} = await MembershipService.getLimits(membershipId);
+    return {
+      limit: Math.min(memberLimit ?? MAX_HOUSEHOLD_MEMBERS, MAX_HOUSEHOLD_MEMBERS),
+      planName: name,
+    };
+  }
+
+  /**
+   * Tells the owner that someone could not join because the household is
+   * full, so they can upgrade. The id is deterministic per household and
+   * requester, so repeated attempts update one notification instead of
+   * spamming pushes.
+   * @param {string} ownerId Household owner uid.
+   * @param {string} householdId Household id.
+   * @param {string} householdName Household name.
+   * @param {string} requesterUid User who tried to join.
+   * @param {string} requesterName Display name of that user.
+   * @return {Promise<void>}
+   */
+  private static async notifyOwnerHouseholdFull(
+    ownerId: string,
+    householdId: string,
+    householdName: string,
+    requesterUid: string,
+    requesterName: string
+  ): Promise<void> {
+    await db
+      .collection(Collections.USERS)
+      .doc(ownerId)
+      .collection(Collections.NOTIFICATIONS)
+      .doc(`household_full_${householdId}_${requesterUid}`)
+      .set({
+        householdId,
+        type: "system",
+        title: "Gia đình đã đủ thành viên",
+        message:
+          `${requesterName} muốn tham gia "${householdName}" nhưng gia đình ` +
+          "đã đủ chỗ. Nâng cấp Premium để mời thêm thành viên.",
+        inventoryItemId: null,
+        isRead: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+  }
+
+  /**
+   * Normalizes the code and rejects malformed input (counted as a failure).
+   * @param {string} callerUid Authenticated user id.
+   * @param {string} rawCode Code as typed by the user.
+   * @return {Promise<string>} Normalized code.
+   */
+  private static async requireValidCodeFormat(
+    callerUid: string,
+    rawCode: string
+  ): Promise<string> {
+    const code = normalizeInviteCode(rawCode);
+    if (!code) {
+      throwInvalidArgument("Mã lời mời không được để trống.");
+    }
+    if (!isValidInviteCode(code)) {
+      await this.recordFailedAttempt(callerUid);
+      throwNotFound(INVALID_CODE_MESSAGE);
+    }
+    return code;
+  }
+
+  /**
+   * Blocks users who entered too many wrong codes in the current window.
+   * @param {string} uid Authenticated user id.
+   * @return {Promise<void>}
+   */
+  private static async assertNotLockedOut(uid: string): Promise<void> {
+    const snap = await db.collection(Collections.INVITE_ATTEMPTS).doc(uid).get();
+    const data = snap.data();
+    if (!data) return;
+
+    const windowStart = (data.windowStart as Timestamp).toMillis();
+    const inWindow = Date.now() - windowStart < INVITE_ATTEMPT_WINDOW_MS;
+    if (inWindow && (data.failedCount as number) >= MAX_FAILED_INVITE_ATTEMPTS) {
+      throwResourceExhausted(
+        "Bạn nhập sai mã quá nhiều lần, vui lòng thử lại sau 1 giờ."
+      );
+    }
+  }
+
+  /**
+   * Increments the wrong-code counter, starting a new window when expired.
+   * @param {string} uid Authenticated user id.
+   * @return {Promise<void>}
+   */
+  private static async recordFailedAttempt(uid: string): Promise<void> {
+    const ref = db.collection(Collections.INVITE_ATTEMPTS).doc(uid);
+    await db.runTransaction(async (tx) => {
+      const data = (await tx.get(ref)).data();
+      const windowStart = data ? (data.windowStart as Timestamp).toMillis() : 0;
+      if (!data || Date.now() - windowStart >= INVITE_ATTEMPT_WINDOW_MS) {
+        tx.set(ref, {failedCount: 1, windowStart: Timestamp.now()});
+      } else {
+        tx.update(ref, {failedCount: FieldValue.increment(1)});
+      }
+    });
+  }
+
+  /**
+   * Resets the wrong-code counter after a successful join.
+   * @param {string} uid Authenticated user id.
+   * @return {Promise<void>}
+   */
+  private static async clearFailedAttempts(uid: string): Promise<void> {
+    await db.collection(Collections.INVITE_ATTEMPTS).doc(uid).delete();
   }
 }

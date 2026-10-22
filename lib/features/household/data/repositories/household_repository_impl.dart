@@ -14,12 +14,20 @@ class HouseholdRepositoryImpl implements HouseholdRepository {
 
   @override
   Stream<Household?> watchHousehold(String householdId) {
-    return remoteDataSource.watchHousehold(householdId);
+    return remoteDataSource.watchHousehold(householdId).handleError(_toFailure);
   }
 
   @override
   Stream<List<Household>> watchUserHouseholds(String userId) {
-    return remoteDataSource.watchUserHouseholds(userId);
+    return remoteDataSource.watchUserHouseholds(userId).handleError(_toFailure);
+  }
+
+  /// Maps stream errors (e.g. permission-denied right after being removed
+  /// from a household) to domain failures instead of raw exceptions.
+  Never _toFailure(Object error) {
+    if (error is Failure) throw error;
+    if (error is AppException) throw Failure.fromException(error);
+    throw ServerFailure('Không thể đồng bộ dữ liệu gia đình: $error');
   }
 
   @override
@@ -53,12 +61,10 @@ class HouseholdRepositoryImpl implements HouseholdRepository {
   @override
   Future<HouseholdInvitation> generateInvitation({
     required String householdId,
-    int expiresInDays = 7,
   }) async {
     try {
       return await remoteDataSource.generateInvitation(
         householdId: householdId,
-        expiresInDays: expiresInDays,
       );
     } on AppException catch (e) {
       throw Failure.fromException(e);

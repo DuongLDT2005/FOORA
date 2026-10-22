@@ -10,7 +10,6 @@ import {
 
 interface GenerateInvitationInput {
   householdId: string;
-  expiresInDays?: number;
 }
 
 export const generateHouseholdInvitation = onCall<GenerateInvitationInput>(
@@ -18,16 +17,16 @@ export const generateHouseholdInvitation = onCall<GenerateInvitationInput>(
   async (request): Promise<ApiResponse<HouseholdInvitationResult>> => {
     try {
       const user = await getAuthenticatedUser(request);
-      const {householdId, expiresInDays} = request.data || {};
+      const {householdId} = request.data || {};
 
       if (!householdId || typeof householdId !== "string") {
         throwInvalidArgument("Thiếu hoặc sai định dạng householdId.");
       }
 
+      // Lifetime is fixed server-side (7 days); clients cannot extend it.
       const result = await HouseholdService.createInvitation(
         user.uid,
-        householdId,
-        expiresInDays ?? 7
+        householdId
       );
 
       return {

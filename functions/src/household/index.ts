@@ -9,4 +9,3 @@ export * from "./callables/leave_household";
 export * from "./callables/switch_household";
 export * from "./callables/update_household_name";
 export * from "./callables/get_household_members";
-export * from "./services/household_service";

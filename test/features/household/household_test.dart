@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foora/features/membership/data/models/membership_plan_model.dart';
 import 'package:foora/core/constants/app_enums.dart';
 import 'package:foora/features/household/domain/entities/household.dart';
 import 'package:foora/features/household/domain/entities/household_invitation.dart';
@@ -14,6 +15,7 @@ import 'package:foora/features/household/domain/usecases/remove_member.dart';
 import 'package:foora/features/household/domain/usecases/revoke_household_invitation.dart';
 import 'package:foora/features/household/domain/usecases/switch_household.dart';
 import 'package:foora/features/household/domain/usecases/update_household_name.dart';
+import 'package:foora/features/household/domain/usecases/validate_invite_code.dart';
 
 class FakeHouseholdRepository implements HouseholdRepository {
   final Map<String, Household> households = {};
@@ -53,15 +55,13 @@ class FakeHouseholdRepository implements HouseholdRepository {
   @override
   Future<HouseholdInvitation> generateInvitation({
     required String householdId,
-    int expiresInDays = 7,
   }) async {
     final inv = HouseholdInvitation(
       id: 'inv-123',
-      code: 'FOORA-TEST',
+      code: 'AB3K7Q',
       householdId: householdId,
       householdName: 'Gia đình Test',
-      expiresAt: DateTime.now().add(Duration(days: expiresInDays)),
-      shareUrl: 'https://foora.app/household/join?code=FOORA-TEST',
+      expiresAt: DateTime.now().add(const Duration(days: 7)),
     );
     activeInvitation = inv;
     return inv;
@@ -89,6 +89,7 @@ class FakeHouseholdRepository implements HouseholdRepository {
       householdName: 'Gia đình Test',
       ownerName: 'Nguyễn Văn A',
       memberCount: 2,
+      memberLimit: 3,
       alreadyMember: false,
       expiresAt: DateTime.now().add(const Duration(days: 5)),
     );
@@ -140,7 +141,6 @@ void main() {
       const owner = HouseholdMember(
         id: 'u-1',
         fullName: 'Nguyễn Văn An',
-        email: 'an@gmail.com',
         role: HouseholdRole.owner,
         isCurrentUser: true,
       );
@@ -148,7 +148,6 @@ void main() {
       const member = HouseholdMember(
         id: 'u-2',
         fullName: 'Bình',
-        email: 'binh@gmail.com',
         role: HouseholdRole.member,
       );
 
@@ -165,7 +164,6 @@ void main() {
         householdId: 'h-1',
         householdName: 'Test',
         expiresAt: DateTime.now().subtract(const Duration(hours: 1)),
-        shareUrl: 'https://foora.app/household/join?code=EXP-123',
       );
 
       final validInv = HouseholdInvitation(
@@ -174,7 +172,6 @@ void main() {
         householdId: 'h-1',
         householdName: 'Test',
         expiresAt: DateTime.now().add(const Duration(days: 2)),
-        shareUrl: 'https://foora.app/household/join?code=VAL-123',
       );
 
       expect(expiredInv.isExpired, isTrue);
@@ -207,30 +204,33 @@ void main() {
       expect(emitted?.name, 'Nhà của tôi');
     });
 
-    test('WatchUserHouseholdsUseCase emits list of joined households', () async {
-      final now = DateTime.now();
-      repository.households['h-1'] = Household(
-        id: 'h-1',
-        name: 'Nhà A',
-        ownerId: 'u-1',
-        members: ['u-1'],
-        createdAt: now,
-        updatedAt: now,
-      );
-      repository.households['h-2'] = Household(
-        id: 'h-2',
-        name: 'Nhà B',
-        ownerId: 'u-2',
-        members: ['u-1', 'u-2'],
-        createdAt: now,
-        updatedAt: now,
-      );
+    test(
+      'WatchUserHouseholdsUseCase emits list of joined households',
+      () async {
+        final now = DateTime.now();
+        repository.households['h-1'] = Household(
+          id: 'h-1',
+          name: 'Nhà A',
+          ownerId: 'u-1',
+          members: ['u-1'],
+          createdAt: now,
+          updatedAt: now,
+        );
+        repository.households['h-2'] = Household(
+          id: 'h-2',
+          name: 'Nhà B',
+          ownerId: 'u-2',
+          members: ['u-1', 'u-2'],
+          createdAt: now,
+          updatedAt: now,
+        );
 
-      final useCase = WatchUserHouseholdsUseCase(repository);
-      final list = await useCase('u-1').first;
+        final useCase = WatchUserHouseholdsUseCase(repository);
+        final list = await useCase('u-1').first;
 
-      expect(list.length, 2);
-    });
+        expect(list.length, 2);
+      },
+    );
 
     test('UpdateHouseholdNameUseCase updates name via repository', () async {
       final useCase = UpdateHouseholdNameUseCase(repository);
@@ -243,18 +243,17 @@ void main() {
       final useCase = GenerateHouseholdInvitationUseCase(repository);
       final inv = await useCase(householdId: 'h-1');
 
-      expect(inv.code, 'FOORA-TEST');
-      expect(repository.activeInvitation?.code, 'FOORA-TEST');
+      expect(inv.code, 'AB3K7Q');
+      expect(repository.activeInvitation?.code, 'AB3K7Q');
     });
 
     test('RevokeHouseholdInvitationUseCase clears active invitation', () async {
       repository.activeInvitation = HouseholdInvitation(
         id: 'inv-1',
-        code: 'FOORA-TEST',
+        code: 'AB3K7Q',
         householdId: 'h-1',
         householdName: 'Test',
         expiresAt: DateTime.now().add(const Duration(days: 1)),
-        shareUrl: 'https://foora.app/household/join?code=FOORA-TEST',
       );
 
       final useCase = RevokeHouseholdInvitationUseCase(repository);
@@ -265,7 +264,7 @@ void main() {
 
     test('JoinHouseholdUseCase delegates to repository', () async {
       final useCase = JoinHouseholdUseCase(repository);
-      await expectLater(useCase('FOORA-TEST'), completes);
+      await expectLater(useCase('AB3K7Q'), completes);
     });
 
     test('RemoveHouseholdMemberUseCase delegates to repository', () async {
@@ -287,6 +286,48 @@ void main() {
       await useCase('h-2');
 
       expect(repository.switchedHouseholdId, 'h-2');
+    });
+  });
+
+  group('ValidateInviteCodeUseCase', () {
+    const validate = ValidateInviteCodeUseCase();
+
+    test('normalizes spaces, dashes and lower case', () {
+      expect(validate(' ab3-k7q '), 'AB3K7Q');
+    });
+
+    test('rejects wrong length and look-alike characters', () {
+      expect(validate('AB3K7'), isNull);
+      expect(validate('AB3K7QQ'), isNull);
+      for (final code in ['AB3K70', 'AB3KOQ', 'AB3K1Q', 'AB3KIQ', 'AB3KLQ']) {
+        expect(validate(code), isNull, reason: code);
+      }
+    });
+  });
+
+  group('Household member limit', () {
+    HouseholdInvitationInfo info(int count, int limit) =>
+        HouseholdInvitationInfo(
+          code: 'AB3K7Q',
+          householdId: 'h-1',
+          householdName: 'Nhà',
+          ownerName: 'An',
+          memberCount: count,
+          memberLimit: limit,
+          alreadyMember: false,
+          expiresAt: DateTime(2026, 12, 1),
+        );
+
+    test('isFull once seats are used up', () {
+      expect(info(2, 3).isFull, isFalse);
+      expect(info(3, 3).isFull, isTrue);
+    });
+
+    test('MembershipPlanModel parses memberLimit', () {
+      final free = MembershipPlanModel.fromJson({'memberLimit': 3}, id: 'free');
+      final legacy = MembershipPlanModel.fromJson({}, id: 'premium');
+      expect(free.memberLimit, 3);
+      expect(legacy.memberLimit, isNull);
     });
   });
 }
