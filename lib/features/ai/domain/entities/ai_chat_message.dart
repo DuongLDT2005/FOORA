@@ -1,6 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
+import 'ai_recipe.dart';
+import 'ai_action.dart';
+
 /// Pure domain entity representing a message in AI Assistant chat session.
 @immutable
 class AiChatMessage {
@@ -8,14 +11,18 @@ class AiChatMessage {
   final String content;
   final bool isUser;
   final DateTime timestamp;
-  final List<String> suggestedRecipes;
+  final List<AiRecipe> recipes;
+  final List<AiAction> actions;
+  final String? actionStatus;
 
   const AiChatMessage({
     required this.id,
     required this.content,
     required this.isUser,
     required this.timestamp,
-    this.suggestedRecipes = const [],
+    this.recipes = const [],
+    this.actions = const [],
+    this.actionStatus,
   });
 
   @override
@@ -26,10 +33,9 @@ class AiChatMessage {
         other.content == content &&
         other.isUser == isUser &&
         other.timestamp == timestamp &&
-        const ListEquality<dynamic>().equals(
-          other.suggestedRecipes,
-          suggestedRecipes,
-        );
+        const ListEquality<AiRecipe>().equals(other.recipes, recipes) &&
+        const ListEquality<AiAction>().equals(other.actions, actions) &&
+        other.actionStatus == actionStatus;
   }
 
   @override
@@ -38,6 +44,8 @@ class AiChatMessage {
     content,
     isUser,
     timestamp,
-    Object.hashAll(suggestedRecipes),
+    Object.hashAll(recipes),
+    Object.hashAll(actions),
+    actionStatus,
   );
 }

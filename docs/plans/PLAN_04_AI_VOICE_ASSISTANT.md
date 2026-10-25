@@ -2,9 +2,17 @@
 
 > Mục tiêu: chat tiếng Việt dựa trên tồn kho household, nhập câu hỏi bằng giọng nói, gợi ý món ưu tiên nguyên liệu sắp hết hạn, và **đề xuất** cập nhật kho để người dùng duyệt. Đây là kế hoạch triển khai; các con số quota và model là cấu hình ban đầu, cần kiểm tra lại trên môi trường chạy trước khi phát hành.
 
-## 1. Hiện trạng và phạm vi
+## Trạng thái triển khai (25/10/2026)
 
-- Flutter đã có khung `lib/features/ai/` nhưng phần lớn là stub. `functions/src/ai/index.ts` chưa export callable.
+- Đã triển khai structured JSON cho reply/recipe/action, lọc context và lịch sử theo household, recipe card, action review sheet, callable `applyAiActions`, kiểm tra snapshot/FEFO/foodLimit và `initialQuantity` trên các đường tạo/sửa item. Client chỉ ghi kho sau khi người dùng xác nhận action.
+- Đã thêm `firestore.indexes.json`, Rules, tài liệu dữ liệu, script backfill chạy trên Emulator và cấu hình `firebase.ai-test.json`. Kiểm tra: Functions 23 unit test, Flutter 112 test, Firestore Emulator cho apply đồng thời, retry, conflict, nhiều batch, giới hạn gói và migration mẫu.
+- Còn phải thử mic tiếng Việt và xử lý từ chối quyền trên thiết bị thật; gọi Gemini với secret thật để đo timeout/chi phí và xác nhận model; kiểm tra App Check trên các nền tảng trước khi bật enforcement; chạy backfill trên dữ liệu thật theo quy trình triển khai. Chưa deploy production hoặc tạo APK thử nghiệm trong đợt này. Shopping list tiếp tục phụ thuộc PLAN 01.
+
+## 1. Hiện trạng trước đợt triển khai và phạm vi
+
+- Đã có màn `/ai-assistant`, nhập text/mic tiếng Việt, transcript sửa trước khi gửi, lịch sử chat, quota theo ngày và callable `aiAssistant` được export. Đây là nền Phase 1, chưa đạt Definition of Done vì thiếu emulator integration test và kiểm tra mic trên thiết bị thật.
+- Backend hiện trả text thuần với `actions: []`, `recipes: []`; chưa có structured JSON output/validator cho recipe và action, `applyAiActions` hay migration `initialQuantity`.
+- Query lịch sử hiện giới hạn trước rồi mới lọc household; query inventory 150 item active theo hạn dùng có thể bị item quá hạn chiếm hết context. Sửa cả hai trước khi nghiệm thu Phase 1/2.
 - Inventory, household mặc định, membership, receipt scan và payment đã có luồng riêng; AI phải dùng lại repository, constants và quy tắc hiện có.
 - `speech_to_text` đã có trong `pubspec.yaml`; cần kiểm tra quyền và khả năng nhận tiếng Việt trên thiết bị thật.
 - Shopping list thuộc PLAN 01 và chưa hiện diện trong code đang chạy. Chat, recipe và cập nhật inventory **không phụ thuộc** PLAN 01. Chỉ nút “thêm nguyên liệu thiếu vào danh sách mua” triển khai sau khi API shopping list hoàn thành.
@@ -23,15 +31,15 @@ Voice luôn nghe, tự gửi lời nói, tự ghi kho, tư vấn y tế và thao
 ### 2.1 Số lượng và FEFO
 
 - `inventory_items.quantity` là **số lượng còn hiện tại**, không phải số lượng mua ban đầu.
-- Thêm `initialQuantity` là mốc để tính `remainingPercentage = round(quantity / initialQuantity * 100)`, giới hạn trong 0..100. Khi thêm item mới, đặt `initialQuantity = quantity`.
+- Thêm `initialQuantity` là mốc để tính `remainingPercentage = round(quantity / initialQuantity * 100)`, giới hạn trong 0..100. Item active mới phải có `quantity > 0` và `initialQuantity = quantity`; khi `quantity = 0`, đặt phần trăm bằng 0 và status tương ứng, không chia cho 0. Không cho `initialQuantity <= 0` trên item active.
 - Với item cũ thiếu `initialQuantity`: migration/backfill **trước phase cập nhật kho**; nếu `remainingPercentage > 0`, ước lượng `quantity / (remainingPercentage / 100)` và đánh dấu giá trị migration. Nếu không thể suy ra đáng tin cậy, dùng `quantity` làm mốc mới và ghi nhận việc reset phần trăm. Kiểm thử lại màn sửa item, status và mọi chỗ đọc `remainingPercentage`; cập nhật `DATABASE.md` và `firestore.rules`.
-- Một `inventory_item` là một batch. Khi dùng nhiều batch cùng tên, backend chia lượng trừ theo `expirationDate` tăng dần (FEFO), rồi `createdAt`/ID để có thứ tự ổn định. Nếu câu nói hoặc đơn vị mơ hồ, yêu cầu người dùng chọn batch và lượng; không đoán.
+- Một `inventory_item` là một batch. Khi dùng nhiều batch cùng tên và **cùng đơn vị rõ ràng**, backend chia lượng trừ theo `expirationDate` tăng dần (FEFO), rồi `createdAt`/ID để có thứ tự ổn định. Nếu tên, batch hoặc đơn vị mơ hồ, yêu cầu người dùng chọn batch và lượng; không đoán. Chỉ cho chọn những batch ứng viên đã lưu cùng snapshot trong đề xuất; nếu cần batch khác, tạo đề xuất mới từ trạng thái kho mới.
 - `set_quantity` đặt lượng còn lại cho **một batch được chọn rõ**. Nếu lời nói chỉ có tên và trùng nhiều batch, yêu cầu chọn batch. Không cho tăng số lượng qua `set_quantity`; mua thêm tạo batch mới qua `add_inventory`.
 - Không tự đổi `kg/g`, `hộp/quả` hoặc cắt lượng yêu cầu theo lượng tồn. Khi thiếu lượng, vượt tồn, đơn vị không khớp hay confidence thấp: `needsReview`; user phải sửa hoặc bỏ action.
 
 ### 2.2 Recipe
 
-- Chỉ item `active` và chưa quá hạn mới được đưa vào danh sách nguyên liệu có thể dùng; món quá hạn chỉ được nêu như cảnh báo.
+- Chỉ item `active` và chưa quá hạn mới được đưa vào danh sách nguyên liệu có thể dùng; món quá hạn chỉ được nêu như cảnh báo. Khi kho vượt giới hạn context, ưu tiên item chưa quá hạn theo HSD gần nhất; không để item quá hạn chiếm hết 150 chỗ và không khẳng định đã xem toàn bộ kho.
 - Recipe tối đa ba món, mỗi món tối đa 12 bước; ưu tiên item sắp hết hạn. `usesRefs` phải tham chiếu item trong context; nguyên liệu thiếu được hiển thị, chưa tạo shopping item.
 - Recipe là gợi ý, không tự trừ kho. Nếu sau này thêm nút “Đã nấu món này”, nút đó đi qua cùng luồng đề xuất và xác nhận action.
 
@@ -67,9 +75,9 @@ type SendResult = {
 
 1. Xác thực user, quyền household và input. Cùng `requestId` với payload khác phải bị từ chối.
 2. Transaction giữ chỗ quota và tạo `users/{uid}/ai_requests/{requestId}` trạng thái `pending`; retry `completed` trả kết quả đã lưu, retry `pending` báo đang xử lý. Không gọi model bên trong transaction.
-3. Đọc tối đa 150 item active theo hạn dùng, tối đa sáu lượt chat gần nhất. Context gửi model gồm alias ngắn, tên, lượng, đơn vị, ngày hết hạn, vị trí; không chứa UID/email. Nếu vượt giới hạn, nói rõ câu trả lời chỉ dựa trên một phần inventory; không khẳng định “không có” món nằm ngoài phần đã tải.
-4. Gọi Gemini với system instruction riêng và JSON schema gọn. Giới hạn tổng thời gian, số lần retry cho lỗi tạm thời; ghi model thực dùng.
-5. Validator kiểm tra câu trả lời, action, recipe, `ref`, số lượng, đơn vị và độ dài. Chuyển alias thành item ID, lưu `expectedUpdatedAt` (hoặc version) và snapshot số lượng/đơn vị cho mỗi action.
+3. Lấy tối đa 150 item active: ưu tiên item **chưa quá hạn** theo HSD gần nhất; chỉ dùng chỗ còn lại cho một số item quá hạn để cảnh báo, không dùng chúng làm `usesRefs` của recipe. Lấy tối đa sáu lượt chat gần nhất **của đúng household trước khi limit**, giữ cặp user/assistant theo `requestId`; UI cũng query 50 tin của đúng household trước khi limit. Thêm composite index `householdId + createdAt` nếu query yêu cầu. Context gửi model gồm alias ngắn, tên, lượng, đơn vị, ngày hết hạn, vị trí; không chứa UID/email. Nếu vượt giới hạn, nói rõ câu trả lời chỉ dựa trên một phần inventory; không khẳng định “không có” món nằm ngoài phần đã tải.
+4. Gọi Gemini với system instruction riêng và JSON schema gọn. Theo phase: hoàn thiện chat với `actions: []`, `recipes: []`; Phase 2 mở recipe; Phase 4 mới mở action, tránh hiển thị đề xuất chưa có luồng duyệt. Giới hạn tổng thời gian, số lần retry cho lỗi tạm thời; ghi model thực dùng.
+5. Validator kiểm tra các trường được mở ở phase hiện tại: câu trả lời; sau đó recipe và `usesRefs`; cuối cùng action, số lượng, đơn vị và `ref`. Khi mở action, chuyển alias thành item ID, lưu `expectedUpdatedAt` (hoặc version), snapshot số lượng/đơn vị và danh sách batch ứng viên có giới hạn cho mỗi action; nếu vượt giới hạn ứng viên, yêu cầu người dùng hỏi lại/chọn rõ hơn.
 6. Transaction ghi một cặp user/assistant chat và chuyển request sang `completed`, lưu response để retry trả đúng cùng kết quả. Nếu request không còn `pending`, không ghi chat.
 7. Khi model hoặc validation lỗi, transaction chuyển request sang `failed` và hoàn đúng quota đã giữ. Với request treo do Function chết/timeout, tác vụ dọn định kỳ chỉ hoàn request hết lease, chưa completed; hoàn đúng một lần bằng trạng thái trong transaction. Worker đến muộn không được hoàn tất request đã failed.
 
@@ -107,18 +115,24 @@ type ApplyInput = {
   messageId: string;
   decisions: Array<{
     actionId: string; accept: boolean;
+    targetItemId?: string; // set_quantity hoặc chọn một batch rõ ràng
+    batchAllocations?: Array<{itemId: string; quantity: number}>; // consume/discard nhiều batch
+    name?: string; foodId?: string | null; // sửa add_inventory khi cần review
     quantity?: number; unit?: string; categoryId?: string;
-    storageLocationId?: "fridge" | "freezer"; expirationDate?: string;
+    storageLocationId?: "fridge" | "freezer"; expirationDate?: string; // YYYY-MM-DD
   }>;
 };
 ```
 
-- Xác thực user và household. Message thuộc user, có `actionStatus = proposed`, tạo chưa quá 30 phút. Chỉ dùng `actionId` từ đề xuất đã lưu; backend validate lại toàn bộ giá trị user sửa, whitelist field, giới hạn số decision và cấm ID trùng.
+- Xác thực user và household. Message thuộc user, có `actionStatus = proposed`, tạo chưa quá 30 phút. Chỉ dùng `actionId` từ đề xuất đã lưu; backend validate lại toàn bộ giá trị user sửa, whitelist field, giới hạn số decision và cấm ID trùng. Gửi decision cho **mọi action** trong message; action không được chọn phải có `accept: false` để kết quả không mơ hồ.
+- `targetItemId` chỉ hợp lệ cho `set_quantity` hoặc chọn một batch khi review; `batchAllocations` chỉ hợp lệ cho `consume/discard` nhiều batch. Chúng loại trừ nhau. Mọi ID phải nằm trong tập batch ứng viên, cùng household, tên/đơn vị khớp đề xuất và có snapshot lưu từ lúc đề xuất. Nếu không chọn thủ công, server chỉ tự phân bổ FEFO khi tên/đơn vị/lượng đã rõ và đủ tồn; tổng `batchAllocations.quantity` phải bằng lượng xác nhận. Batch ngoài tập ứng viên hoặc thiếu snapshot cần hỏi lại/tạo đề xuất mới.
+- Khi người dùng sửa `name`/`foodId` của `add_inventory`, xác thực lại master food, category, location, đơn vị, HSD và foodLimit. Không lấy đường dẫn Firestore hoặc quyền từ quyết định hay model.
 - **Trong cùng transaction**, đọc message và kiểm tra status lần nữa; đọc household và xác nhận caller vẫn là member, rồi đọc các item liên quan và giới hạn gói trước khi ghi. So `updatedAt`/version, số lượng, đơn vị và status với snapshot lúc đề xuất. Bất kỳ conflict nào trả `failed-precondition` cùng danh sách món cần xem lại; không áp dụng một phần trong bản đầu.
 - Với nhiều batch FEFO, server tính phân bổ theo snapshot đã xác nhận và kiểm tra lại tất cả batch trong transaction. Không đổi đơn vị hoặc tự giảm lượng user yêu cầu.
 - `consume/discard` trừ lượng hiện tại; khi về 0 đặt status tương ứng. `set_quantity` chỉ giảm hoặc đặt 0. Tính `remainingPercentage` bằng `initialQuantity`. `add_inventory` dùng chung logic tạo item, quyền, foodLimit và counter với `InventoryService`; refactor thành helper transaction được kiểm thử, không gọi một transaction lồng trong transaction khác.
-- Đọc tất cả document cần thiết trước mọi lệnh ghi theo yêu cầu Firestore. Ghi item, household counter của item mới và `actionStatus = applied/dismissed` trong transaction. Trigger `onInventoryItemMutation` hiện có xử lý giảm counter khi item active chuyển sang consumed/discarded; không giảm lần thứ hai. Tài liệu hóa và kiểm thử tương tác này.
-- Bấm xác nhận lần hai hoặc retry sau timeout: đọc `actionStatus` đã hoàn tất và trả kết quả đã lưu; tuyệt đối không ghi inventory lần nữa. Nếu tất cả bị bỏ chọn, chỉ đặt `dismissed`.
+- Đọc tất cả document cần thiết trước mọi lệnh ghi theo yêu cầu Firestore. Ghi item, household counter của item mới, kết quả từng action và `actionStatus = applied/dismissed` trong transaction. Trigger `onInventoryItemMutation` hiện có xử lý giảm counter khi item active chuyển sang consumed/discarded; không giảm lần thứ hai. Tài liệu hóa và kiểm thử tương tác này.
+- Lưu `decisionsHash` từ payload đã chuẩn hóa và kết quả theo từng `actionId` trong cùng transaction. Bấm xác nhận lần hai hoặc retry sau timeout với **cùng** decisions: trả kết quả cũ; cùng `messageId` nhưng decisions khác: `failed-precondition`, tuyệt đối không ghi inventory lần nữa. Client giữ nguyên payload khi retry.
+- Mỗi action lưu `reviewState = ready | needsReview` và `resolution = pending | applied | dismissed | expired`. Message `actionStatus = proposed | applied | dismissed | expired`: `applied` nếu có ít nhất một action được áp dụng; `dismissed` nếu tất cả bị bỏ. Kết quả từng action là nguồn để UI hiển thị trạng thái khi quyết định lẫn nhận/bỏ. Khi conflict, không ghi bất kỳ action nào, giữ đề xuất chưa áp dụng và yêu cầu lấy lại snapshot/xác nhận mới; khi quá 30 phút, từ chối và đánh dấu expired.
 
 ## 4. Firestore và bảo mật
 
@@ -130,7 +144,7 @@ type ApplyInput = {
 | `memberships/{id}.aiAssistantDailyQuota` | Hạn mức, null = không giới hạn | Theo rules hiện có |
 | `households/{id}/inventory_items/{itemId}.initialQuantity` | Mốc lượng ban đầu | Theo rules inventory được cập nhật có kiểm soát |
 
-Document chat assistant lưu `requestId`, `householdId`, `actions`, `recipes`, `actionStatus`, `model`, `createdAt`; action lưu item ID và snapshot/version. Giới hạn 50 tin gần nhất, có chiến lược phân trang khi cần. Không lưu âm thanh; transcript chỉ được lưu khi user bấm Gửi. Thông báo cho user rằng nội dung chat và phần tồn kho liên quan được gửi đến dịch vụ AI.
+Document chat assistant lưu `requestId`, `householdId`, `actions`, `recipes`, `actionStatus`, `decisionsHash`/kết quả áp dụng khi đã quyết định, `model`, `createdAt`; mỗi action lưu ID batch ứng viên, snapshot/version, `reviewState` và `resolution`. Query 50 tin gần nhất **theo household** trước khi limit, có chiến lược phân trang khi cần. Không lưu âm thanh; transcript chỉ được lưu khi user bấm Gửi. Thông báo cho user rằng nội dung chat và phần tồn kho liên quan được gửi đến dịch vụ AI.
 
 Áp dụng App Check cho callable sau khi client đã tích hợp và test trên mọi nền tảng được hỗ trợ. Secret chỉ ở Functions; auth, household access, quota và validation đều ở backend. Không coi ẩn nút ở UI là kiểm soát quyền.
 
@@ -142,19 +156,29 @@ Document chat assistant lưu `requestId`, `householdId`, `actions`, `recipes`, `
 - Voice service giữ một instance `SpeechToText`, xin quyền cần thiết, ưu tiên locale tiếng Việt nếu khả dụng; cho sửa transcript trước khi gửi. `inputMode` chỉ ghi cách nhập; sau khi bấm Gửi, text và speech chạy cùng provider, callable, quota, lịch sử và màn kết quả. Nếu mic/locale không khả dụng, ô text vẫn dùng được. Thêm quyền Android/iOS theo yêu cầu plugin và test máy thật.
 - Action card hiển thị batch, HSD, lượng trước/sau và ô sửa cho `needsReview`. Không chọn sẵn action cần review. Sau conflict, làm mới tồn kho và yêu cầu user xác nhận lại.
 - Recipe card hiển thị nguyên liệu dùng, nguyên liệu thiếu và bước nấu; chưa có nút ghi shopping list trong bản đầu.
-- Hiển thị loading, lỗi, retry, quota và trạng thái `proposed/applied/dismissed/expired`; không hiển thị thành công cho action bị từ chối.
+- Hiển thị loading, lỗi, retry, quota và kết quả **từng action** (`pending/applied/dismissed/expired`); không hiển thị thành công cho action bị từ chối. Retry xác nhận giữ nguyên decisions để nhận lại đúng kết quả.
 
 ## 6. Thứ tự thực hiện
 
 | Phase | Kết quả có thể demo | Điều kiện xong |
 |---|---|---|
-| 1. Chat AI + speech-to-text | Cùng màn chat hỏi tồn kho/hạn dùng bằng cách gõ hoặc nói; transcript sửa được trước khi gửi | Emulator test auth/household/quota/idempotency; test mic tiếng Việt, từ chối quyền và gửi bằng giọng nói trên thiết bị thật |
-| 2. Recipe | Hỏi bằng gõ hoặc nói đều trả tối đa ba recipe có refs và nguyên liệu thiếu | Test không dùng item quá hạn, ref lạ, thiếu context |
-| 3. Chuẩn hóa dữ liệu | `quantity/initialQuantity/remainingPercentage` và migration thống nhất | Test thêm/sửa/dùng hết item cũ và mới; rules cập nhật |
-| 4. Cập nhật kho | Tin nhắn gõ hoặc nói đều tạo action card, xác nhận bằng transaction và xử lý conflict | Test FEFO nhiều batch, đổi unit, thay đổi đồng thời, retry/bấm đôi |
+| 1. Hoàn thiện chat AI + speech-to-text (đang có nền) | Cùng màn chat hỏi tồn kho/hạn dùng bằng cách gõ hoặc nói; transcript sửa được trước khi gửi; lịch sử đúng household | Query history trước limit; structured reply với recipe/action rỗng; emulator test auth/household/quota/idempotency; test mic tiếng Việt và từ chối quyền trên thiết bị thật |
+| 2. Recipe | Hỏi bằng gõ hoặc nói đều trả tối đa ba recipe có refs và nguyên liệu thiếu | Item còn dùng được được ưu tiên trong 150 context; test kho >150 item, item quá hạn, ref lạ, thiếu context |
+| 3. Chuẩn hóa dữ liệu | `quantity/initialQuantity/remainingPercentage` và migration thống nhất | Dry-run/backfill và test thêm/sửa/dùng hết item cũ/mới; rules, tài liệu cập nhật |
+| 4. Cập nhật kho | Tin nhắn gõ hoặc nói đều tạo action card, xác nhận bằng transaction và xử lý conflict | Chốt batch selection và kết quả từng action; test FEFO nhiều batch, unit, thay đổi đồng thời, retry cùng/khác decisions, bấm đôi |
 | 5. Tích hợp sau MVP | Thêm nguyên liệu thiếu vào shopping list | Chỉ bắt đầu khi PLAN 01 có repository/callable ổn định |
 
 Không deploy production trong bước viết feature; quy trình deploy theo `docs/DEVELOPMENT_WORKFLOW.md`.
+
+### 6.1 Backlog có thể giao theo PR
+
+Các PR dưới đây theo thứ tự phụ thuộc. Mỗi PR cập nhật `docs/DATABASE.md`, `docs/FUNCTIONS_GUIDE.md`, Rules/index nếu hợp đồng dữ liệu hoặc query đổi; nêu test đã chạy và phần cần thử trên máy thật.
+
+1. **PR A — hoàn thiện Phase 1.** Sửa query history backend/Flutter thành lọc `householdId` trước `limit`; thêm index cần thiết. Tách adapter Gemini trả JSON với chỉ `reply` đang mở, kiểm tra reply và giữ `actions/recipes` rỗng. Test quota ngày Việt Nam, reservation/refund một lần, retry `requestId` cùng/khác payload, lease timeout, quyền household và history nhiều household; thử mic tiếng Việt/từ chối quyền trên máy thật. Xong khi cùng câu hỏi gõ/nói đi qua một callable, retry không tạo tin hoặc trừ quota hai lần.
+2. **PR B — Phase 2 recipe.** Đổi cách chọn context để item chưa quá hạn được ưu tiên trong 150 chỗ; tách item quá hạn thành cảnh báo. Bật schema `recipes`, validate giới hạn, `usesRefs`, tên nguyên liệu thiếu và độ dài; map vào Firestore/Flutter và tạo recipe card. Test kho >150 item (kể cả nhiều item quá hạn), refs lạ, món thiếu nguyên liệu, dữ liệu không đầy đủ. Xong khi gõ/mic “Hôm nay nấu gì?” trả tối đa ba món có nguyên liệu dùng/thiếu và bước nấu, không tự trừ kho.
+3. **PR C — Phase 3 số lượng.** Thêm `initialQuantity` ở đường thêm thủ công, receipt batch, model, form sửa, rules và tài liệu. Viết backfill có dry-run báo số item suy ra được, phải reset mốc, item số lượng 0/bất thường; kiểm thử trên dữ liệu Emulator trước khi chạy dữ liệu thật. Test invariant `quantity`, `initialQuantity`, `remainingPercentage` và status ở đường thêm/sửa/dùng hết. Xong khi mọi item active dùng cho action có `initialQuantity > 0` và phần trăm nhất quán; chạy production migration theo quy trình duyệt riêng.
+4. **PR D — Phase 4 action.** Chốt `ValidatedAction` với batch ứng viên/snapshot, `reviewState`/`resolution`, hợp đồng quyết định ở mục 3.3 rồi mới mở `actions` từ model. Thêm `applyAiActions`, helper transaction dùng chung với inventory, FEFO, kiểm tra quyền/foodLimit, conflict và `decisionsHash`; Flutter có action card chọn/sửa/xác nhận và trạng thái từng action. Test 2 action nhận/bỏ lẫn nhau, nhiều batch/đơn vị, batch ngoài ứng viên, đồng thời hai lần apply, retry cùng/khác decisions, counter và receipt regression. Xong khi kho chỉ thay đổi sau xác nhận hợp lệ và mỗi action được áp dụng tối đa một lần.
+5. **PR E — tích hợp và bàn giao.** Chạy toàn bộ unit/emulator/regression, kiểm tra mic trên thiết bị thật và chi phí/timeout model. Tích hợp App Check ở client, test trên mọi nền tảng được hỗ trợ rồi mới bật enforcement cho callable; kiểm tra lại Rules/index, hướng dẫn setup/demo và APK thử nghiệm. Shopping-list button chỉ mở sau khi PLAN 01 có API ổn định.
 
 ## 7. Kiểm thử và Definition of Done
 

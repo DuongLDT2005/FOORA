@@ -158,7 +158,9 @@ functions/src/
 | | `onInventoryItemMutation` | Firestore | `households/{householdId}/inventory_items/{itemId}` | Snapshot document update/delete | Lắng nghe `onUpdate` & `onDelete` (không bắt `onCreate` để tránh double count) đồng bộ `activeItemCount` khi đổi trạng thái sang `consumed`/`discarded`. |
 | | `checkExpiryDailyCron` | Scheduled | `0 7 * * *` (07:00 VN) | Không có (Tự động) | Quét các item sắp hết hạn (<= 3 ngày) / hết hạn (< 0 ngày) -> ghi `notifications`. |
 | **`receipt`** | `parseReceiptAi` | Callable | `onCall` | `{ ocrText: string; householdId: string }` | Trích xuất JSON danh sách thực phẩm (`name`, `quantity`, `unit`, `storageLocationId`). |
-| **`ai`** | `aiAssistant` | Callable | `onCall` | `{ requestId, householdId, message, inputMode }` | Chat hỏi kho chỉ đọc; xác thực household, quota AI theo ngày Việt Nam và request idempotency; không dùng quota receipt. |
+| **`ai`** | `aiAssistant` | Callable | `onCall` | `{ requestId, householdId, message, inputMode }` | Trả JSON gồm `reply`, recipe đã validate và action **đề xuất**; xác thực household, quota AI theo ngày Việt Nam và request idempotency; không ghi kho. |
+| | `applyAiActions` | Callable | `onCall` | `{ messageId, decisions[] }` | Duyệt/loại toàn bộ action của một message, kiểm tra lại batch và quyền trong transaction, FEFO, foodLimit, lưu kết quả từng action; retry cùng decisions không ghi lần hai. |
+| | `cleanupExpiredAiRequests` | Scheduled | Mỗi 5 phút | Request AI hết lease | Chuyển pending request treo sang failed và hoàn quota đúng ngày đã giữ. |
 | **`notification`** | `onNotificationCreated` | Firestore | `users/{userId}/notifications/{id}` | Snapshot document thông báo mới | Gửi tin nhắn FCM đến toàn bộ thiết bị đang active trong `users/{userId}/devices`. |
 | **`membership`** | `resetMonthlyQuotaCron` | Scheduled | `0 0 1 * *` (00:00 ngày 1) | Không có (Tự động) | Batch update reset `ai_usage/current.receiptScanUsed = 0` cho toàn bộ user Free. |
 | | `getMembershipInfo` | Callable | `onCall` | Không có | Thông tin chi tiết gói và hạn mức sử dụng. |
@@ -183,6 +185,14 @@ functions/src/
 ---
 
 ## 4. Chi Tiet Thuc Thi: payOS QR & Khoa Tai Khoan Tuc Thi
+
+### Kiểm tra AI Voice trên máy phát triển
+
+1. Chạy `cd functions`, `npm run lint`, `npm test`; ở root chạy `flutter analyze` và `flutter test`.
+2. Tại root, chạy `npm exec --yes --package firebase-tools -- firebase emulators:exec --config firebase.ai-test.json --only firestore --project foora-app "node functions/test/ai_emulator.integration.js"`. Bài kiểm tra này dùng project/cổng Emulator riêng, tạo dữ liệu mẫu và kiểm tra apply đồng thời, FEFO, stale snapshot, foodLimit, cùng dry run/apply backfill. Nó dùng Admin SDK nên không thay thế bài kiểm tra quyền client theo Firestore Rules.
+3. Muốn xem báo cáo backfill trên dữ liệu Emulator đã nạp: trong `functions`, chạy `npm run backfill:initial-quantity`; chỉ chạy `npm run backfill:initial-quantity -- --apply` sau khi kiểm tra báo cáo. Đặt `FIRESTORE_EMULATOR_HOST` đúng cổng Emulator đang chạy. Script chỉ hỗ trợ Emulator, không ghi production.
+
+Trước khi phát hành: cấu hình `GEMINI_API_KEY` trong Firebase Secret Manager, thử model được chọn bằng tài khoản thật để kiểm tra timeout/chi phí, kiểm tra micro và quyền tiếng Việt trên thiết bị thật, triển khai index/Rules cùng Functions, chạy migration dữ liệu thật bằng quy trình riêng và chỉ bật App Check enforcement sau khi client đã tích hợp, kiểm tra đủ nền tảng.
 
 ### A. payOS QR
 

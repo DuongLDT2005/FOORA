@@ -9,11 +9,27 @@
       ]
     },
     {
+      "collectionGroup": "ai_chats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "householdId", "order": "ASCENDING"},
+        {"fieldPath": "createdAt", "order": "DESCENDING"}
+      ]
+    },
+    {
       "collectionGroup": "inventory_items",
       "queryScope": "COLLECTION",
       "fields": [
         {"fieldPath": "status", "order": "ASCENDING"},
         {"fieldPath": "expirationDate", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "expirationDate", "order": "DESCENDING"}
       ]
     },
     {

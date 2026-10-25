@@ -10,6 +10,12 @@ class _FakeAiRepository implements AiRepository {
   String? sentInputMode;
 
   @override
+  Future<Map<String, dynamic>> applyActions({
+    required String messageId,
+    required List<Map<String, dynamic>> decisions,
+  }) async => {};
+
+  @override
   Future<AiAssistantResponse> sendMessage({
     required String householdId,
     required String requestId,

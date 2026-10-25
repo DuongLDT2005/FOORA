@@ -356,7 +356,18 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
 
   // Simple field setters.
   void onQuantityChanged(double newQty) {
-    state = state.copyWith(quantity: newQty);
+    if (!newQty.isFinite || newQty < 0) return;
+    final baseline = itemToEdit == null || newQty > state.initialQuantity
+        ? newQty
+        : state.initialQuantity;
+    final percent = baseline > 0
+        ? (newQty / baseline * 100).round().clamp(0, 100)
+        : 0;
+    state = state.copyWith(
+      quantity: newQty,
+      initialQuantity: baseline,
+      remainingPercentage: percent,
+    );
   }
 
   void onUnitChanged(String newUnit) {
@@ -364,7 +375,8 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
   }
 
   void onRemainingPercentageChanged(double newPercentage) {
-    state = state.copyWith(remainingPercentage: newPercentage.toInt());
+    final percent = newPercentage.round().clamp(0, 100);
+    onQuantityChanged(state.initialQuantity * percent / 100);
   }
 
   /// Purchase date changed -> expiry must be recalculated.
@@ -410,7 +422,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
       return false;
     }
 
-    if (state.quantity <= 0) {
+    if (state.quantity < 0 || (itemToEdit == null && state.quantity == 0)) {
       state = state.copyWith(
         errorMessage: 'Số lượng thực phẩm phải lớn hơn 0.',
       );
@@ -456,8 +468,12 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
           categoryId: state.categoryId,
           storageLocationId: state.storageLocationId,
           quantity: state.quantity,
+          initialQuantity: state.initialQuantity,
           unit: state.unit,
           remainingPercentage: state.remainingPercentage,
+          status: state.quantity == 0
+              ? InventoryItemStatus.consumed
+              : itemToEdit!.status,
           purchaseDate: state.purchaseDate,
           expirationDate: state.expirationDate,
           photoUrl: state.photoUrl,
@@ -472,6 +488,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
           normalizedName: state.name.trim().toLowerCase(),
           categoryId: state.categoryId,
           quantity: state.quantity,
+          initialQuantity: state.quantity,
           unit: state.unit,
           remainingPercentage: state.remainingPercentage,
           storageLocationId: state.storageLocationId,

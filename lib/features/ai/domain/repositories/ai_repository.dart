@@ -13,4 +13,9 @@ abstract class AiRepository {
     required String message,
     required String inputMode,
   });
+
+  Future<Map<String, dynamic>> applyActions({
+    required String messageId,
+    required List<Map<String, dynamic>> decisions,
+  });
 }

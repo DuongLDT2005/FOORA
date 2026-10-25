@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,6 +16,25 @@ import '../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../providers/ai_provider.dart';
 import '../widgets/chat_bubble.dart';
+import '../widgets/ai_action_review_sheet.dart';
+
+String vietnameseSpeechLocale(List<LocaleName> locales, {required bool isWeb}) {
+  // The web plugin reports only the browser's current language, so its list
+  // cannot be used to decide whether Vietnamese recognition is available.
+  if (isWeb) return 'vi-VN';
+  for (final locale in locales) {
+    if (locale.localeId.toLowerCase().replaceAll('_', '-') == 'vi-vn') {
+      return locale.localeId;
+    }
+  }
+  for (final locale in locales) {
+    if (locale.localeId.toLowerCase().startsWith('vi')) {
+      return locale.localeId;
+    }
+  }
+  // Android's online recognizer may support languages absent from locales().
+  return 'vi-VN';
+}
 
 class AiChatPage extends ConsumerStatefulWidget {
   const AiChatPage({super.key});
@@ -72,15 +92,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       }
       final locales = await _speech.locales();
       if (!mounted) return;
-      final vietnamese = locales
-          .where((locale) => locale.localeId.toLowerCase().startsWith('vi'))
-          .toList();
       _beforeSpeech = _composer.text.trimRight();
       _draftMode = 'voice';
       await _speech.listen(
         onResult: _onSpeechResult,
         listenOptions: SpeechListenOptions(
-          localeId: vietnamese.isEmpty ? null : vietnamese.first.localeId,
+          localeId: vietnameseSpeechLocale(locales, isWeb: kIsWeb),
           listenMode: ListenMode.dictation,
           partialResults: true,
           cancelOnError: true,
@@ -111,15 +128,33 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
   Future<void> _send() async {
     final text = _composer.text.trim();
-    if (text.isEmpty || _isListening) return;
+    final chat = ref.read(aiChatProvider);
+    if (text.isEmpty ||
+        text.length > 1000 ||
+        _isListening ||
+        chat.isSending ||
+        chat.pendingMessage != null) {
+      return;
+    }
     _focusNode.unfocus();
-    final success = await ref
+    final sending = ref
         .read(aiChatProvider.notifier)
         .send(text, inputMode: _draftMode);
-    if (success && mounted) {
-      _composer.clear();
-      setState(() => _draftMode = 'text');
-    }
+    _composer.value = TextEditingValue.empty;
+    setState(() => _draftMode = 'text');
+    await sending;
+  }
+
+  void _editPending() {
+    final chat = ref.read(aiChatProvider);
+    final message = chat.pendingMessage;
+    if (message == null || chat.isSending) return;
+    ref.read(aiChatProvider.notifier).discardPending();
+    _composer.text = message;
+    _composer.selection = TextSelection.collapsed(offset: message.length);
+    _draftMode = chat.pendingInputMode ?? 'text';
+    _focusNode.requestFocus();
+    setState(() {});
   }
 
   void _useSuggestion(String question) {
@@ -136,11 +171,16 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final historyAsync = ref.watch(aiChatHistoryProvider);
     final history = historyAsync.valueOrNull;
     final byId = <String, AiChatMessage>{};
-    for (final message in [...?history, ...chat.messages]) {
+    for (final message in [...chat.messages, ...?history]) {
       byId[message.id] = message;
     }
     final messages = byId.values.toList()
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      ..sort((a, b) {
+        final byTime = a.timestamp.compareTo(b.timestamp);
+        if (byTime != 0) return byTime;
+        if (a.isUser != b.isUser) return a.isUser ? -1 : 1;
+        return a.id.compareTo(b.id);
+      });
     final pendingAlreadyVisible =
         chat.pendingRequestId != null &&
         byId.containsKey('${chat.pendingRequestId}-user');
@@ -222,7 +262,20 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                     ),
                   ],
                   ...messages.reversed.map(
-                    (message) => ChatBubble(message: message),
+                    (message) => ChatBubble(
+                      message: message,
+                      onReviewActions: message.actionStatus == 'proposed'
+                          ? () async {
+                              await showModalBottomSheet<void>(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) =>
+                                    AiActionReviewSheet(message: message),
+                              );
+                              ref.invalidate(aiChatHistoryProvider);
+                            }
+                          : null,
+                    ),
                   ),
                 ],
               ),
@@ -239,7 +292,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                 Padding(
                   padding: EdgeInsets.only(bottom: 8.h),
                   child: Text(
-                    'Đang nghe… Bấm micro để dừng. Bạn có thể sửa lời nói trước khi gửi.',
+                    'Đang nghe tiếng Việt… Bấm micro để dừng. Bạn có thể sửa lời nói trước khi gửi.',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.primary,
@@ -279,6 +332,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                       minLines: 1,
                       maxLines: 4,
                       maxLength: 1000,
+                      textInputAction: TextInputAction.send,
                       textCapitalization: TextCapitalization.sentences,
                       style: AppTextStyles.bodyMedium.copyWith(fontSize: 15.sp),
                       decoration: InputDecoration(
@@ -305,6 +359,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                         }
                         setState(() {});
                       },
+                      onSubmitted: (_) => _send(),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -455,8 +510,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   child: const Text('Thử lại'),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      ref.read(aiChatProvider.notifier).discardPending(),
+                  onPressed: _editPending,
                   child: const Text('Sửa câu hỏi'),
                 ),
               ],

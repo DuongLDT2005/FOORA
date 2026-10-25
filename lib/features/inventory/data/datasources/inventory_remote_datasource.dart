@@ -201,6 +201,8 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
         final docRef = itemsRef.doc(itemId);
         batch.update(docRef, {
           'status': status,
+          'quantity': 0,
+          'remainingPercentage': 0,
           'updatedAt': FieldValue.serverTimestamp(),
           if (isTerminalStatus) 'statusChangedAt': FieldValue.serverTimestamp(),
         });

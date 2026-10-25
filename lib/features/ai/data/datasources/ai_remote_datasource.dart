@@ -16,6 +16,11 @@ abstract class AiRemoteDataSource {
     required String message,
     required String inputMode,
   });
+
+  Future<Map<String, dynamic>> applyActions({
+    required String messageId,
+    required List<Map<String, dynamic>> decisions,
+  });
 }
 
 class AiRemoteDataSourceImpl implements AiRemoteDataSource {
@@ -33,12 +38,12 @@ class AiRemoteDataSourceImpl implements AiRemoteDataSource {
         .collection(FirestoreConstants.users)
         .doc(userId)
         .collection(FirestoreConstants.aiChats)
+        .where('householdId', isEqualTo: householdId)
         .orderBy('createdAt', descending: true)
         .limit(50)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
-              .where((doc) => doc.data()['householdId'] == householdId)
               .map((doc) => {'id': doc.id, ...doc.data()})
               .toList(),
         );
@@ -72,6 +77,13 @@ class AiRemoteDataSourceImpl implements AiRemoteDataSource {
         case 'failed-precondition':
           throw ServerException(
             error.message ?? 'Câu hỏi chưa thể xử lý. Vui lòng thử lại.',
+            error.code,
+          );
+        case 'internal':
+        case 'unavailable':
+          throw ServerException(
+            error.message ?? 'Dịch vụ AI tạm thời chưa sẵn sàng.',
+            error.code,
           );
         case 'not-found':
           throw const ServerException('Dịch vụ trợ lý AI chưa sẵn sàng.');
@@ -84,6 +96,33 @@ class AiRemoteDataSourceImpl implements AiRemoteDataSource {
       rethrow;
     } catch (_) {
       throw const ServerException('Không thể nhận câu trả lời từ trợ lý AI.');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> applyActions({
+    required String messageId,
+    required List<Map<String, dynamic>> decisions,
+  }) async {
+    try {
+      final response = await functions.httpsCallable('applyAiActions').call({
+        'messageId': messageId,
+        'decisions': decisions,
+      });
+      final envelope = Map<String, dynamic>.from(response.data as Map);
+      if (envelope['success'] != true || envelope['data'] is! Map) {
+        throw const ServerException('Không thể xác nhận cập nhật kho.');
+      }
+      return Map<String, dynamic>.from(envelope['data'] as Map);
+    } on FirebaseFunctionsException catch (error) {
+      throw ServerException(
+        error.message ?? 'Không thể xác nhận cập nhật kho.',
+        error.code,
+      );
+    } on AppException {
+      rethrow;
+    } catch (_) {
+      throw const ServerException('Không thể xác nhận cập nhật kho.');
     }
   }
 }

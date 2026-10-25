@@ -200,6 +200,8 @@ cd ..
 
 The assistant uses `GEMINI_API_KEY` server-side and defaults to `gemini-3.8-flash`; set `AI_ASSISTANT_MODEL` in the Functions environment to test a different model without changing code. The Flutter client never receives the key.
 
+If a chat request reports that Gemini requires payment or has exhausted its limit, check the Gemini project's billing/usage and the `GEMINI_API_KEY` configured for Functions. A question about an empty fridge is answered locally by the callable, but recipe and inventory-action requests still need a working Gemini API. After changing Functions code, rebuild with `cd functions && npm run build` and restart the Functions Emulator if it has not reloaded.
+
 - Emulator: copy `functions/.secret.local.example` to `functions/.secret.local` and fill in the keys.
 - Deployed: `firebase functions:secrets:set OPENROUTER_API_KEY` (already set on `foora-app`).
 

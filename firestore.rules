@@ -114,17 +114,27 @@ service cloud.firestore {
         allow update: if isHouseholdMember(householdId)
           && changedKeys().hasOnly([
             'foodId', 'name', 'normalizedName', 'categoryId', 'quantity',
-            'unit', 'remainingPercentage', 'storageLocationId', 'purchaseDate',
-            'expirationDate', 'photoUrl', 'status', 'statusChangedAt', 'updatedAt'
+            'unit', 'initialQuantity', 'remainingPercentage',
+            'storageLocationId', 'purchaseDate', 'expirationDate', 'photoUrl',
+            'status', 'statusChangedAt', 'updatedAt'
           ])
           && request.resource.data.status in ['active', 'consumed', 'discarded']
           // Re-activating a consumed/discarded item would bypass foodLimit.
           && !(resource.data.status != 'active' && request.resource.data.status == 'active')
           && request.resource.data.quantity is number
           && request.resource.data.quantity >= 0
+          && request.resource.data.initialQuantity is number
+          && request.resource.data.initialQuantity > 0
+          && request.resource.data.quantity <= request.resource.data.initialQuantity
+          && (request.resource.data.status != 'active' || request.resource.data.quantity > 0)
+          && (request.resource.data.status == 'active' || request.resource.data.quantity == 0)
           && request.resource.data.remainingPercentage is number
           && request.resource.data.remainingPercentage >= 0
           && request.resource.data.remainingPercentage <= 100
+          && request.resource.data.remainingPercentage - 0.5 <=
+            request.resource.data.quantity * 100 / request.resource.data.initialQuantity
+          && request.resource.data.quantity * 100 / request.resource.data.initialQuantity <
+            request.resource.data.remainingPercentage + 0.5
           // statusChangedAt must equal server time when written (prevents spoofing).
           && (!changedKeys().hasAny(['statusChangedAt'])
               || request.resource.data.statusChangedAt == request.time)

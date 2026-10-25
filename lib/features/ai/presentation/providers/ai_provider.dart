@@ -11,6 +11,7 @@ import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/entities/ai_assistant_response.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../../domain/usecases/send_ai_query.dart';
+import '../../domain/usecases/apply_ai_actions.dart';
 
 final aiRemoteDataSourceProvider = Provider<AiRemoteDataSource>((ref) {
   return AiRemoteDataSourceImpl(
@@ -25,6 +26,10 @@ final aiRepositoryProvider = Provider<AiRepository>((ref) {
 
 final sendAiQueryProvider = Provider<SendAiQuery>((ref) {
   return SendAiQuery(ref.watch(aiRepositoryProvider));
+});
+
+final applyAiActionsProvider = Provider<ApplyAiActions>((ref) {
+  return ApplyAiActions(ref.watch(aiRepositoryProvider));
 });
 
 final aiChatHistoryProvider = StreamProvider.autoDispose<List<AiChatMessage>>((

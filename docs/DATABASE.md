@@ -330,9 +330,11 @@ households/{householdId}/inventory_items/{inventoryItemId}
 | `name`                | String    |      Yes | Food name (from master food, user input, or OCR receipt)                           |
 | `normalizedName`      | String    |      Yes | Lowercase unaccented name for autocomplete search across household history         |
 | `categoryId`          | String    |      Yes | Reference to category ID (e.g. `vegetables`, `meat`)                               |
-| `quantity`            | Number    |      Yes | Purchase quantity                                                                  |
+| `quantity`            | Number    |      Yes | Current remaining quantity in this batch                                            |
+| `initialQuantity`     | Number    |      Yes | Positive baseline quantity; new batch starts with `initialQuantity = quantity`     |
 | `unit`                | String    |      Yes | Measurement unit                                                                   |
-| `remainingPercentage` | Number    |      Yes | Remaining quantity percentage, from 0 to 100                                       |
+| `remainingPercentage` | Number    |      Yes | `round(quantity / initialQuantity * 100)`, limited to 0..100                        |
+| `initialQuantityMigration` | String | No | `inferred` or `reset` for old batches processed by the backfill              |
 | `storageLocationId`   | String    |      Yes | Reference to storage location document ID (`fridge`, `freezer`)                    |
 | `purchaseDate`        | Timestamp |      Yes | Purchase date                                                                      |
 | `expirationDate`      | Timestamp |      Yes | Expiration date (calculated by rule or customized by user)                         |
@@ -343,7 +345,7 @@ households/{householdId}/inventory_items/{inventoryItemId}
 | `createdAt`           | Timestamp |      Yes | Creation time                                                                      |
 | `updatedAt`           | Timestamp |      Yes | Last update                                                                        |
 
-> **Security Rules**: Client **không** được tạo hoặc xóa `inventory_items` trực tiếp; món mới phải đi qua callable `addInventoryItem` / `batchAddInventoryItems` để backend kiểm tra `foodLimit`. Thành viên household chỉ được cập nhật các field nội dung (`name`, `quantity`, `unit`, `remainingPercentage`, `storageLocationId`, `purchaseDate`, `expirationDate`, `categoryId`, `foodId`, `normalizedName`, `photoUrl`, `status`, `statusChangedAt`, `updatedAt`) và không được chuyển một món `consumed`/`discarded` về lại `active`. Khi cập nhật `status`, `statusChangedAt` phải bằng `request.time`.
+> **Security Rules**: Client **không** được tạo hoặc xóa `inventory_items` trực tiếp; món mới phải đi qua callable `addInventoryItem` / `batchAddInventoryItems` hoặc action AI đã duyệt để backend kiểm tra `foodLimit`. Thành viên household chỉ được cập nhật các field nội dung (`name`, `quantity`, `initialQuantity`, `unit`, `remainingPercentage`, `storageLocationId`, `purchaseDate`, `expirationDate`, `categoryId`, `foodId`, `normalizedName`, `photoUrl`, `status`, `statusChangedAt`, `updatedAt`) với `quantity <= initialQuantity` và phần trăm tương ứng; không được chuyển món `consumed`/`discarded` về `active`. Khi cập nhật `status`, `statusChangedAt` phải bằng `request.time`. Backfill `initialQuantity` chạy dry-run trên Emulator bằng `cd functions && npm run backfill:initial-quantity`; chỉ thêm `-- --apply` sau khi xem báo cáo. Script này không ghi production.
 
 > **Cơ chế Vòng đời & Tự động gợi ý món (Autocomplete & Lifecycle)**:
 >
@@ -508,11 +510,11 @@ users/{userId}/ai_usage/current
 
 ## 15.1 AI assistant chat, requests, and daily usage
 
-- `users/{userId}/ai_chats/{messageId}`: server-written conversation records. Fields: `householdId`, `requestId`, `content`, `isUser`, `createdAt`; user messages also have `inputMode` (`text` or `voice`); assistant messages also have `model`, `actions`, and `recipes`. Owners may read, but only Cloud Functions may write.
+- `users/{userId}/ai_chats/{messageId}`: server-written conversation records. Fields: `householdId`, `requestId`, `content`, `isUser`, `createdAt`; user messages also have `inputMode` (`text` or `voice`); assistant messages have `model`, validated `recipes` (`usesRefs` là item IDs, `usedIngredients`, `missingIngredients`, `steps`) và `actions` (ID đề xuất, batch ứng viên/snapshot, `reviewState`, `resolution`). Khi duyệt action, lưu thêm `actionStatus`, `decisionsHash`, `applyResult` atomically. Owners may read, but only Cloud Functions may write. Query lịch sử lọc household trước khi lấy 50 tin; composite index nằm trong `firestore.indexes.json`.
 - `users/{userId}/ai_requests/{requestId}`: server-only idempotency record. Fields: `payloadHash`, `householdId`, `status` (`pending`, `completed`, `failed`), `quotaDay`, `quotaReserved`, `attemptId`, `leaseExpiresAt`, `result`, `updatedAt`.
 - `users/{userId}/ai_usage_days/{YYYY-MM-DD}`: server-written daily counter with `used` and `updatedAt`; owners may read. Day boundaries use `Asia/Ho_Chi_Minh`. Receipt usage in `ai_usage/current` remains separate.
 
-The initial chat backend only returns read-only inventory answers. `actions` and `recipes` are empty until their later phases are implemented and validated.
+`aiAssistant` trả lời và đề xuất; nó không thay đổi kho. `applyAiActions` chỉ áp dụng các action đã lưu sau khi user xác nhận, kiểm tra lại quyền và snapshot trong transaction. Retry cùng decisions trả lại `applyResult`; decisions khác cho cùng message bị từ chối.
 
 # 16. Collection: subscriptions
 
