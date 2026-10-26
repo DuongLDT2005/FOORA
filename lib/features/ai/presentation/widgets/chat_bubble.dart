@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/entities/ai_recipe.dart';
+import 'ai_consume_receipt_card.dart';
 import 'ai_entry_receipt_card.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -52,10 +53,7 @@ class ChatBubble extends StatelessWidget {
                 ))
               AiEntryReceiptCard(message: message, onEdit: onReviewActions)
             else if (message.actions.isNotEmpty)
-              _ActionSummary(
-                message: message,
-                onReviewActions: onReviewActions,
-              ),
+              AiConsumeReceiptCard(message: message, onEdit: onReviewActions)
           ],
         ),
       ),
@@ -63,55 +61,6 @@ class ChatBubble extends StatelessWidget {
   }
 }
 
-class _ActionSummary extends StatelessWidget {
-  const _ActionSummary({required this.message, this.onReviewActions});
-
-  final AiChatMessage message;
-  final VoidCallback? onReviewActions;
-
-  @override
-  Widget build(BuildContext context) {
-    final pending = message.actionStatus == 'proposed';
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: 14.h),
-      padding: EdgeInsets.all(14.r),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        border: Border.all(color: AppColors.slate200),
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Đề xuất cập nhật kho',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.slate800,
-              fontSize: 16.sp,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          ...message.actions.map(
-            (action) => Padding(
-              padding: EdgeInsets.only(bottom: 5.h),
-              child: Text(
-                '${action.name}: ${action.type} · '
-                '${action.resolution == 'pending' ? action.reviewState : action.resolution}',
-                style: AppTextStyles.bodySmall,
-              ),
-            ),
-          ),
-          if (pending)
-            TextButton(
-              onPressed: onReviewActions,
-              child: const Text('Xem và xác nhận'),
-            ),
-        ],
-      ),
-    );
-  }
-}
 
 class _RecipeCard extends StatelessWidget {
   const _RecipeCard({required this.recipe});

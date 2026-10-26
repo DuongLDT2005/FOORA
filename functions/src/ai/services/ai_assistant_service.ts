@@ -21,6 +21,7 @@ import {
   validateAssistantResponse,
 } from "./ai_model_response";
 import {parseInventoryEntry} from "./ai_inventory_entry";
+import {parseInventoryConsume} from "./ai_inventory_consume";
 import {suggestFoodCategoryId} from "./ai_food_category";
 
 interface AiAssistantInput {
@@ -220,9 +221,10 @@ export class AiAssistantService {
       const trulyEmpty = inventoryDocs.length === 0 &&
         (await itemsRef.where("status", "==", "active").limit(1).get()).empty;
       const entryLines = parseInventoryEntry(input.message);
-      const localReply = !entryLines && trulyEmpty ?
+      const consumeResult = !entryLines ? parseInventoryConsume(input.message, inventory) : null;
+      const localReply = !entryLines && !consumeResult && trulyEmpty ?
         replyForEmptyInventory(input.message) : null;
-      if (!entryLines && !localReply && !apiKey) {
+      if (!entryLines && !consumeResult && !localReply && !apiKey) {
         throwFailedPrecondition("Dịch vụ AI chưa được cấu hình.");
       }
       const chatSnap = await chats.where("householdId", "==", input.householdId)
@@ -254,6 +256,7 @@ export class AiAssistantService {
           text: String(doc.data().content ?? "").slice(0, 1000),
         }));
       const model = entryLines ? "local-inventory-entry" :
+        consumeResult ? "local-inventory-consume" :
         localReply ? "local-empty-inventory" :
           process.env.AI_ASSISTANT_MODEL || "gemini-3.8-flash";
       const minimumMenuDishes = requestedMenuDishCount(input.message);
@@ -301,9 +304,15 @@ export class AiAssistantService {
             "condiments_spices, beverages, frozen_foods, canned_dry_goods; " +
             "nếu không chắc hãy bỏ categoryId để người dùng sửa. " +
             "Tủ lạnh tương ứng storageLocationId fridge, tủ đông là freezer. " +
-            "Nếu người dùng nói đã dùng hoặc bỏ món trong kho, tạo action " +
-            "consume/discard/set_quantity với ref từ context khi xác định được. " +
-            "Không tự khẳng định hành động đã được thực hiện. " +
+            "Nếu người dùng nói đã dùng, ăn, bỏ hoặc muốn bớt món trong kho, bắt buộc tạo action " +
+            "consume/discard/set_quantity với ref từ context. Bắt buộc điền name, quantity và unit cho mỗi action. " +
+            "Quy tắc quy đổi đơn vị số lượng khi trừ kho: " +
+            "1. Phải quy đổi về đúng unit của món đó đang lưu trong kho: " +
+            "- Khối lượng: 1 lạng = 0.1 kg = 100 g (ví dụ nếu kho lưu kg mà người dùng nói 5 lạng thì quantity = 0.5, unit = 'kg'; nói 2 lạng thì quantity = 0.2, unit = 'kg'). 1 kg = 10 lạng = 1000 g. " +
+            "- Thể tích: 1 lít = 1000 ml. " +
+            "- Đếm: quả, trái, cái là tương đương nhau. " +
+            "2. Khi người dùng nói 'dùng hết', 'ăn hết', 'bỏ hết' thì quantity chính là toàn bộ số lượng còn lại của món đó trong kho. " +
+            "3. Không tự khẳng định hành động đã được thực hiện trong câu trả lời (chỉ nói đã tạo đề xuất/phiếu xuất để người dùng xác nhận). " +
             "Nếu chỉ hỏi thông tin, actions là mảng rỗng. " +
             "Không khuyên dùng thực phẩm đã quá hạn; chỉ cảnh báo món đó. " +
             "Nếu kho bị cắt bớt, nói rõ câu trả lời chỉ dựa trên phần dữ liệu được cấp. " +
@@ -313,18 +322,29 @@ export class AiAssistantService {
           httpOptions: {timeout: 25000},
         },
       };
-      let responseText: string | undefined;
+      let validated: ReturnType<typeof validateAssistantResponse>;
       if (entryLines) {
-        responseText = JSON.stringify({
+        const responseText = JSON.stringify({
           reply: `Tôi đã lập phiếu nhập ${entryLines.length} món. ` +
             "Hãy kiểm tra thông tin và xác nhận để thêm vào tủ.",
           recipes: [],
           actions: entryLines.map((line) => ({type: "add_inventory", ...line})),
         });
+        validated = validateAssistantResponse(
+          responseText, inventory, inventoryTruncated);
+      } else if (consumeResult) {
+        validated = {
+          reply: consumeResult.reply,
+          recipes: [],
+          actions: consumeResult.actions,
+        };
       } else if (localReply) {
-        responseText = JSON.stringify({reply: localReply, recipes: [], actions: []});
+        const responseText = JSON.stringify({reply: localReply, recipes: [], actions: []});
+        validated = validateAssistantResponse(
+          responseText, inventory, inventoryTruncated);
       } else {
         const ai = new GoogleGenAI({apiKey});
+        let responseText: string | undefined;
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             const response = await ai.models.generateContent(modelRequest);
@@ -341,13 +361,13 @@ export class AiAssistantService {
             await new Promise((resolve) => setTimeout(resolve, 750));
           }
         }
+        validated = validateAssistantResponse(
+          responseText, inventory, inventoryTruncated);
       }
-      let validated = validateAssistantResponse(
-        responseText, inventory, inventoryTruncated);
       if (!validated) {
         throwFailedPrecondition("Trợ lý AI trả lời không hợp lệ. Vui lòng thử lại.");
       }
-      if (!entryLines && !localReply && minimumMenuDishes > 0 &&
+      if (!entryLines && !consumeResult && !localReply && minimumMenuDishes > 0 &&
           validated.recipes.length < minimumMenuDishes &&
           inventory.some((item) => !item.isExpired && item.quantity > 0)) {
         try {
@@ -372,10 +392,11 @@ export class AiAssistantService {
         }
       }
       const {reply, recipes} = validated;
-      const addNames = [...new Set(validated.actions
+       const addNames = [...new Set(validated.actions
         .filter((action) => action.type === "add_inventory")
         .map((action) => normalizeFoodName(action.name)))];
       const catalogCategories = new Map<string, string>();
+      const catalogExactNames = new Map<string, string>();
       if (addNames.length > 0) {
         try {
           const foods = await db.collection(Collections.FOODS)
@@ -386,6 +407,9 @@ export class AiAssistantService {
               continue;
             }
             catalogCategories.set(String(data.normalizedName), data.categoryId);
+            if (typeof data.name === "string") {
+              catalogExactNames.set(data.name.toLowerCase().trim(), data.categoryId);
+            }
           }
         } catch {
           // Category suggestions are optional; the review UI still lets users
@@ -394,8 +418,10 @@ export class AiAssistantService {
       }
       const actions = validated.actions.map((action) => {
         if (action.type !== "add_inventory") return action;
-        const categoryId = catalogCategories.get(normalizeFoodName(action.name)) ??
-          suggestFoodCategoryId(action.name) ?? action.categoryId;
+        const exactCat = catalogExactNames.get(action.name.toLowerCase().trim());
+        const suggestedCat = suggestFoodCategoryId(action.name);
+        const normalizedCat = catalogCategories.get(normalizeFoodName(action.name));
+        const categoryId = exactCat ?? suggestedCat ?? normalizedCat ?? action.categoryId;
         return {...action,
           ...(categoryId ? {categoryId} : {}),
           storageLocationId: action.storageLocationId ?? "fridge"};

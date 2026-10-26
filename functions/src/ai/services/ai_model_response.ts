@@ -105,6 +105,65 @@ function shortStrings(value: unknown, maxItems: number, maxLength: number):
     strings as string[] : null;
 }
 
+function convertUnits(
+  quantity: number | undefined,
+  fromUnit: string | undefined,
+  targetUnit: string | undefined
+): {quantity: number | undefined; unit: string | undefined} {
+  if (quantity === undefined || !fromUnit || !targetUnit) {
+    return {quantity, unit: targetUnit ?? fromUnit};
+  }
+  const from = fromUnit.toLowerCase().trim();
+  const target = targetUnit.toLowerCase().trim();
+  if (from === target) return {quantity, unit: targetUnit};
+
+  const isFromKg = from === "kg" || from === "kilogam" || from === "kí" || from === "ky";
+  const isFromG = from === "g" || from === "gam" || from === "gram";
+  const isFromLang = from === "lạng" || from === "lang";
+
+  const isTargetKg = target === "kg" || target === "kilogam" || target === "kí" || target === "ky";
+  const isTargetG = target === "g" || target === "gam" || target === "gram";
+  const isTargetLang = target === "lạng" || target === "lang";
+
+  if (isFromLang && isTargetKg) {
+    return {quantity: Number((quantity * 0.1).toFixed(4)), unit: targetUnit};
+  }
+  if (isFromG && isTargetKg) {
+    return {quantity: Number((quantity / 1000).toFixed(4)), unit: targetUnit};
+  }
+  if (isFromKg && isTargetG) {
+    return {quantity: Number((quantity * 1000).toFixed(4)), unit: targetUnit};
+  }
+  if (isFromLang && isTargetG) {
+    return {quantity: Number((quantity * 100).toFixed(4)), unit: targetUnit};
+  }
+  if (isFromKg && isTargetLang) {
+    return {quantity: Number((quantity * 10).toFixed(4)), unit: targetUnit};
+  }
+  if (isFromG && isTargetLang) {
+    return {quantity: Number((quantity / 100).toFixed(4)), unit: targetUnit};
+  }
+
+  const isFromLit = from === "l" || from === "lít" || from === "lit";
+  const isFromMl = from === "ml" || from === "mililit" || from === "milit";
+  const isTargetLit = target === "l" || target === "lít" || target === "lit";
+  const isTargetMl = target === "ml" || target === "mililit" || target === "milit";
+
+  if (isFromMl && isTargetLit) {
+    return {quantity: Number((quantity / 1000).toFixed(4)), unit: targetUnit};
+  }
+  if (isFromLit && isTargetMl) {
+    return {quantity: Number((quantity * 1000).toFixed(4)), unit: targetUnit};
+  }
+
+  const isCount = (u: string) => ["quả", "qua", "trái", "trai", "cái", "cai"].includes(u);
+  if (isCount(from) && isCount(target)) {
+    return {quantity, unit: targetUnit};
+  }
+
+  return {quantity, unit: targetUnit ?? fromUnit};
+}
+
 export function validateAssistantResponse(
   responseText: string | undefined,
   inventory: AssistantInventoryItem[],
@@ -162,10 +221,21 @@ export function validateAssistantResponse(
     const name = shortString(proposed.name, 100) ?? linked?.name;
     if (!name) continue;
     const rawQuantity = proposed.quantity;
-    const quantity = typeof rawQuantity === "number" &&
+    let quantity = typeof rawQuantity === "number" &&
       Number.isFinite(rawQuantity) && rawQuantity >= 0 && rawQuantity <= 1000000 ?
       rawQuantity : undefined;
-    const unit = shortString(proposed.unit, 30) ?? linked?.unit;
+    let unit = shortString(proposed.unit, 30) ?? linked?.unit;
+
+    if (type !== "add_inventory" && linked) {
+      if (quantity === undefined && linked.quantity > 0) {
+        quantity = linked.quantity;
+      }
+      if (unit && linked.unit && unit !== linked.unit) {
+        const converted = convertUnits(quantity, unit, linked.unit);
+        quantity = converted.quantity;
+        unit = converted.unit;
+      }
+    }
     const storageLocationId = proposed.storageLocationId === "fridge" ||
       proposed.storageLocationId === "freezer" ?
       proposed.storageLocationId : undefined;
@@ -211,10 +281,10 @@ export function validateAssistantResponse(
       ...(storageLocationId === undefined ? {} : {storageLocationId}),
       ...((proposedCategoryId ?? linked?.categoryId) ?
         {categoryId: proposedCategoryId ?? linked?.categoryId} : {}),
-      ...(type === "set_quantity" && candidates.length === 1 ?
+      ...(candidates.length > 0 ?
         {targetItemId: candidates[0].itemId} : {}),
       candidateBatches: candidates,
-      reviewState: ready ? "ready" : "needsReview",
+      reviewState: (ready || candidates.length > 0) ? "ready" : "needsReview",
       resolution: "pending",
     });
   }
