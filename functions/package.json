@@ -14,6 +14,7 @@
     "upload:food-images": "npm run build && node lib/scripts/upload_food_images.js",
     "seed:mock": "npm run build && node lib/scripts/seed_mock_users.js",
     "analytics:demo": "npm run build && node lib/scripts/synthetic_analytics.js",
+    "backfill:initial-quantity": "npm run build && node lib/scripts/backfill_initial_quantity.js",
     "logs": "firebase functions:log",
     "test": "npm run build && node --test test/*.test.js",
     "test:rules": "firebase emulators:exec --only firestore --project demo-foora-rules \"node --test test/rules/*.test.js\""

@@ -77,7 +77,6 @@ class HomePage extends ConsumerWidget {
                 expiredCount: expiredCount,
                 onExpiredTap: () => context.push(AppRouteNames.wasteStatistics),
               ),
-
               if (totalCount == 0)
                 Padding(
                   padding: EdgeInsets.only(top: 32.h),

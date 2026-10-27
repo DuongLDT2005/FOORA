@@ -13,6 +13,7 @@ class InventoryItem {
   final String normalizedName; // Lowercase/unaccented for autocomplete & search
   final String categoryId; // Foreign key to food_categories
   final double quantity;
+  final double initialQuantity;
   final String unit;
   final int remainingPercentage; // 0 to 100
   final String
@@ -35,6 +36,7 @@ class InventoryItem {
     required this.normalizedName,
     required this.categoryId,
     required this.quantity,
+    double? initialQuantity,
     required this.unit,
     required this.remainingPercentage,
     required this.storageLocationId,
@@ -46,7 +48,7 @@ class InventoryItem {
     this.statusChangedAt,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : initialQuantity = initialQuantity ?? quantity;
 
   bool get isExpired => expirationDate.isBefore(DateTime.now());
 
@@ -58,6 +60,7 @@ class InventoryItem {
     String? normalizedName,
     String? categoryId,
     double? quantity,
+    double? initialQuantity,
     String? unit,
     int? remainingPercentage,
     String? storageLocationId,
@@ -77,6 +80,7 @@ class InventoryItem {
       normalizedName: normalizedName ?? this.normalizedName,
       categoryId: categoryId ?? this.categoryId,
       quantity: quantity ?? this.quantity,
+      initialQuantity: initialQuantity ?? this.initialQuantity,
       unit: unit ?? this.unit,
       remainingPercentage: remainingPercentage ?? this.remainingPercentage,
       storageLocationId: storageLocationId ?? this.storageLocationId,
@@ -101,6 +105,7 @@ class InventoryItem {
         other.normalizedName == normalizedName &&
         other.categoryId == categoryId &&
         other.quantity == quantity &&
+        other.initialQuantity == initialQuantity &&
         other.unit == unit &&
         other.remainingPercentage == remainingPercentage &&
         other.storageLocationId == storageLocationId &&
@@ -122,6 +127,7 @@ class InventoryItem {
     normalizedName,
     categoryId,
     quantity,
+    initialQuantity,
     unit,
     remainingPercentage,
     storageLocationId,

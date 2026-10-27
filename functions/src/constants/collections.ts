@@ -25,6 +25,10 @@ export const Collections = {
   NOTIFICATIONS: "notifications",
   DEVICES: "devices",
   AI_USAGE: "ai_usage",
+  AI_CHATS: "ai_chats",
+  AI_SESSIONS: "ai_sessions",
+  AI_REQUESTS: "ai_requests",
+  AI_USAGE_DAYS: "ai_usage_days",
   PAYMENTS: "payments",
 
   // Households Subcollections (households/{householdId}/...)

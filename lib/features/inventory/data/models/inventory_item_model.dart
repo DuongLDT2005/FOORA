@@ -14,6 +14,7 @@ class InventoryItemModel extends InventoryItem {
     required super.normalizedName,
     required super.categoryId,
     required super.quantity,
+    super.initialQuantity,
     required super.unit,
     required super.remainingPercentage,
     required super.storageLocationId,
@@ -38,6 +39,11 @@ class InventoryItemModel extends InventoryItem {
   /// Builds a model from a raw map; enum fields are parsed from strings.
   factory InventoryItemModel.fromJson(Map<String, dynamic> json, {String? id}) {
     final name = json['name'] as String? ?? '';
+    final quantity = (json['quantity'] as num?)?.toDouble() ?? 0.0;
+    final percentage = (json['remainingPercentage'] as num?)?.toInt() ?? 100;
+    final inferredInitial = percentage > 0 && quantity > 0
+        ? quantity / (percentage / 100)
+        : quantity;
     return InventoryItemModel(
       id:
           id ??
@@ -49,7 +55,9 @@ class InventoryItemModel extends InventoryItem {
       normalizedName:
           json['normalizedName'] as String? ?? name.toLowerCase().trim(),
       categoryId: json['categoryId'] as String? ?? 'other',
-      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
+      quantity: quantity,
+      initialQuantity:
+          (json['initialQuantity'] as num?)?.toDouble() ?? inferredInitial,
       unit: json['unit'] as String? ?? '',
       remainingPercentage:
           (json['remainingPercentage'] as num?)?.toInt() ?? 100,
@@ -74,6 +82,7 @@ class InventoryItemModel extends InventoryItem {
       normalizedName: item.normalizedName,
       categoryId: item.categoryId,
       quantity: item.quantity,
+      initialQuantity: item.initialQuantity,
       unit: item.unit,
       remainingPercentage: item.remainingPercentage,
       storageLocationId: item.storageLocationId,
@@ -96,6 +105,7 @@ class InventoryItemModel extends InventoryItem {
       'normalizedName': normalizedName,
       'categoryId': categoryId,
       'quantity': quantity,
+      'initialQuantity': initialQuantity,
       'unit': unit,
       'remainingPercentage': remainingPercentage,
       'storageLocationId': storageLocationId,
@@ -121,6 +131,7 @@ class InventoryItemModel extends InventoryItem {
       'normalizedName': normalizedName,
       'categoryId': categoryId,
       'quantity': quantity,
+      'initialQuantity': initialQuantity,
       'unit': unit,
       'remainingPercentage': remainingPercentage,
       'storageLocationId': storageLocationId,

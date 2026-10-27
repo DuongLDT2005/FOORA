@@ -101,7 +101,8 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
       final parsed = double.tryParse(
         _quantityController.text.replaceAll(',', '.'),
       );
-      if (parsed != null && parsed > 0) {
+      if (parsed != null &&
+          (parsed > 0 || widget.itemToEdit != null && parsed == 0)) {
         notifier.onQuantityChanged(parsed);
       }
     });
@@ -246,6 +247,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             categoryId: formState.categoryId,
             storageLocationId: formState.storageLocationId,
             quantity: formState.quantity,
+            initialQuantity: formState.initialQuantity,
             unit: formState.unit,
             remainingPercentage: formState.remainingPercentage,
             purchaseDate: formState.purchaseDate,
@@ -277,6 +279,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             categoryId: latestState.categoryId,
             storageLocationId: latestState.storageLocationId,
             quantity: latestState.quantity,
+            initialQuantity: latestState.initialQuantity,
             unit: latestState.unit,
             remainingPercentage: latestState.remainingPercentage,
             purchaseDate: latestState.purchaseDate,
@@ -402,10 +405,11 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
 
                   SizedBox(height: 20.h),
 
-                  // 4. Remaining Percentage (Slider)
-                  AppPercentageSlider(
-                    value: formState.remainingPercentage.toDouble(),
-                    onChanged: formNotifier.onRemainingPercentageChanged,
+                  // Percentage follows the remaining quantity and original batch size.
+                  Text(
+                    'Lượng còn lại: ${formState.remainingPercentage}% '
+                    '(mốc ${formState.initialQuantity} ${formState.unit})',
+                    style: AppTextStyles.bodySmall,
                   ),
 
                   SizedBox(height: 20.h),

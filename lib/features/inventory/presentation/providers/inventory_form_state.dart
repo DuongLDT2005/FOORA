@@ -11,6 +11,7 @@ class InventoryFormState {
   final String categoryId;
   final String storageLocationId;
   final double quantity;
+  final double initialQuantity;
   final String unit;
   final int remainingPercentage;
   final DateTime purchaseDate;
@@ -39,6 +40,7 @@ class InventoryFormState {
     required this.categoryId,
     required this.storageLocationId,
     required this.quantity,
+    required this.initialQuantity,
     required this.unit,
     required this.remainingPercentage,
     required this.purchaseDate,
@@ -73,6 +75,7 @@ class InventoryFormState {
         categoryId: itemToEdit.categoryId,
         storageLocationId: itemToEdit.storageLocationId,
         quantity: itemToEdit.quantity,
+        initialQuantity: itemToEdit.initialQuantity,
         unit: itemToEdit.unit,
         remainingPercentage: itemToEdit.remainingPercentage,
         purchaseDate: itemToEdit.purchaseDate,
@@ -98,6 +101,7 @@ class InventoryFormState {
       categoryId: initialCategory,
       storageLocationId: initialLocation,
       quantity: 1,
+      initialQuantity: 1,
       unit: 'quả',
       remainingPercentage: 100,
       purchaseDate: today,
@@ -118,6 +122,7 @@ class InventoryFormState {
     String? categoryId,
     String? storageLocationId,
     double? quantity,
+    double? initialQuantity,
     String? unit,
     int? remainingPercentage,
     DateTime? purchaseDate,
@@ -145,6 +150,7 @@ class InventoryFormState {
       categoryId: categoryId ?? this.categoryId,
       storageLocationId: storageLocationId ?? this.storageLocationId,
       quantity: quantity ?? this.quantity,
+      initialQuantity: initialQuantity ?? this.initialQuantity,
       unit: unit ?? this.unit,
       remainingPercentage: remainingPercentage ?? this.remainingPercentage,
       purchaseDate: purchaseDate ?? this.purchaseDate,
