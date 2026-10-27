@@ -1,10 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foora/features/ai/domain/entities/ai_chat_message.dart';
+import 'package:foora/features/ai/domain/entities/ai_chat_session.dart';
 import 'package:foora/features/ai/domain/entities/ai_assistant_response.dart';
 import 'package:foora/features/ai/domain/repositories/ai_repository.dart';
 import 'package:foora/features/ai/domain/usecases/send_ai_query.dart';
 
 class _FakeAiRepository implements AiRepository {
+  @override
+  Stream<AiAssistantQuota> watchQuota({
+    required String userId,
+    required String membershipId,
+    required String day,
+  }) => const Stream.empty();
+
   String? sentMessage;
   String? sentRequestId;
   String? sentInputMode;
@@ -18,6 +26,7 @@ class _FakeAiRepository implements AiRepository {
   @override
   Future<AiAssistantResponse> sendMessage({
     required String householdId,
+    required String sessionId,
     required String requestId,
     required String message,
     required String inputMode,
@@ -39,6 +48,12 @@ class _FakeAiRepository implements AiRepository {
   @override
   Stream<List<AiChatMessage>> watchMessages({
     required String userId,
+    required String sessionId,
+  }) => Stream.value(const []);
+
+  @override
+  Stream<List<AiChatSession>> watchSessions({
+    required String userId,
     required String householdId,
   }) => Stream.value(const []);
 }
@@ -50,6 +65,7 @@ void main() {
 
     final reply = await useCase(
       householdId: 'home',
+      sessionId: 'session-1',
       requestId: 'request-1',
       message: '  Còn bao nhiêu trứng?  ',
       inputMode: 'voice',
@@ -69,6 +85,7 @@ void main() {
     expect(
       () => useCase(
         householdId: 'home',
+        sessionId: 'session-1',
         requestId: 'request-1',
         message: '   ',
         inputMode: 'text',
@@ -78,6 +95,7 @@ void main() {
     expect(
       () => useCase(
         householdId: 'home',
+        sessionId: 'session-1',
         requestId: 'request-2',
         message: 'a' * 1001,
         inputMode: 'text',

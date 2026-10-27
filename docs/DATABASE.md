@@ -35,6 +35,8 @@ Firestore
 │       │
 │       ├── ai_chats
 │       │   └── {messageId}
+│       ├── ai_sessions
+│       │   └── {sessionId}
 │       ├── ai_requests
 │       │   └── {requestId}
 │       ├── ai_usage_days
@@ -510,7 +512,8 @@ users/{userId}/ai_usage/current
 
 ## 15.1 AI assistant chat, requests, and daily usage
 
-- `users/{userId}/ai_chats/{messageId}`: server-written conversation records. Fields: `householdId`, `requestId`, `content`, `isUser`, `createdAt`; user messages also have `inputMode` (`text` or `voice`); assistant messages have `model`, validated `recipes` (`usesRefs` là item IDs, `usedIngredients`, `missingIngredients`, `steps`) và `actions` (ID đề xuất, batch ứng viên/snapshot, `reviewState`, `resolution`). Khi duyệt action, lưu thêm `actionStatus`, `decisionsHash`, `applyResult` atomically. Owners may read, but only Cloud Functions may write. Query lịch sử lọc household trước khi lấy 50 tin; composite index nằm trong `firestore.indexes.json`.
+- `users/{userId}/ai_chats/{messageId}`: server-written conversation records. Fields: `householdId`, `sessionId`, `requestId`, `content`, `isUser`, `createdAt`; user messages also have `inputMode` (`text` or `voice`); assistant messages have `model`, validated `recipes` (`title`, `servings?`, `ingredients[]` gồm `name`, `quantity?`, `unit?`, `itemId?` — có `itemId` là lấy từ kho, không có là cần mua; kèm `usesRefs`/`usedIngredients`/`missingIngredients` suy ra từ `ingredients`; không có bước nấu, tin cũ có thể còn `steps`) và `actions` (ID đề xuất, batch ứng viên/snapshot, `reviewState`, `resolution`; `add_inventory` được khớp với `foods` bằng bộ chấm điểm dùng chung với quét hóa đơn (`functions/src/inventory/services/food_matcher.ts`) nên có thêm `foodId`, `photoUrl`, `spokenName` khi lời nói khác tên chuẩn và `expirationDate` dự kiến). Khi duyệt action, lưu thêm `actionStatus`, `decisionsHash`, `applyResult` atomically. Owners may read, but only Cloud Functions may write. Query lịch sử lọc `sessionId` trước khi lấy 50 tin; composite index nằm trong `firestore.indexes.json`. Tin tạo trước khi có session không có `sessionId` nên không hiện trong lịch sử.
+- `users/{userId}/ai_sessions/{sessionId}`: server-written conversation summary cho màn lịch sử chat. Fields: `householdId`, `title` (câu hỏi đầu, ≤ 80 ký tự), `lastMessage` (câu trả lời mới nhất, ≤ 140 ký tự), `messageCount`, `createdAt`, `updatedAt`. Owners may read, only Cloud Functions may write; client liệt kê theo `householdId` + `updatedAt desc` (composite index). Một session chỉ thuộc một household.
 - `users/{userId}/ai_requests/{requestId}`: server-only idempotency record. Fields: `payloadHash`, `householdId`, `status` (`pending`, `completed`, `failed`), `quotaDay`, `quotaReserved`, `attemptId`, `leaseExpiresAt`, `result`, `updatedAt`.
 - `users/{userId}/ai_usage_days/{YYYY-MM-DD}`: server-written daily counter with `used` and `updatedAt`; owners may read. Day boundaries use `Asia/Ho_Chi_Minh`. Receipt usage in `ai_usage/current` remains separate.
 

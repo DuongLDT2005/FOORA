@@ -1,131 +1,102 @@
-import {randomUUID} from "crypto";
 import {normalizeFoodName} from "../../utils/string";
-import {AssistantInventoryItem, ValidatedAction} from "./ai_model_response";
+import {AssistantInventoryItem} from "./ai_model_response";
 
-function convertQuantity(
-  qty: number,
-  fromUnit: string,
-  toUnit: string
-): {quantity: number; unit: string} {
-  const f = fromUnit.toLowerCase().trim();
-  const t = toUnit.toLowerCase().trim();
-  if (f === t) return {quantity: qty, unit: toUnit};
-
-  const isFromKg = f === "kg" || f === "kilogam" || f === "kilôgam" || f === "kí" || f === "ky";
-  const isFromG = f === "g" || f === "gam" || f === "gram";
-  const isFromLang = f === "lạng" || f === "lang";
-
-  const isTargetKg = t === "kg" || t === "kilogam" || t === "kilôgam" || t === "kí" || t === "ky";
-  const isTargetG = t === "g" || t === "gam" || t === "gram";
-  const isTargetLang = t === "lạng" || t === "lang";
-
-  if (isFromLang && isTargetKg) return {quantity: Number((qty * 0.1).toFixed(4)), unit: toUnit};
-  if (isFromG && isTargetKg) return {quantity: Number((qty / 1000).toFixed(4)), unit: toUnit};
-  if (isFromKg && isTargetG) return {quantity: Number((qty * 1000).toFixed(4)), unit: toUnit};
-  if (isFromLang && isTargetG) return {quantity: Number((qty * 100).toFixed(4)), unit: toUnit};
-  if (isFromKg && isTargetLang) return {quantity: Number((qty * 10).toFixed(4)), unit: toUnit};
-  if (isFromG && isTargetLang) return {quantity: Number((qty / 100).toFixed(4)), unit: toUnit};
-
-  const isFromLit = f === "l" || f === "lít" || f === "lit";
-  const isFromMl = f === "ml" || f === "mililit" || f === "milit";
-  const isTargetLit = t === "l" || t === "lít" || t === "lit";
-  const isTargetMl = t === "ml" || t === "mililit" || t === "milit";
-
-  if (isFromMl && isTargetLit) return {quantity: Number((qty / 1000).toFixed(4)), unit: toUnit};
-  if (isFromLit && isTargetMl) return {quantity: Number((qty * 1000).toFixed(4)), unit: toUnit};
-
-  return {quantity: qty, unit: toUnit};
+/** Model-shaped proposal; the shared validator turns it into an action. */
+export interface ConsumeProposal {
+  type: "consume" | "discard";
+  ref: string;
+  name: string;
+  quantity: number;
+  unit: string;
 }
 
+/** Lowercase words with the accents the user typed, split like the normalizer. */
+function typedWords(value: string): string[] {
+  return value.normalize("NFC").toLocaleLowerCase("vi-VN")
+    .replace(/[^\p{L}\p{N}]+/gu, " ").trim().split(" ").filter(Boolean);
+}
+
+/**
+ * True when every word of the spoken name appears in the item name. Words
+ * typed with accents must match exactly, because without them "cá" (fish)
+ * and "cà" (as in "cà rốt") are the same word.
+ * @param {string} spoken Food name from the message.
+ * @param {string} itemName Inventory item name.
+ * @return {boolean} Whether the item is named by the message.
+ */
+export function namesItem(spoken: string, itemName: string): boolean {
+  const typed = ` ${typedWords(itemName).join(" ")} `;
+  const plain = ` ${normalizeFoodName(itemName)} `;
+  return typedWords(spoken).every((word) => {
+    const unaccented = normalizeFoodName(word);
+    return word !== unaccented ?
+      typed.includes(` ${word} `) :
+      plain.includes(` ${unaccented} `);
+  });
+}
+
+/**
+ * Parses explicit "used/cooked/threw away N unit food" messages without a model
+ * call. It only names the food; the validator collects every batch of that
+ * food for FEFO and decides whether the proposal needs review. Units are
+ * kept as spoken, never converted (PLAN_04 §2.1). Returns null, so the model
+ * answers instead, for questions or when any food is missing or ambiguous.
+ * @param {string} message User message.
+ * @param {AssistantInventoryItem[]} inventory Loaded items.
+ * @return {object | null} Reply and proposals, or null.
+ */
 export function parseInventoryConsume(
   message: string,
   inventory: AssistantInventoryItem[]
-): {reply: string; actions: ValidatedAction[]} | null {
+): {reply: string; proposals: ConsumeProposal[]} | null {
   const normalized = normalizeFoodName(message);
-
-  // Check if message is asking to consume, discard, or deduct items
-  const isConsumeIntent = /\b(dung|da dung|tieu thu|tru|tru kho|an|da an|xuat|xuat kho|bo|vut|bo di|lay|bot|het|da het)\b/iu.test(normalized);
-  if (!isConsumeIntent) return null;
-
-  // Make sure it is not an add_inventory intent
-  if (/\b(nap|them|mua|cat vao|cho vao|bo vao|bo sung|ghi vao)\b/iu.test(normalized)) {
+  if (/[?？]/.test(message) ||
+      /\b(khong|ko|chua|nen|co nen|bao nhieu|neu)\b/.test(normalized)) {
     return null;
   }
+  // Requests for dish ideas ("gợi ý món ăn từ 2 quả trứng") are not reports.
+  if (/\b(goi y|nau gi|mon gi|lam gi|cong thuc|thuc don)\b/.test(normalized)) {
+    return null;
+  }
+  if (!/\b(dung|da dung|tieu thu|tru|tru kho|an|da an|xuat|xuat kho|bo|vut|bo di|lay|bot|het|da het|da nau|vua nau|nau xong|da lam|vua lam)\b/
+    .test(normalized)) return null;
+  if (/\b(nap|them|mua|cat vao|cho vao|bo vao|bo sung|ghi vao)\b/.test(normalized)) {
+    return null;
+  }
+  const lowered = message.normalize("NFC").toLocaleLowerCase("vi-VN");
+  // "bỏ"/"vứt" mean discard; checked with accents so "bò" (beef) is not one.
+  const type = /(?:^|\s)(bỏ|vứt)(?=\s|$)/u.test(lowered) ? "discard" : "consume";
 
   const segments = message.replace(/(\d),(\d)/g, "$1.$2")
     .split(/\s*[,;]\s*|\s+(?:và|với)\s+(?=\d)/iu);
-
-  const actions: ValidatedAction[] = [];
-  const usedItemIds = new Set<string>();
-
+  const proposals: ConsumeProposal[] = [];
   for (const segment of segments) {
-    const match = /(\d+(?:[.,]\d+)?)\s*(kg|kilôgam|kí|ky|g|gam|lạng|lang|con|bó|quả|hộp|chai|lít|lit|l|gói|túi|cái|củ|trái|miếng|mớ)\s+(.+)/iu.exec(segment);
+    const match = /(\d+(?:[.,]\d+)?)\s*(kg|kilôgam|kí|ky|g|gam|lạng|lang|con|bó|quả|hộp|chai|lít|lit|l|gói|túi|cái|củ|trái|miếng|mớ)\s+(.+)/iu
+      .exec(segment);
     if (!match) continue;
-
-    const rawQty = Number(match[1].replace(",", "."));
-    const rawUnit = match[2].toLowerCase();
-    const rawName = match[3]
-      .replace(/\s+(?:dùng|ăn|nấu|cho|trong|tủ|hôm nay|nhé|nha|ạ|đi)\b.*$/iu, "")
+    const quantity = Number(match[1].replace(",", "."));
+    const unit = match[2].toLocaleLowerCase("vi-VN");
+    const spoken = match[3]
+      .replace(/\s+(?:dùng|ăn|nấu|cho|trong|tủ|hôm nay|nhé|nha|ạ|đi|rồi)\b.*$/iu, "")
       .trim();
-
-    if (!Number.isFinite(rawQty) || rawQty <= 0 || !rawName) continue;
-
-    const targetNorm = normalizeFoodName(rawName);
-
-    // Search for matching item in inventory
-    let matchedItem: AssistantInventoryItem | undefined;
-
-    // 1. Exact normalized name
-    matchedItem = inventory.find(
-      (item) => !usedItemIds.has(item.itemId) && item.normalizedName === targetNorm
-    );
-
-    // 2. Contains match (e.g., 'bò' matches 'thịt bò' or 'thịt bò' matches 'bò')
-    if (!matchedItem) {
-      matchedItem = inventory.find(
-        (item) =>
-          !usedItemIds.has(item.itemId) &&
-          (item.normalizedName.includes(targetNorm) || targetNorm.includes(item.normalizedName))
-      );
-    }
-
-    if (!matchedItem) continue;
-    usedItemIds.add(matchedItem.itemId);
-
-    // Convert units (e.g., 5 lạng bò -> 0.5 kg bò)
-    const converted = convertQuantity(rawQty, rawUnit, matchedItem.unit);
-
-    actions.push({
-      actionId: randomUUID(),
-      type: "consume",
-      name: matchedItem.name,
-      quantity: converted.quantity,
-      unit: converted.unit,
-      categoryId: matchedItem.categoryId,
-      storageLocationId: matchedItem.storageLocationId,
-      targetItemId: matchedItem.itemId,
-      candidateBatches: [
-        {
-          itemId: matchedItem.itemId,
-          name: matchedItem.name,
-          quantity: matchedItem.quantity,
-          initialQuantity: matchedItem.initialQuantity,
-          unit: matchedItem.unit,
-          expirationDate: matchedItem.expirationDate,
-          updatedAtMillis: matchedItem.updatedAtMillis,
-          createdAtMillis: matchedItem.createdAtMillis,
-        },
-      ],
-      reviewState: "ready",
-      resolution: "pending",
-    });
+    if (!Number.isFinite(quantity) || quantity <= 0 || !spoken) return null;
+    const named = inventory.filter((item) => namesItem(spoken, item.name));
+    const foods = new Set(named.map((item) => normalizeFoodName(item.name)));
+    // Never guess between different foods (PLAN_04 §2.1).
+    if (foods.size !== 1) return null;
+    // Inventory is ordered by expiry, so this is the earliest batch; the
+    // validator adds the other batches of the same food and unit.
+    const item = named.find((candidate) => !candidate.isExpired) ?? named[0];
+    proposals.push({type, ref: item.ref, name: item.name, quantity, unit});
   }
-
-  if (actions.length === 0) return null;
-
-  const names = actions.map((a) => `${a.quantity} ${a.unit} ${a.name}`).join(", ");
+  if (proposals.length === 0) return null;
+  const verb = type === "discard" ? "bỏ" : "trừ";
+  const lines = proposals
+    .map((proposal) => `${proposal.quantity} ${proposal.unit} ${proposal.name}`)
+    .join(", ");
   return {
-    reply: `Tôi đã lập phiếu trừ cho ${names}. Hãy kiểm tra số lượng và nhấn xác nhận để trừ kho.`,
-    actions,
+    reply: `Tôi đã lập phiếu ${verb} ${lines}. ` +
+      "Hãy kiểm tra số lượng và nhấn xác nhận để cập nhật kho.",
+    proposals,
   };
 }

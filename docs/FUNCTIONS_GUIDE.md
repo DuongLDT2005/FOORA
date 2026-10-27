@@ -86,7 +86,7 @@ functions/src/
 │   ├── callables/
 │   │   └── ai_assistant.ts         # Callable chat AI chỉ đọc kho, text hoặc voice transcript
 │   ├── services/
-│   │   └── ai_assistant_service.ts # Context kho, Gemini, quota ngày và idempotency
+│   │   └── ai_assistant_service.ts # Context kho, model AI (Gemini), quota ngày và idempotency
 │   ├── schedulers/
 │   │   └── cleanup_ai_requests.ts  # Hoàn quota request treo hết lease
 │   └── index.ts
@@ -158,7 +158,7 @@ functions/src/
 | | `onInventoryItemMutation` | Firestore | `households/{householdId}/inventory_items/{itemId}` | Snapshot document update/delete | Lắng nghe `onUpdate` & `onDelete` (không bắt `onCreate` để tránh double count) đồng bộ `activeItemCount` khi đổi trạng thái sang `consumed`/`discarded`. |
 | | `checkExpiryDailyCron` | Scheduled | `0 7 * * *` (07:00 VN) | Không có (Tự động) | Quét các item sắp hết hạn (<= 3 ngày) / hết hạn (< 0 ngày) -> ghi `notifications`. |
 | **`receipt`** | `parseReceiptAi` | Callable | `onCall` | `{ ocrText: string; householdId: string }` | Trích xuất JSON danh sách thực phẩm (`name`, `quantity`, `unit`, `storageLocationId`). |
-| **`ai`** | `aiAssistant` | Callable | `onCall` | `{ requestId, householdId, message, inputMode }` | Trả JSON gồm `reply`, recipe đã validate và action **đề xuất**; xác thực household, quota AI theo ngày Việt Nam và request idempotency; không ghi kho. |
+| **`ai`** | `aiAssistant` | Callable | `onCall` | `{ requestId, sessionId, householdId, message, inputMode }` | `sessionId` là UUID v4 do client tạo cho mỗi cuộc trò chuyện; lịch sử gửi model chỉ lấy trong session đó. Trả JSON gồm `reply`, recipe đã validate và action **đề xuất** (`add_inventory` được khớp với `foods` như quét hóa đơn; `consume`/`discard` giữ nguyên đơn vị người dùng nói, áp dụng FEFO khi xác nhận); xác thực household, quota AI theo ngày Việt Nam và request idempotency; không ghi kho. |
 | | `applyAiActions` | Callable | `onCall` | `{ messageId, decisions[] }` | Duyệt/loại toàn bộ action của một message, kiểm tra lại batch và quyền trong transaction, FEFO, foodLimit, lưu kết quả từng action; retry cùng decisions không ghi lần hai. |
 | | `cleanupExpiredAiRequests` | Scheduled | Mỗi 5 phút | Request AI hết lease | Chuyển pending request treo sang failed và hoàn quota đúng ngày đã giữ. |
 | **`notification`** | `onNotificationCreated` | Firestore | `users/{userId}/notifications/{id}` | Snapshot document thông báo mới | Gửi tin nhắn FCM đến toàn bộ thiết bị đang active trong `users/{userId}/devices`. |
@@ -193,7 +193,7 @@ functions/src/
 2. Tại root, chạy `npm exec --yes --package firebase-tools -- firebase emulators:exec --config firebase.ai-test.json --only firestore --project foora-app "node functions/test/ai_emulator.integration.js"`. Bài kiểm tra này dùng project/cổng Emulator riêng, tạo dữ liệu mẫu và kiểm tra apply đồng thời, FEFO, stale snapshot, foodLimit, cùng dry run/apply backfill. Nó dùng Admin SDK nên không thay thế bài kiểm tra quyền client theo Firestore Rules.
 3. Muốn xem báo cáo backfill trên dữ liệu Emulator đã nạp: trong `functions`, chạy `npm run backfill:initial-quantity`; chỉ chạy `npm run backfill:initial-quantity -- --apply` sau khi kiểm tra báo cáo. Đặt `FIRESTORE_EMULATOR_HOST` đúng cổng Emulator đang chạy. Script chỉ hỗ trợ Emulator, không ghi production.
 
-Trước khi phát hành: cấu hình `GEMINI_API_KEY` trong Firebase Secret Manager, thử model được chọn bằng tài khoản thật để kiểm tra timeout/chi phí, kiểm tra micro và quyền tiếng Việt trên thiết bị thật, triển khai index/Rules cùng Functions, chạy migration dữ liệu thật bằng quy trình riêng và chỉ bật App Check enforcement sau khi client đã tích hợp, kiểm tra đủ nền tảng.
+Trước khi phát hành: cấu hình `OPENROUTER_API_KEY` trong Firebase Secret Manager (dùng chung với quét hóa đơn), thử model được chọn bằng tài khoản thật để kiểm tra timeout/chi phí, kiểm tra micro và quyền tiếng Việt trên thiết bị thật, triển khai index/Rules cùng Functions, chạy migration dữ liệu thật bằng quy trình riêng và chỉ bật App Check enforcement sau khi client đã tích hợp, kiểm tra đủ nền tảng.
 
 ### A. payOS QR
 

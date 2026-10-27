@@ -179,21 +179,6 @@ class InventoryPage extends ConsumerWidget {
               ),
             ),
 
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => context.push(AppRouteNames.aiAssistant),
-                  icon: Icon(LucideIcons.sparkles, size: 18.r),
-                  label: Text(
-                    'Hỏi trợ lý về kho',
-                    style: TextStyle(fontSize: 14.sp),
-                  ),
-                ),
-              ),
-            ),
-
             // Search and Location Filters
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),

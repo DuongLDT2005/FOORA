@@ -38,6 +38,7 @@ class MobileShellScaffold extends ConsumerWidget {
               onNotificationTap: () {
                 context.push(AppRouteNames.notifications);
               },
+              onAssistantTap: () => context.push(AppRouteNames.aiAssistant),
             ),
       body: navigationShell,
       floatingActionButton: isScanTab
@@ -88,11 +89,13 @@ class _MobileShellHeader extends StatelessWidget
   final String userInitial;
   final int unreadCount;
   final VoidCallback onNotificationTap;
+  final VoidCallback onAssistantTap;
 
   const _MobileShellHeader({
     required this.userInitial,
     required this.unreadCount,
     required this.onNotificationTap,
+    required this.onAssistantTap,
   });
 
   @override
@@ -158,46 +161,64 @@ class _MobileShellHeader extends StatelessWidget
                   ),
                 ],
               ),
-              // Right: Notification Bell Button with Unread Badge
-              IconButton(
-                onPressed: onNotificationTap,
-                icon: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      LucideIcons.bell,
-                      size: 22.r,
-                      color: AppColors.slate500,
+              // Right: Assistant + Notification Bell Button with Unread Badge
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: onAssistantTap,
+                    tooltip: 'Trợ lý FOORA',
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppColors.emerald50,
                     ),
-                    if (unreadCount > 0)
-                      Positioned(
-                        top: -7.h,
-                        right: -8.w,
-                        child: Container(
-                          constraints: BoxConstraints(
-                            minWidth: 18.r,
-                            minHeight: 18.r,
-                          ),
-                          padding: EdgeInsets.symmetric(horizontal: 4.w),
-                          decoration: const BoxDecoration(
-                            color: AppColors.red500,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            unreadCount > 99 ? '99+' : '$unreadCount',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w700,
-                              height: 1,
+                    icon: Icon(
+                      LucideIcons.bot,
+                      size: 21.r,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  SizedBox(width: 4.w),
+                  IconButton(
+                    onPressed: onNotificationTap,
+                    icon: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          LucideIcons.bell,
+                          size: 22.r,
+                          color: AppColors.slate500,
+                        ),
+                        if (unreadCount > 0)
+                          Positioned(
+                            top: -7.h,
+                            right: -8.w,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                minWidth: 18.r,
+                                minHeight: 18.r,
+                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 4.w),
+                              decoration: const BoxDecoration(
+                                color: AppColors.red500,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                unreadCount > 99 ? '99+' : '$unreadCount',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                  ],
-                ),
-                tooltip: 'Thông báo',
+                      ],
+                    ),
+                    tooltip: 'Thông báo',
+                  ),
+                ],
               ),
             ],
           ),

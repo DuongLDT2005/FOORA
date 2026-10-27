@@ -20,6 +20,7 @@ class FirestoreConstants {
   static const String devices = 'devices';
   static const String aiUsage = 'ai_usage';
   static const String aiChats = 'ai_chats';
+  static const String aiSessions = 'ai_sessions';
   static const String aiRequests = 'ai_requests';
   static const String aiUsageDays = 'ai_usage_days';
   static const String payments = 'payments';

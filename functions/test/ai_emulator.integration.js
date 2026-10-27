@@ -35,7 +35,8 @@ async function main() {
   const user = {uid, email: "", role: "member", activeHouseholdId: householdId,
     membershipId: "free", isActive: true};
   const requestId = randomUUID();
-  const question = {requestId, householdId, message: "Hôm nay ăn gì?",
+  const question = {requestId, sessionId: randomUUID(), householdId,
+    message: "Hôm nay ăn gì?",
     inputMode: "text"};
   await assert.rejects(AiAssistantService.send(user, question, ""),
     {code: "failed-precondition"});
@@ -52,7 +53,8 @@ async function main() {
   const emptyHouseholdId = `empty-${suffix}`;
   await db.collection("households").doc(emptyHouseholdId).set({ownerId: uid,
     members: [uid], activeItemCount: 0});
-  const emptyInput = {requestId: randomUUID(), householdId: emptyHouseholdId,
+  const emptyInput = {requestId: randomUUID(), sessionId: randomUUID(),
+    householdId: emptyHouseholdId,
     message: "Trong tủ còn thực phẩm nào sắp hết hạn?", inputMode: "text"};
   const emptyUser = {...user, activeHouseholdId: emptyHouseholdId};
   const emptyResult = await AiAssistantService.send(emptyUser, emptyInput, "");
@@ -62,11 +64,25 @@ async function main() {
   assert.deepEqual(await AiAssistantService.send(emptyUser, emptyInput, ""),
     emptyResult);
   assert.equal((await usage.ref.get()).data().used, 1);
-  const entryInput = {requestId: randomUUID(), householdId: emptyHouseholdId,
+  const entryInput = {requestId: randomUUID(), sessionId: emptyInput.sessionId,
+    householdId: emptyHouseholdId,
     message: "hãy nạp vào tủ lạnh của tôi 10kg cá, 10kg thịt, 5kg cà rốt, " +
       "4 kg khoai tây, 10 bó rau dùng cho cả tuần", inputMode: "text"};
   const entry = await AiAssistantService.send(emptyUser, entryInput, "");
   assert.equal(entry.actions.length, 5);
+  // Both questions share one session: its title is the first question.
+  const session = (await db.collection("users").doc(uid)
+    .collection("ai_sessions").doc(emptyInput.sessionId).get()).data();
+  assert.equal(session.title, emptyInput.message);
+  assert.equal(session.messageCount, 4);
+  assert.equal(session.householdId, emptyHouseholdId);
+  assert.equal((await userChats.doc(entry.messageId).get()).data().sessionId,
+    emptyInput.sessionId);
+  await db.collection("memberships").doc("free")
+    .update({aiAssistantDailyQuota: 10});
+  await assert.rejects(AiAssistantService.send(user, {...question,
+    requestId: randomUUID(), sessionId: emptyInput.sessionId}, ""),
+  {code: "permission-denied"}, "a session stays in its household");
   assert.equal((await db.collection("households").doc(emptyHouseholdId)
     .collection("inventory_items").get()).size, 0);
   const futureDate = new Date(Date.now() + 7 * 86400000)

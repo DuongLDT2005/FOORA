@@ -77,6 +77,11 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      match /ai_sessions/{sessionId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+
       match /ai_requests/{requestId} {
         allow read, write: if false;
       }

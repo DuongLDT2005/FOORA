@@ -7,6 +7,8 @@ const {
   assistantModelError,
   requestedMenuDishCount,
   requestedServings,
+  promisesMissingReceipt,
+  requestedFollowUpDishCount,
 } = require("../lib/ai/services/ai_assistant_service.js");
 
 test("uses Vietnam day boundaries for assistant quota", () => {
@@ -36,4 +38,27 @@ test("recognizes multi-dish menus and serving counts", () => {
   assert.equal(requestedMenuDishCount("thực đơn chứ không phải 1 món"), 2);
   assert.equal(requestedMenuDishCount("gợi ý 3 món cho bữa tối"), 3);
   assert.equal(requestedMenuDishCount("tôi nên nấu món gì?"), 0);
+});
+
+test("detects a reply that promises a receipt without actions", () => {
+  assert.equal(promisesMissingReceipt({reply: "Tôi đã tạo phiếu trừ kho.",
+    recipes: [], actions: []}), true);
+  assert.equal(promisesMissingReceipt({reply: "Tôi đã tạo phiếu trừ kho.",
+    recipes: [], actions: [{type: "consume"}]}), false);
+  assert.equal(promisesMissingReceipt({reply: "Tủ còn 3 quả trứng.",
+    recipes: [], actions: []}), false);
+});
+
+test("follow-ups on a dish suggestion must suggest dishes again", () => {
+  const history = [
+    {role: "user", text: "Nấu gì với đồ sắp hết hạn?"},
+    {role: "assistant", text: "Có 2 món.", dishes: 2},
+  ];
+  assert.equal(requestedFollowUpDishCount("Điều chỉnh cho 4 người", history), 2);
+  assert.equal(requestedFollowUpDishCount("nấu cho 4 người", history), 2);
+  assert.equal(requestedFollowUpDishCount("Gợi ý món khác", history), 1);
+  assert.equal(requestedFollowUpDishCount("Món nào nấu nhanh hơn?", history), 1);
+  assert.equal(requestedFollowUpDishCount("Tủ còn gì?", history), 0);
+  assert.equal(requestedFollowUpDishCount("Điều chỉnh cho 4 người",
+    [{role: "assistant", text: "Tủ còn 3 quả trứng."}]), 0);
 });

@@ -5,9 +5,30 @@ import 'package:foora/features/ai/data/repositories/ai_repository_impl.dart';
 
 class _FakeRemote implements AiRemoteDataSource {
   @override
-  Stream<List<Map<String, dynamic>>> watchMessages({
+  Stream<Map<String, dynamic>> watchQuota({
+    required String userId,
+    required String membershipId,
+    required String day,
+  }) => const Stream.empty();
+
+  @override
+  Stream<List<Map<String, dynamic>>> watchSessions({
     required String userId,
     required String householdId,
+  }) => Stream.value([
+    {
+      'id': 'session-1',
+      'title': 'Hôm nay nấu gì?',
+      'lastMessage': 'Gợi ý trứng hấp.',
+      'updatedAt': Timestamp.fromDate(DateTime(2026, 10, 25)),
+    },
+    {'id': 'session-2', 'title': '  '},
+  ]);
+
+  @override
+  Stream<List<Map<String, dynamic>>> watchMessages({
+    required String userId,
+    required String sessionId,
   }) => Stream.value([
     {
       'id': 'message-assistant',
@@ -50,6 +71,7 @@ class _FakeRemote implements AiRemoteDataSource {
   @override
   Future<Map<String, dynamic>> sendMessage({
     required String householdId,
+    required String sessionId,
     required String requestId,
     required String message,
     required String inputMode,
@@ -59,10 +81,11 @@ class _FakeRemote implements AiRemoteDataSource {
     'recipes': [
       {
         'title': 'Trứng hấp',
-        'usesRefs': ['batch-1'],
-        'usedIngredients': ['Trứng'],
-        'missingIngredients': [],
-        'steps': ['Hấp chín'],
+        'servings': 2,
+        'ingredients': [
+          {'name': 'Trứng', 'quantity': 2, 'unit': 'quả', 'itemId': 'batch-1'},
+          {'name': 'Hành lá', 'quantity': 1, 'unit': 'nhánh'},
+        ],
       },
     ],
     'actions': [],
@@ -77,10 +100,22 @@ class _FakeRemote implements AiRemoteDataSource {
 }
 
 void main() {
-  test('maps structured recipes and action status from saved chat', () async {
+  test('maps saved chat sessions with a fallback title', () async {
+    final sessions = await AiRepositoryImpl(
+      _FakeRemote(),
+    ).watchSessions(userId: 'user', householdId: 'household').first;
+    expect(sessions.map((session) => session.title), [
+      'Hôm nay nấu gì?',
+      'Cuộc trò chuyện',
+    ]);
+    expect(sessions.first.lastMessage, 'Gợi ý trứng hấp.');
+    expect(sessions.first.updatedAt, DateTime(2026, 10, 25));
+  });
+
+  test('maps legacy recipes and action status from saved chat', () async {
     final repository = AiRepositoryImpl(_FakeRemote());
     final history = await repository
-        .watchMessages(userId: 'user', householdId: 'household')
+        .watchMessages(userId: 'user', sessionId: 'session')
         .first;
     expect(history.single.recipes.single.usesRefs, ['batch-1']);
     expect(history.single.recipes.single.missingIngredients, ['Hành']);
@@ -95,11 +130,17 @@ void main() {
     final repository = AiRepositoryImpl(_FakeRemote());
     final response = await repository.sendMessage(
       householdId: 'household',
+      sessionId: 'session',
       requestId: 'request',
       message: 'Hôm nay nấu gì?',
       inputMode: 'voice',
     );
-    expect(response.message.recipes.single.title, 'Trứng hấp');
+    final recipe = response.message.recipes.single;
+    expect(recipe.title, 'Trứng hấp');
+    expect(recipe.servings, 2);
+    expect(recipe.ingredients.first.quantity, 2);
+    expect(recipe.ingredients.first.inInventory, isTrue);
+    expect(recipe.missingIngredients, ['Hành lá']);
     expect(response.quota.remaining, 9);
   });
 }

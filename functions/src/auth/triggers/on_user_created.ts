@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
 import {UserRecord} from "firebase-admin/auth";
+import {REGION} from "../../config/firebase";
 import {AuthService} from "../services/auth_service";
 
 /**
@@ -8,6 +9,7 @@ import {AuthService} from "../services/auth_service";
  * (via Email/Password or Google Sign-In).
  */
 export const onUserCreated = functions
+  .region(REGION)
   .auth.user()
   .onCreate(async (user: UserRecord) => {
     logger.info(`[AuthTrigger] Processing new user registration: ${user.uid} (${user.email})`);

@@ -224,6 +224,11 @@ export class AiActionService {
       prepared.set(decision.actionId, {expirationDate});
     }
 
+    // Same plan as manual adds: the household owner's subscription decides
+    // foodLimit (FUNCTIONS_GUIDE §1.5, PLAN_04 §8.3).
+    const membershipId = await InventoryService.resolveHouseholdMembershipId(
+      preflightData.householdId as string);
+
     return db.runTransaction(async (tx): Promise<ApplyAiResult> => {
       const messageSnap = await tx.get(messageRef);
       const message = messageSnap.data();
@@ -288,6 +293,7 @@ export class AiActionService {
       const acceptedAdds = decisions.filter((decision) => decision.accept &&
         actions.find((action) => action.actionId === decision.actionId)?.type ===
           "add_inventory");
+      const foodPhotos = new Map<string, string | null>();
       for (const decision of acceptedAdds) {
         const category = await tx.get(db.collection(Collections.FOOD_CATEGORIES)
           .doc(decision.categoryId ?? ""));
@@ -304,10 +310,12 @@ export class AiActionService {
               food.data()?.categoryId !== decision.categoryId) {
             throwInvalidArgument("Thực phẩm chuẩn không hợp lệ.");
           }
+          foodPhotos.set(decision.foodId,
+            (food.data()?.photoUrl as string | undefined) || null);
         }
       }
       const membership = await tx.get(db.collection(Collections.MEMBERSHIPS)
-        .doc(user.membershipId));
+        .doc(membershipId));
       if (!membership.exists || membership.data()?.isActive === false) {
         throwFailedPrecondition("Cấu hình gói thành viên chưa sẵn sàng.");
       }
@@ -358,7 +366,8 @@ export class AiActionService {
             expirationDate: Timestamp.fromDate(prepared.get(action.actionId)!.expirationDate),
             source: "manual",
             status: "active",
-            photoUrl: null,
+            photoUrl: decision.foodId ?
+              foodPhotos.get(decision.foodId) ?? null : null,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
           }});

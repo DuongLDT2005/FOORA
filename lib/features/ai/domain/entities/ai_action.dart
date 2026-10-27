@@ -31,6 +31,10 @@ class AiAction {
     this.categoryId,
     this.storageLocationId,
     this.targetItemId,
+    this.foodId,
+    this.photoUrl,
+    this.spokenName,
+    this.expirationDate,
   });
 
   final String actionId;
@@ -41,6 +45,16 @@ class AiAction {
   final String? categoryId;
   final String? storageLocationId;
   final String? targetItemId;
+
+  /// add_inventory: `foods` entry matched on the server, as in receipt scans.
+  final String? foodId;
+  final String? photoUrl;
+
+  /// add_inventory: the user's wording when the catalog name differs.
+  final String? spokenName;
+
+  /// add_inventory: estimated expiry `YYYY-MM-DD` from shelf-life rules.
+  final String? expirationDate;
   final List<AiActionCandidate> candidateBatches;
   final String reviewState;
   final String resolution;
