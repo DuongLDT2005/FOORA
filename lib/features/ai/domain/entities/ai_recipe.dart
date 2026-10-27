@@ -2,46 +2,74 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
 @immutable
+class AiRecipeIngredient {
+  const AiRecipeIngredient({
+    required this.name,
+    this.quantity,
+    this.unit,
+    this.itemId,
+    this.expirationDate,
+  });
+
+  final String name;
+  final double? quantity;
+  final String? unit;
+
+  /// Inventory item the ingredient comes from; null when it must be bought.
+  final String? itemId;
+
+  /// Day the linked fridge item expires (date only); null when bought.
+  final DateTime? expirationDate;
+
+  bool get inInventory => itemId != null;
+
+  @override
+  bool operator ==(Object other) =>
+      other is AiRecipeIngredient &&
+      other.name == name &&
+      other.quantity == quantity &&
+      other.unit == unit &&
+      other.itemId == itemId &&
+      other.expirationDate == expirationDate;
+
+  @override
+  int get hashCode => Object.hash(name, quantity, unit, itemId, expirationDate);
+}
+
+/// A suggested dish: ingredients and amounts only. Suggestions never change
+/// inventory; the user reports what they cooked in a later message.
+@immutable
 class AiRecipe {
   const AiRecipe({
     required this.title,
-    required this.usesRefs,
-    required this.usedIngredients,
-    required this.missingIngredients,
-    required this.steps,
-    this.cookingMinutes,
+    required this.ingredients,
+    this.servings,
   });
 
   final String title;
-  final List<String> usesRefs;
-  final List<String> usedIngredients;
-  final List<String> missingIngredients;
-  final List<String> steps;
-  final int? cookingMinutes;
+  final List<AiRecipeIngredient> ingredients;
+  final int? servings;
+
+  List<String> get usesRefs => [
+    for (final ingredient in ingredients)
+      if (ingredient.itemId != null) ingredient.itemId!,
+  ];
+
+  List<String> get missingIngredients => [
+    for (final ingredient in ingredients)
+      if (!ingredient.inInventory) ingredient.name,
+  ];
 
   @override
   bool operator ==(Object other) =>
       other is AiRecipe &&
       other.title == title &&
-      const ListEquality<String>().equals(other.usesRefs, usesRefs) &&
-      const ListEquality<String>().equals(
-        other.usedIngredients,
-        usedIngredients,
-      ) &&
-      const ListEquality<String>().equals(
-        other.missingIngredients,
-        missingIngredients,
-      ) &&
-      const ListEquality<String>().equals(other.steps, steps) &&
-      other.cookingMinutes == cookingMinutes;
+      other.servings == servings &&
+      const ListEquality<AiRecipeIngredient>().equals(
+        other.ingredients,
+        ingredients,
+      );
 
   @override
-  int get hashCode => Object.hash(
-    title,
-    Object.hashAll(usesRefs),
-    Object.hashAll(usedIngredients),
-    Object.hashAll(missingIngredients),
-    Object.hashAll(steps),
-    cookingMinutes,
-  );
+  int get hashCode => Object.hash(title, servings, Object.hashAll(ingredients));
 }

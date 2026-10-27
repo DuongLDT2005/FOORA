@@ -4,6 +4,11 @@ import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
 import {normalizeFoodName} from "../../utils/string";
 import {InventoryService} from "../../inventory/services/inventory_service";
+import {
+  MasterFoodItem,
+  findBestMasterFoodMatch,
+  toMasterFoodItem,
+} from "../../inventory/services/food_matcher";
 
 /**
  * Raw receipt item extracted purely from the receipt by Gemini or fallback parser.
@@ -19,15 +24,7 @@ export interface ParsedReceiptItemRaw {
   packUnit?: string;
 }
 
-export interface MasterFoodItem {
-  id: string;
-  name: string;
-  normalizedName: string;
-  aliases: string[];
-  categoryId: string;
-  defaultUnit: string;
-  photoUrl?: string | null;
-}
+export {MasterFoodItem};
 
 export interface MatchedExistingStock {
   itemId: string;
@@ -99,18 +96,8 @@ export class ReceiptParserService {
           categories[0].id :
           "vegetables";
 
-    const masterFoods: MasterFoodItem[] = masterFoodsSnap.docs.map((d) => {
-      const data = d.data();
-      return {
-        id: d.id,
-        name: data.name as string,
-        normalizedName: (data.normalizedName || "").toLowerCase(),
-        aliases: ((data.aliases || []) as string[]).map((a) => a.toLowerCase()),
-        categoryId: data.categoryId as string,
-        defaultUnit: data.defaultUnit as string,
-        photoUrl: (data.photoUrl as string) || null,
-      };
-    });
+    const masterFoods: MasterFoodItem[] = masterFoodsSnap.docs
+      .map((d) => toMasterFoodItem(d.id, d.data()));
 
     const activeItems = activeItemsSnap.docs.map((d) => {
       const data = d.data();
@@ -168,7 +155,7 @@ export class ReceiptParserService {
       const finalQuantity = purchaseQty * packMultiplier;
 
       // Step C: Scoring-based Master Food Matching
-      const {matchedFood, matchScore} = this._findBestMasterFoodMatch(normRawName, cleanRawName, masterFoods);
+      const {matchedFood, matchScore} = findBestMasterFoodMatch(normRawName, masterFoods);
 
       // Verify item credibility: Must have either matched master food (score >= 0.8) OR contain a known food indicator
       const hasFoodKeyword = this._containsFoodIndicator(normRawName);
@@ -650,93 +637,6 @@ export class ReceiptParserService {
 
     logger.warn("[ReceiptParserService] All OpenRouter models exhausted, falling back to line parser.");
     return this._fallbackLineParser(ocrText, masterFoods);
-  }
-
-  /**
-   * Scoring-based Master Food Matching:
-   * 1. Exact normalized name match -> 1.0
-   * 2. Exact alias match -> 0.95
-   * 3. Whole phrase containment with specificity check -> 0.82 - 0.92
-   * 4. Specificity penalty: If product has distinguishing modifiers (e.g. 'thanh trùng', 'chua', 'bột')
-   *    and candidate master food is just generic (e.g. 'sữa'), deduct score so it won't false match.
-   *
-   * Minimum threshold to accept match is 0.80.
-   */
-  private static _findBestMasterFoodMatch(
-    normRawName: string,
-    cleanRawName: string,
-    masterFoods: MasterFoodItem[]
-  ): {matchedFood: MasterFoodItem | null; matchScore: number} {
-    let bestFood: MasterFoodItem | null = null;
-    let bestScore = 0;
-
-    const normTokens = normRawName.split(" ").filter((t) => t.length > 0);
-    const paddedNorm = ` ${normRawName} `;
-
-    for (const food of masterFoods) {
-      let score = 0;
-
-      // Rule 1: Exact normalized name match
-      if (normRawName === food.normalizedName) {
-        score = 1.0;
-      } else if (food.aliases.includes(normRawName)) {
-        // Rule 2: Exact alias match
-        score = 0.95;
-      } else {
-        // Rule 3: Whole phrase / token boundary containment
-        const paddedFood = ` ${food.normalizedName} `;
-        const foodTokens = food.normalizedName.split(" ").filter((t) => t.length > 0);
-
-        let aliasPhraseScore = 0;
-        for (const alias of food.aliases) {
-          if (alias.length >= 4 && paddedNorm.includes(` ${alias} `)) {
-            const aliasTokens = alias.split(" ").filter((t) => t.length > 0);
-            const specificity = aliasTokens.length / normTokens.length;
-            const aScore = 0.82 + Math.min(0.12, specificity * 0.12);
-            if (aScore > aliasPhraseScore) aliasPhraseScore = aScore;
-          }
-        }
-
-        if (paddedNorm.includes(paddedFood) && food.normalizedName.length >= 3) {
-          const specificity = foodTokens.length / normTokens.length;
-          let containmentScore = 0.84 + Math.min(0.12, specificity * 0.12);
-
-          // Specificity penalty: Prevent "Mộc Châu Sữa thanh trùng" matching generic "Sữa"
-          const distinguishingKeywords = [
-            "thanh trung",
-            "tiet trung",
-            "chua",
-            "dac",
-            "bot",
-            "chay",
-            "dam",
-            "tron",
-          ];
-          const rawHasDiff = distinguishingKeywords.some((kw) => normRawName.includes(kw));
-          const foodHasDiff = distinguishingKeywords.some((kw) => food.normalizedName.includes(kw));
-
-          if (rawHasDiff && !foodHasDiff) {
-            containmentScore -= 0.18; // Penalty drops score below 0.80 threshold
-          }
-
-          score = Math.max(aliasPhraseScore, containmentScore);
-        } else if (aliasPhraseScore > 0) {
-          score = aliasPhraseScore;
-        }
-      }
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestFood = food;
-      }
-    }
-
-    // Only accept match if score meets or exceeds 0.80 threshold
-    if (bestScore >= 0.8) {
-      return {matchedFood: bestFood, matchScore: bestScore};
-    }
-
-    return {matchedFood: null, matchScore: 0};
   }
 
   /**

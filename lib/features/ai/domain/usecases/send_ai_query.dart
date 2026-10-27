@@ -8,6 +8,7 @@ class SendAiQuery {
 
   Future<AiAssistantResponse> call({
     required String householdId,
+    required String sessionId,
     required String requestId,
     required String message,
     required String inputMode,
@@ -18,6 +19,7 @@ class SendAiQuery {
     }
     return repository.sendMessage(
       householdId: householdId,
+      sessionId: sessionId,
       requestId: requestId,
       message: normalized,
       inputMode: inputMode,

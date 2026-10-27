@@ -368,7 +368,7 @@ Rules:
 
 ## 12. AI RULES
 
-The Flutter client must never call Gemini directly.
+The Flutter client must never call an AI model (Gemini, OpenRouter, ...) directly.
 
 Bad:
 
@@ -399,7 +399,7 @@ Flutter
 Rules:
 
 ```bash
-- Gemini API credentials stay on the backend.
+- AI provider credentials (Gemini, OpenRouter) stay on the backend.
 - Validate Firebase Authentication.
 - Validate membership/permissions.
 - Validate AI quota.

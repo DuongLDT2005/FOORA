@@ -23,7 +23,9 @@ String? suggestAiCategoryId(String name) {
   ).hasMatch(text)) {
     return 'vegetables';
   }
-  if (RegExp(r'^(cua|tom|ca|muc|oc|so|ngao|hau|ghe|hai san)\b').hasMatch(text)) {
+  if (RegExp(
+    r'^(cua|tom|ca|muc|oc|so|ngao|hau|ghe|hai san)\b',
+  ).hasMatch(text)) {
     return 'seafood';
   }
   if (RegExp(r'^(thit|ga|vit|heo|lon|bo vien)\b').hasMatch(text)) {

@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/entities/ai_recipe.dart';
+import 'ai_chat_suggestions.dart' show aiExpiryLabel;
 import 'ai_consume_receipt_card.dart';
 import 'ai_entry_receipt_card.dart';
 
 class ChatBubble extends StatelessWidget {
-  const ChatBubble({super.key, required this.message, this.onReviewActions});
+  const ChatBubble({
+    super.key,
+    required this.message,
+    this.onReviewActions,
+    this.onCooked,
+  });
 
   final AiChatMessage message;
   final VoidCallback? onReviewActions;
+
+  /// Starts a "I cooked this" report the user edits before sending.
+  final ValueChanged<AiRecipe>? onCooked;
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +56,19 @@ class ChatBubble extends StatelessWidget {
                 ),
               ),
             ),
-            ...message.recipes.map((recipe) => _RecipeCard(recipe: recipe)),
+            ...message.recipes.map(
+              (recipe) => _RecipeCard(
+                recipe: recipe,
+                onCooked: onCooked == null ? null : () => onCooked!(recipe),
+              ),
+            ),
             if (message.actions.isNotEmpty &&
                 message.actions.every(
                   (action) => action.type == 'add_inventory',
                 ))
               AiEntryReceiptCard(message: message, onEdit: onReviewActions)
             else if (message.actions.isNotEmpty)
-              AiConsumeReceiptCard(message: message, onEdit: onReviewActions)
+              AiConsumeReceiptCard(message: message, onEdit: onReviewActions),
           ],
         ),
       ),
@@ -61,18 +76,22 @@ class ChatBubble extends StatelessWidget {
   }
 }
 
-
 class _RecipeCard extends StatelessWidget {
-  const _RecipeCard({required this.recipe});
+  const _RecipeCard({required this.recipe, this.onCooked});
 
   final AiRecipe recipe;
+  final VoidCallback? onCooked;
 
   @override
   Widget build(BuildContext context) {
+    final inStock = recipe.ingredients.where((item) => item.inInventory);
+    final toBuy = recipe.ingredients.where((item) => !item.inInventory);
+    // The backend lists the part above the stock again under "to buy".
+    final stockedNames = {for (final item in inStock) item.name};
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(bottom: 14.h),
-      padding: EdgeInsets.all(14.r),
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 8.h),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         border: Border.all(color: AppColors.slate200),
@@ -81,39 +100,169 @@ class _RecipeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            recipe.title,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.slate800,
-              fontSize: 16.sp,
-            ),
+          Row(
+            children: [
+              Icon(
+                Icons.restaurant_menu_rounded,
+                size: 18.r,
+                color: AppColors.primary,
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  recipe.title,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.slate800,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (recipe.servings != null)
+                Text(
+                  '${recipe.servings} người',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.slate600,
+                  ),
+                ),
+            ],
           ),
-          if (recipe.cookingMinutes != null)
-            Text('${recipe.cookingMinutes} phút', style: AppTextStyles.caption),
-          if (recipe.usedIngredients.isNotEmpty) ...[
+          if (inStock.isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            _sectionLabel('Có trong tủ', AppColors.primary),
+            ...inStock.map(_ingredientLine),
+          ],
+          if (toBuy.isNotEmpty) ...[
             SizedBox(height: 10.h),
-            Text(
-              'Trong tủ: ${recipe.usedIngredients.join(', ')}',
-              style: AppTextStyles.bodySmall,
-            ),
-          ],
-          if (recipe.missingIngredients.isNotEmpty) ...[
-            SizedBox(height: 6.h),
-            Text(
-              'Cần thêm: ${recipe.missingIngredients.join(', ')}',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.red700),
-            ),
-          ],
-          SizedBox(height: 10.h),
-          ...recipe.steps.asMap().entries.map(
-            (entry) => Padding(
-              padding: EdgeInsets.only(bottom: 5.h),
-              child: Text(
-                '${entry.key + 1}. ${entry.value}',
-                style: AppTextStyles.bodySmall,
+            _sectionLabel('Cần mua thêm', AppColors.amber800),
+            ...toBuy.map(
+              (item) => _ingredientLine(
+                item,
+                note: stockedNames.contains(item.name)
+                    ? 'Tủ không đủ, cần mua thêm'
+                    : null,
               ),
             ),
+          ],
+          SizedBox(height: 4.h),
+          Divider(height: 12.h, color: AppColors.slate100),
+          Wrap(
+            spacing: 4.w,
+            children: [
+              // The assistant lists amounts only; steps come from a search.
+              TextButton.icon(
+                onPressed: () => _openCookingSearch(context),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                ),
+                icon: Icon(Icons.play_circle_outline_rounded, size: 18.r),
+                label: const Text('Xem cách nấu'),
+              ),
+              if (onCooked != null && inStock.isNotEmpty)
+                TextButton.icon(
+                  onPressed: onCooked,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  ),
+                  icon: Icon(Icons.check_circle_outline_rounded, size: 18.r),
+                  label: const Text('Tôi đã nấu món này'),
+                ),
+            ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openCookingSearch(BuildContext context) async {
+    final url = Uri.https('www.youtube.com', '/results', {
+      'search_query': 'cách nấu ${recipe.title}',
+    });
+    var opened = false;
+    try {
+      opened = await launchUrl(url, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Reported below like an app that declined the link.
+    }
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không mở được trang hướng dẫn nấu.')),
+      );
+    }
+  }
+
+  Widget _sectionLabel(String text, Color color) => Padding(
+    padding: EdgeInsets.only(bottom: 4.h),
+    child: Text(
+      text.toUpperCase(),
+      style: AppTextStyles.caption.copyWith(
+        color: color,
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4,
+      ),
+    ),
+  );
+
+  /// Why the dish was picked: fridge items expiring within two days stand out.
+  Widget _expiryLabel(DateTime expirationDate) {
+    final now = DateTime.now();
+    final soon = !DateUtils.dateOnly(
+      expirationDate,
+    ).isAfter(DateUtils.dateOnly(now).add(const Duration(days: 2)));
+    return Text(
+      aiExpiryLabel(expirationDate, now),
+      style: AppTextStyles.caption.copyWith(
+        fontSize: 11.sp,
+        color: soon ? AppColors.amber800 : AppColors.slate500,
+        fontWeight: soon ? FontWeight.w600 : FontWeight.w400,
+      ),
+    );
+  }
+
+  Widget _ingredientLine(AiRecipeIngredient ingredient, {String? note}) {
+    final quantity = ingredient.quantity;
+    final amount = quantity == null
+        ? ''
+        : '${aiDisplayNumber(quantity)} ${ingredient.unit ?? ''}'.trim();
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 3.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ingredient.name,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.slate800,
+                  ),
+                ),
+                if (ingredient.inInventory && ingredient.expirationDate != null)
+                  _expiryLabel(ingredient.expirationDate!),
+                if (note != null)
+                  Text(
+                    note,
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 11.sp,
+                      color: AppColors.amber800,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (amount.isNotEmpty) ...[
+            SizedBox(width: 12.w),
+            Text(
+              amount,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.slate800,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ],
       ),
     );

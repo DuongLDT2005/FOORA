@@ -6,7 +6,7 @@
 
 - Đã triển khai structured JSON cho reply/recipe/action, lọc context và lịch sử theo household, recipe card, action review sheet, callable `applyAiActions`, kiểm tra snapshot/FEFO/foodLimit và `initialQuantity` trên các đường tạo/sửa item. Client chỉ ghi kho sau khi người dùng xác nhận action.
 - Đã thêm `firestore.indexes.json`, Rules, tài liệu dữ liệu, script backfill chạy trên Emulator và cấu hình `firebase.ai-test.json`. Kiểm tra: Functions 23 unit test, Flutter 112 test, Firestore Emulator cho apply đồng thời, retry, conflict, nhiều batch, giới hạn gói và migration mẫu.
-- Còn phải thử mic tiếng Việt và xử lý từ chối quyền trên thiết bị thật; gọi Gemini với secret thật để đo timeout/chi phí và xác nhận model; kiểm tra App Check trên các nền tảng trước khi bật enforcement; chạy backfill trên dữ liệu thật theo quy trình triển khai. Chưa deploy production hoặc tạo APK thử nghiệm trong đợt này. Shopping list tiếp tục phụ thuộc PLAN 01.
+- Còn phải thử mic tiếng Việt và xử lý từ chối quyền trên thiết bị thật; gọi model OpenRouter với secret thật để đo timeout/chi phí và xác nhận model; kiểm tra App Check trên các nền tảng trước khi bật enforcement; chạy backfill trên dữ liệu thật theo quy trình triển khai. Chưa deploy production hoặc tạo APK thử nghiệm trong đợt này. Shopping list tiếp tục phụ thuộc PLAN 01.
 
 ## 1. Hiện trạng trước đợt triển khai và phạm vi
 
@@ -40,20 +40,20 @@ Voice luôn nghe, tự gửi lời nói, tự ghi kho, tư vấn y tế và thao
 ### 2.2 Recipe
 
 - Chỉ item `active` và chưa quá hạn mới được đưa vào danh sách nguyên liệu có thể dùng; món quá hạn chỉ được nêu như cảnh báo. Khi kho vượt giới hạn context, ưu tiên item chưa quá hạn theo HSD gần nhất; không để item quá hạn chiếm hết 150 chỗ và không khẳng định đã xem toàn bộ kho.
-- Recipe tối đa ba món, mỗi món tối đa 12 bước; ưu tiên item sắp hết hạn. `usesRefs` phải tham chiếu item trong context; nguyên liệu thiếu được hiển thị, chưa tạo shopping item.
+- Recipe tối đa ba món, chỉ gồm tên món và tối đa 15 nguyên liệu kèm lượng/đơn vị theo khẩu phần (không có bước nấu); ưu tiên item sắp hết hạn. Nguyên liệu lấy từ kho phải có `ref` của item chưa quá hạn trong context; nguyên liệu cần mua không có `ref`, chưa tạo shopping item. Gợi ý món không bao giờ tạo action. Nấu xong, người dùng nói "Tôi đã nấu …, dùng …" (hoặc bấm "Tôi đã nấu món này" để soạn sẵn câu theo lượng gợi ý rồi sửa) và câu đó thành phiếu `consume` cần xác nhận; lịch sử chat gửi model kèm tóm tắt nguyên liệu của các món đã gợi ý để dùng khi người dùng không nói lượng.
 - Recipe là gợi ý, không tự trừ kho. Nếu sau này thêm nút “Đã nấu món này”, nút đó đi qua cùng luồng đề xuất và xác nhận action.
 
 ## 3. Kiến trúc và hợp đồng API
 
 ```text
 Flutter chat / voice transcript
-  -> aiAssistant callable: auth, household, quota, context, Gemini, validator
+  -> aiAssistant callable: auth, household, quota, context, model AI (Gemini), validator
   -> reply + recipe + action proposals (Firestore: client chỉ đọc)
   -> người dùng sửa/chọn/xác nhận
   -> applyAiActions callable: đọc trạng thái mới, transaction, kết quả
 ```
 
-Cloud Functions giữ `GEMINI_API_KEY` bằng secret. Client không gọi Gemini trực tiếp. Dùng `@google/genai` đã có trong Functions và structured JSON output; backend vẫn validate từng trường sau khi parse. Chọn model qua config backend, thử trên emulator và môi trường triển khai trước khi chốt tên model, fallback, timeout và chi phí. Tạo adapter riêng cho assistant trước; chỉ trích xuất phần chung từ receipt parser khi có test hồi quy cho quét hóa đơn.
+Cloud Functions giữ `GEMINI_API_KEY` bằng secret (dùng chung với quét hóa đơn). Client không gọi model trực tiếp. Model trả JSON theo `responseSchema`; backend vẫn validate từng trường sau khi parse. Chọn model qua config backend, thử trên emulator và môi trường triển khai trước khi chốt tên model, fallback, timeout và chi phí. Tạo adapter riêng cho assistant trước; chỉ trích xuất phần chung từ receipt parser khi có test hồi quy cho quét hóa đơn.
 
 ### 3.1 `aiAssistant`
 
@@ -76,7 +76,7 @@ type SendResult = {
 1. Xác thực user, quyền household và input. Cùng `requestId` với payload khác phải bị từ chối.
 2. Transaction giữ chỗ quota và tạo `users/{uid}/ai_requests/{requestId}` trạng thái `pending`; retry `completed` trả kết quả đã lưu, retry `pending` báo đang xử lý. Không gọi model bên trong transaction.
 3. Lấy tối đa 150 item active: ưu tiên item **chưa quá hạn** theo HSD gần nhất; chỉ dùng chỗ còn lại cho một số item quá hạn để cảnh báo, không dùng chúng làm `usesRefs` của recipe. Lấy tối đa sáu lượt chat gần nhất **của đúng household trước khi limit**, giữ cặp user/assistant theo `requestId`; UI cũng query 50 tin của đúng household trước khi limit. Thêm composite index `householdId + createdAt` nếu query yêu cầu. Context gửi model gồm alias ngắn, tên, lượng, đơn vị, ngày hết hạn, vị trí; không chứa UID/email. Nếu vượt giới hạn, nói rõ câu trả lời chỉ dựa trên một phần inventory; không khẳng định “không có” món nằm ngoài phần đã tải.
-4. Gọi Gemini với system instruction riêng và JSON schema gọn. Theo phase: hoàn thiện chat với `actions: []`, `recipes: []`; Phase 2 mở recipe; Phase 4 mới mở action, tránh hiển thị đề xuất chưa có luồng duyệt. Giới hạn tổng thời gian, số lần retry cho lỗi tạm thời; ghi model thực dùng.
+4. Gọi Gemini: `AI_ASSISTANT_MODEL` trả lời trước, các model trong `AI_ASSISTANT_FALLBACK_MODELS` lần lượt chạy song song khi lượt trước lỗi, trả lời không dùng được hoặc quá 3.5s chưa trả lời (lấy câu trả lời hợp lệ đến trước); thinking ở mức thấp nhất, kho gửi dạng dòng gọn, không gọi lại lần hai khi thiếu món thực đơn. Theo phase: hoàn thiện chat với `actions: []`, `recipes: []`; Phase 2 mở recipe; Phase 4 mới mở action, tránh hiển thị đề xuất chưa có luồng duyệt. Giới hạn tổng thời gian, số lần retry cho lỗi tạm thời; ghi model thực dùng.
 5. Validator kiểm tra các trường được mở ở phase hiện tại: câu trả lời; sau đó recipe và `usesRefs`; cuối cùng action, số lượng, đơn vị và `ref`. Khi mở action, chuyển alias thành item ID, lưu `expectedUpdatedAt` (hoặc version), snapshot số lượng/đơn vị và danh sách batch ứng viên có giới hạn cho mỗi action; nếu vượt giới hạn ứng viên, yêu cầu người dùng hỏi lại/chọn rõ hơn.
 6. Transaction ghi một cặp user/assistant chat và chuyển request sang `completed`, lưu response để retry trả đúng cùng kết quả. Nếu request không còn `pending`, không ghi chat.
 7. Khi model hoặc validation lỗi, transaction chuyển request sang `failed` và hoàn đúng quota đã giữ. Với request treo do Function chết/timeout, tác vụ dọn định kỳ chỉ hoàn request hết lease, chưa completed; hoàn đúng một lần bằng trạng thái trong transaction. Worker đến muộn không được hoàn tất request đã failed.
@@ -96,8 +96,8 @@ type ModelReply = {
     storageLocationId?: "fridge" | "freezer";
   }>;
   recipes: Array<{
-    title: string; usesRefs: string[]; missingIngredients: string[];
-    steps: string[]; cookingMinutes?: number;
+    title: string; servings?: number;
+    ingredients: { name: string; ref?: string; quantity?: number; unit?: string }[];
   }>;
 };
 ```

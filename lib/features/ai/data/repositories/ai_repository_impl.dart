@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/ai_chat_message.dart';
+import '../../domain/entities/ai_chat_session.dart';
 import '../../domain/entities/ai_assistant_response.dart';
 import '../../domain/entities/ai_recipe.dart';
 import '../../domain/entities/ai_action.dart';
@@ -17,10 +18,10 @@ class AiRepositoryImpl implements AiRepository {
   @override
   Stream<List<AiChatMessage>> watchMessages({
     required String userId,
-    required String householdId,
+    required String sessionId,
   }) {
     return remoteDataSource
-        .watchMessages(userId: userId, householdId: householdId)
+        .watchMessages(userId: userId, sessionId: sessionId)
         .map(
           (records) => records.map((data) {
             final createdAt = data['createdAt'];
@@ -42,8 +43,36 @@ class AiRepositoryImpl implements AiRepository {
   }
 
   @override
+  Stream<List<AiChatSession>> watchSessions({
+    required String userId,
+    required String householdId,
+  }) {
+    return remoteDataSource
+        .watchSessions(userId: userId, householdId: householdId)
+        .map(
+          (records) => records.map((data) {
+            final updatedAt = data['updatedAt'];
+            final title = data['title'];
+            return AiChatSession(
+              id: data['id'] as String,
+              title: title is String && title.trim().isNotEmpty
+                  ? title.trim()
+                  : 'Cuộc trò chuyện',
+              lastMessage: data['lastMessage'] is String
+                  ? data['lastMessage'] as String
+                  : '',
+              updatedAt: updatedAt is Timestamp
+                  ? updatedAt.toDate()
+                  : DateTime.now(),
+            );
+          }).toList(),
+        );
+  }
+
+  @override
   Future<AiAssistantResponse> sendMessage({
     required String householdId,
+    required String sessionId,
     required String requestId,
     required String message,
     required String inputMode,
@@ -51,6 +80,7 @@ class AiRepositoryImpl implements AiRepository {
     try {
       final data = await remoteDataSource.sendMessage(
         householdId: householdId,
+        sessionId: sessionId,
         requestId: requestId,
         message: message,
         inputMode: inputMode,
@@ -90,6 +120,23 @@ class AiRepositoryImpl implements AiRepository {
     } on AppException catch (error) {
       throw Failure.fromException(error);
     }
+  }
+
+  @override
+  Stream<AiAssistantQuota> watchQuota({
+    required String userId,
+    required String membershipId,
+    required String day,
+  }) {
+    return remoteDataSource
+        .watchQuota(userId: userId, membershipId: membershipId, day: day)
+        .map(
+          (data) => AiAssistantQuota(
+            used: (data['used'] as num?)?.toInt() ?? 0,
+            limit: (data['limit'] as num?)?.toInt(),
+            day: day,
+          ),
+        );
   }
 
   @override
@@ -154,6 +201,10 @@ class AiRepositoryImpl implements AiRepository {
           categoryId: data['categoryId'] as String?,
           storageLocationId: data['storageLocationId'] as String?,
           targetItemId: data['targetItemId'] as String?,
+          foodId: data['foodId'] as String?,
+          photoUrl: data['photoUrl'] as String?,
+          spokenName: data['spokenName'] as String?,
+          expirationDate: data['expirationDate'] as String?,
           candidateBatches: candidates,
           reviewState: data['reviewState'] as String? ?? 'needsReview',
           resolution: data['resolution'] as String? ?? 'pending',
@@ -172,32 +223,60 @@ class AiRepositoryImpl implements AiRepository {
       }
       final data = Map<String, dynamic>.from(item);
       final title = data['title'];
-      final refs = _strings(data['usesRefs']);
-      final used = _strings(data['usedIngredients']);
-      final missing = _strings(data['missingIngredients']);
-      final steps = _strings(data['steps']);
-      if (title is! String ||
-          title.trim().isEmpty ||
-          refs == null ||
-          used == null ||
-          missing == null ||
-          steps == null ||
-          steps.isEmpty) {
-        continue;
-      }
-      final minutes = data['cookingMinutes'];
+      if (title is! String || title.trim().isEmpty) continue;
+      final ingredients =
+          _parseIngredients(data['ingredients']) ?? _legacyIngredients(data);
+      if (ingredients == null || ingredients.isEmpty) continue;
+      final servings = data['servings'];
       recipes.add(
         AiRecipe(
           title: title,
-          usesRefs: refs,
-          usedIngredients: used,
-          missingIngredients: missing,
-          steps: steps,
-          cookingMinutes: minutes is num ? minutes.toInt() : null,
+          ingredients: ingredients,
+          servings: servings is num ? servings.toInt() : null,
         ),
       );
     }
     return recipes;
+  }
+
+  static List<AiRecipeIngredient>? _parseIngredients(Object? raw) {
+    if (raw is! List) return null;
+    final ingredients = <AiRecipeIngredient>[];
+    for (final item in raw) {
+      if (item is! Map || item['name'] is! String) continue;
+      final quantity = item['quantity'];
+      final expirationDate = item['expirationDate'];
+      ingredients.add(
+        AiRecipeIngredient(
+          name: item['name'] as String,
+          quantity: quantity is num ? quantity.toDouble() : null,
+          unit: item['unit'] as String?,
+          itemId: item['itemId'] as String?,
+          expirationDate: expirationDate is String
+              ? DateTime.tryParse(expirationDate)
+              : null,
+        ),
+      );
+    }
+    return ingredients;
+  }
+
+  /// Chats saved before ingredient amounts only list names.
+  static List<AiRecipeIngredient>? _legacyIngredients(
+    Map<String, dynamic> data,
+  ) {
+    final refs = _strings(data['usesRefs']);
+    final used = _strings(data['usedIngredients']);
+    final missing = _strings(data['missingIngredients']);
+    if (refs == null || used == null || missing == null) return null;
+    return [
+      for (var index = 0; index < used.length; index++)
+        AiRecipeIngredient(
+          name: used[index],
+          itemId: index < refs.length ? refs[index] : null,
+        ),
+      for (final name in missing) AiRecipeIngredient(name: name),
+    ];
   }
 
   static List<String>? _strings(Object? raw) {

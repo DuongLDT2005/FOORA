@@ -6,6 +6,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
+import '../../../inventory/presentation/widgets/food_image_avatar.dart';
 import '../../../inventory/domain/entities/food_category.dart';
 import '../../domain/entities/ai_action.dart';
 import '../../domain/entities/ai_chat_message.dart';
@@ -33,6 +34,13 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
       action.categoryId ??
       suggestAiCategoryId(action.name);
 
+  /// The matched catalog food stays linked only while its category is kept;
+  /// the server rejects a foodId whose category differs.
+  String? _foodId(AiAction action) =>
+      action.foodId != null && _categoryId(action) == action.categoryId
+      ? action.foodId
+      : null;
+
   String _amount(AiAction action) {
     final quantity = action.quantity;
     if (quantity == null) return '—';
@@ -58,7 +66,8 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
           !knownCategories.any((category) => category.id == categoryId) ||
           !knownLocations.any((location) => location.id == locationId)) {
         setState(
-          () => _error = 'Kiểm tra tên, lượng, danh mục hoặc mở phần sửa phiếu.',
+          () =>
+              _error = 'Kiểm tra tên, lượng, danh mục hoặc mở phần sửa phiếu.',
         );
         return;
       }
@@ -70,6 +79,7 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
         'unit': action.unit,
         'categoryId': categoryId,
         'storageLocationId': locationId,
+        'foodId': ?_foodId(action),
       });
     }
     final payload = _retryDecisions ?? decisions;
@@ -127,10 +137,13 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
         ? 'Ngăn đông'
         : 'Ngăn mát';
 
+    final hasEdit = pending && widget.onEdit != null;
+
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(bottom: 14.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      // The edit link carries its own padding below.
+      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, hasEdit ? 6.h : 16.h),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         border: Border.all(color: AppColors.slate200),
@@ -170,7 +183,12 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
             index < widget.message.actions.length;
             index++
           ) ...[
-            if (index > 0) Divider(height: 17.h, color: AppColors.slate100),
+            if (index > 0)
+              Divider(
+                height: 21.h,
+                indent: 40.r + 12.w,
+                color: AppColors.slate100,
+              ),
             _buildLine(widget.message.actions[index], categories, pending),
           ],
           SizedBox(height: 14.h),
@@ -210,14 +228,16 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
                 child: Text(_sending ? 'Đang nhập kho…' : 'Xác nhận nhập kho'),
               ),
             ),
-            if (widget.onEdit != null)
-              Align(
-                alignment: Alignment.center,
+            if (hasEdit) ...[
+              SizedBox(height: 4.h),
+              SizedBox(
+                width: double.infinity,
                 child: TextButton(
                   onPressed: widget.onEdit,
                   child: const Text('Sửa tên, lượng hoặc hạn dùng'),
                 ),
               ),
+            ],
           ],
         ],
       ),
@@ -238,15 +258,40 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
       }
     }
     final categoryLabel = category?.name ?? 'Chọn danh mục';
-    return Column(
+    final linked = _foodId(action) != null;
+    final details = [
+      if (action.spokenName != null) 'Bạn nói: ${action.spokenName}',
+      if (action.expirationDate != null && (!pending || linked))
+        'HSD dự kiến ${aiDisplayDate(action.expirationDate!)}',
+    ];
+    final line = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(
-                action.name,
+              child: Text.rich(
+                TextSpan(
+                  text: action.name,
+                  children: [
+                    if (linked)
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 6.w),
+                          child: Tooltip(
+                            message: 'Đã khớp danh mục thực phẩm chuẩn',
+                            child: Icon(
+                              Icons.verified_rounded,
+                              size: 15.r,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.slate800,
                   fontWeight: FontWeight.w600,
@@ -263,43 +308,67 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
             ),
           ],
         ),
+        if (details.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(top: 3.h),
+            child: Text(
+              details.join(' · '),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.slate600,
+              ),
+            ),
+          ),
         if (pending && categories.isNotEmpty)
-          PopupMenuButton<String>(
-            tooltip: 'Đổi danh mục ${action.name}',
-            padding: EdgeInsets.zero,
-            onSelected: (value) => setState(() {
-              _categories[action.actionId] = value;
-              _retryDecisions = null;
-              _error = null;
-            }),
-            itemBuilder: (_) => categories
-                .map(
-                  (candidate) => PopupMenuItem(
-                    value: candidate.id,
-                    child: Text(candidate.name),
-                  ),
-                )
-                .toList(),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 40),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    categoryLabel,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: category == null
-                          ? AppColors.red700
-                          : AppColors.slate600,
+          Padding(
+            padding: EdgeInsets.only(top: 6.h),
+            child: PopupMenuButton<String>(
+              tooltip: 'Đổi danh mục ${action.name}',
+              padding: EdgeInsets.zero,
+              onSelected: (value) => setState(() {
+                _categories[action.actionId] = value;
+                _retryDecisions = null;
+                _error = null;
+              }),
+              itemBuilder: (_) => categories
+                  .map(
+                    (candidate) => PopupMenuItem(
+                      value: candidate.id,
+                      child: Text(candidate.name),
                     ),
+                  )
+                  .toList(),
+              // A chip, so the picker reads as tappable without the
+              // empty height a bare 40px target leaves under the line.
+              child: Container(
+                padding: EdgeInsets.fromLTRB(10.w, 5.h, 6.w, 5.h),
+                decoration: BoxDecoration(
+                  color: category == null ? AppColors.red50 : AppColors.slate50,
+                  border: Border.all(
+                    color: category == null
+                        ? AppColors.red100
+                        : AppColors.slate200,
                   ),
-                  SizedBox(width: 4.w),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 18.r,
-                    color: AppColors.slate600,
-                  ),
-                ],
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      categoryLabel,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: category == null
+                            ? AppColors.red700
+                            : AppColors.slate600,
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18.r,
+                      color: AppColors.slate600,
+                    ),
+                  ],
+                ),
               ),
             ),
           )
@@ -315,5 +384,33 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
           ),
       ],
     );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FoodImageAvatar(
+          photoUrl: action.photoUrl,
+          categoryId: categoryId ?? '',
+          size: 40,
+          borderRadius: 12,
+          backgroundColor: AppColors.slate50,
+        ),
+        SizedBox(width: 12.w),
+        Expanded(child: line),
+      ],
+    );
   }
+}
+
+/// `2026-10-30` → `30/10/2026`; anything else is shown unchanged.
+/// `2` instead of `2.0`, at most two decimals otherwise.
+String aiDisplayNumber(double value) => value % 1 == 0
+    ? value.toInt().toString()
+    : value
+          .toStringAsFixed(2)
+          .replaceFirst(RegExp(r'0+$'), '')
+          .replaceFirst(RegExp(r'\.$'), '');
+
+String aiDisplayDate(String isoDay) {
+  final parts = isoDay.split('-');
+  return parts.length == 3 ? '${parts[2]}/${parts[1]}/${parts[0]}' : isoDay;
 }
