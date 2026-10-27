@@ -140,7 +140,7 @@ enum LocationErrorCode { serviceDisabled, denied, deniedForever, timeout }
 
 /// A device-location error that presentation can map to a recovery action.
 class LocationException extends AppException {
-  const LocationException(this.locationCode, [String? message])
+  LocationException(this.locationCode, [String? message])
     : super(message ?? _messageFor(locationCode), locationCode.name);
 
   final LocationErrorCode locationCode;

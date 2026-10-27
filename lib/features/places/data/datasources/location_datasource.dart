@@ -15,7 +15,7 @@ class LocationDataSourceImpl implements LocationDataSource {
   @override
   Future<UserLocation> getCurrentLocation() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      throw const LocationException(LocationErrorCode.serviceDisabled);
+      throw LocationException(LocationErrorCode.serviceDisabled);
     }
 
     var permission = await Geolocator.checkPermission();
@@ -23,10 +23,10 @@ class LocationDataSourceImpl implements LocationDataSource {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied) {
-      throw const LocationException(LocationErrorCode.denied);
+      throw LocationException(LocationErrorCode.denied);
     }
     if (permission == LocationPermission.deniedForever) {
-      throw const LocationException(LocationErrorCode.deniedForever);
+      throw LocationException(LocationErrorCode.deniedForever);
     }
 
     try {
@@ -44,9 +44,9 @@ class LocationDataSourceImpl implements LocationDataSource {
       );
       return _toUserLocation(current);
     } on TimeoutException {
-      throw const LocationException(LocationErrorCode.timeout);
+      throw LocationException(LocationErrorCode.timeout);
     } on LocationServiceDisabledException {
-      throw const LocationException(LocationErrorCode.serviceDisabled);
+      throw LocationException(LocationErrorCode.serviceDisabled);
     }
   }
 

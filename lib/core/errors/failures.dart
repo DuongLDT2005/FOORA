@@ -86,7 +86,7 @@ class PermissionDeniedFailure extends Failure {
 }
 
 class LocationFailure extends Failure {
-  const LocationFailure(this.locationCode, [String? message])
+  LocationFailure(this.locationCode, [String? message])
     : super(message ?? 'Không thể lấy vị trí.', locationCode.name);
 
   final LocationErrorCode locationCode;
