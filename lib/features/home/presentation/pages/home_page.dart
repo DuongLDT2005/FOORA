@@ -131,6 +131,59 @@ class HomePage extends ConsumerWidget {
                   ),
                 ),
               ),
+              SizedBox(height: 12.h),
+              Material(
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16.r),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16.r),
+                  onTap: () => context.push(AppRouteNames.nearbyStores),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 15.h,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          LucideIcons.mapPinned,
+                          size: 21.r,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tìm nơi đi chợ',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.slate800,
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              Text(
+                                'Xem siêu thị và chợ ở gần vị trí của bạn',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppColors.slate600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          size: 18.r,
+                          color: AppColors.slate500,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
               if (totalCount == 0)
                 Padding(

@@ -742,3 +742,24 @@ When a user adds a food item not present in the master `foods` collection:
    - **Category Fallback**: Client automatically displays the category default illustration (`system/categories/{categoryId}.webp` or vector icon).
    - **Initial Avatar Fallback**: Client renders a stylish pastel avatar containing the first letter of `customName`.
    - **AI Suggestion**: Gemini / Smart Match maps the item name to the closest existing master food illustration if applicable.
+
+---
+
+## 20. Server-only collection: place_cache
+
+**Path**
+
+```text
+place_cache/{roundedLat}_{roundedLng}_{radiusMeters}
+```
+
+This collection stores OpenStreetMap/Overpass responses by an approximately
+1.1 km grid cell for 24 hours. It is only accessed by Cloud Functions; client
+rules deny both reads and writes.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `stores` | Array | At most 200 normalized nearby-store records. |
+| `fetchedAt` | Timestamp | Cache freshness timestamp; TTL is 24 hours. |
+| `radius` | Number | Requested radius in metres. |
+| `center` | Map | Rounded `{lat, lng}` query centre, not precise user location. |

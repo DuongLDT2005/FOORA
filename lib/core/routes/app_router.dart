@@ -19,6 +19,7 @@ import '../../features/payment/presentation/pages/payment_history_page.dart';
 import '../../features/payment/presentation/pages/payment_page.dart';
 import '../../features/payment/presentation/pages/payment_qr_page.dart';
 import '../../features/payment/presentation/pages/payment_result_page.dart';
+import '../../features/places/presentation/pages/nearby_stores_page.dart';
 import '../../features/profile/presentation/pages/contact_us_page.dart';
 import '../../features/statistics/presentation/pages/waste_statistics_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
@@ -201,6 +202,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouteNames.wasteStatistics,
         name: 'wasteStatistics',
         builder: (context, state) => const WasteStatisticsPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.nearbyStores,
+        name: 'nearbyStores',
+        builder: (context, state) => const NearbyStoresPage(),
       ),
       GoRoute(
         path: AppRouteNames.paymentResult,

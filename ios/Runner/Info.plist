@@ -8,6 +8,8 @@
 	<string>FOORA cần nhận diện giọng nói để bạn có thể xem và sửa câu hỏi trước khi gửi.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FOORA uses your location only while the app is open to show nearby stores and markets.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

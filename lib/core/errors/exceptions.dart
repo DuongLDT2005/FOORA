@@ -135,3 +135,26 @@ class PermissionDeniedException extends AppException {
     super.code,
   ]);
 }
+
+enum LocationErrorCode { serviceDisabled, denied, deniedForever, timeout }
+
+/// A device-location error that presentation can map to a recovery action.
+class LocationException extends AppException {
+  const LocationException(this.locationCode, [String? message])
+    : super(message ?? _messageFor(locationCode), locationCode.name);
+
+  final LocationErrorCode locationCode;
+
+  static String _messageFor(LocationErrorCode code) {
+    switch (code) {
+      case LocationErrorCode.serviceDisabled:
+        return 'Dịch vụ định vị đang tắt.';
+      case LocationErrorCode.denied:
+        return 'Bạn chưa cho phép FOORA dùng vị trí.';
+      case LocationErrorCode.deniedForever:
+        return 'Quyền vị trí đã bị từ chối vĩnh viễn.';
+      case LocationErrorCode.timeout:
+        return 'Không lấy được vị trí của bạn. Vui lòng thử lại.';
+    }
+  }
+}

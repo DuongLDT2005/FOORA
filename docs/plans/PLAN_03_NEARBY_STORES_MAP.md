@@ -122,9 +122,9 @@ out center tags 200;
 - `POST https://overpass-api.de/api/interpreter`, body `data=<urlencoded query>`, header
   `User-Agent: FOORA/1.0 (com.foora.foora; contact: foora.team@gmail.com)`, `Content-Type: application/x-www-form-urlencoded`.
 - Timeout 30 s (`AbortSignal.timeout`).
-- 429/504: **không retry dồn dập** – thử lại 1 lần sau 2 s; vẫn lỗi → trả cache cũ hoặc `HttpsError("unavailable", "Máy chủ bản đồ đang bận, thử lại sau ít phút")`.
+- 429/504: **không retry dồn dập** – thử lại đúng 1 lần sau **30 s** theo policy; vẫn lỗi → trả cache cũ hoặc `HttpsError("unavailable", "Máy chủ bản đồ đang bận, thử lại sau ít phút")`.
 - Endpoint đặt trong `defineString("OVERPASS_URL", {default: "https://overpass-api.de/api/interpreter"})` để đổi instance mà không sửa code.
-- Function options: `{region: REGION, timeoutSeconds: 40, maxInstances: 5}`.
+- Function options: `{region: REGION, timeoutSeconds: 70, maxInstances: 5}` để đủ thời gian cho một lần backoff an toàn.
 
 Unit test (`functions/test/overpass_query.test.js`): build query đúng radius/tâm; parse node/way; bỏ phần tử thiếu toạ độ; đặt tên mặc định; build cellId.
 

@@ -181,6 +181,7 @@ functions/src/
 | **`admin`** | `setUserRole` | Callable | `onCall` (Admin only) | `{ targetUid: string; role: 'admin' \| 'member' }` | Set Firebase Auth Custom Claims (`{admin: true}`) & cập nhật `users/{targetUid}.role`. |
 | | `toggleUserActive` | Callable | `onCall` (Admin only) | `{ targetUid: string; isActive: boolean }` | Gọi `auth.revokeRefreshTokens(targetUid)` + `auth.updateUser(targetUid, {disabled: !isActive})` + cập nhật `users/{targetUid}.isActive`. |
 | | `getSystemMetrics` | Callable | `onCall` (Admin only) | Không có | Tổng hợp: tổng số users, số gói premium active, số lượt quét AI trong tháng. |
+| **`places`** | `getNearbyStores` | Callable | `onCall` (Authenticated) | `{ lat, lng, radiusMeters? }` | Làm tròn tâm ô lưới, đọc/ghi `place_cache` TTL 24 giờ, gọi Overpass bằng User-Agent FOORA và trả danh sách cửa hàng OSM. `OVERPASS_URL` là Firebase parameter không bí mật. |
 
 ---
 
