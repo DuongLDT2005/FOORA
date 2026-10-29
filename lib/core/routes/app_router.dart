@@ -30,6 +30,9 @@ import '../../features/profile/presentation/pages/privacy_settings_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/report_bug_page.dart';
 import '../../features/receipt/presentation/pages/receipt_scan_page.dart';
+import '../../features/shopping/domain/entities/shopping_list.dart';
+import '../../features/shopping/presentation/pages/shopping_list_detail_page.dart';
+import '../../features/shopping/presentation/pages/shopping_lists_page.dart';
 import '../../shared/layouts/mobile_shell_scaffold.dart';
 import '../firebase/auth_session_providers.dart';
 import '../firebase/firebase_providers.dart';
@@ -226,6 +229,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final itemToEdit = state.extra as InventoryItem?;
           return ItemFormPage(itemToEdit: itemToEdit);
+        },
+      ),
+      GoRoute(
+        path: AppRouteNames.shoppingLists,
+        name: 'shoppingLists',
+        builder: (context, state) => const ShoppingListsPage(),
+      ),
+      GoRoute(
+        path: AppRouteNames.shoppingListDetail,
+        name: 'shoppingListDetail',
+        builder: (context, state) {
+          final listId = state.pathParameters['id']!;
+          final list = state.extra as ShoppingList?;
+          return ShoppingListDetailPage(listId: listId, initialList: list);
         },
       ),
 

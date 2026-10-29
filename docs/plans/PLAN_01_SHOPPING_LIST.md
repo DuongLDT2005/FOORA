@@ -1,5 +1,11 @@
 # PLAN 01 – Danh sách đi chợ (Shopping list) + gợi ý "Hay mua"
 
+> **Ghi chú triển khai (2026-10-29)** – khác với bản plan dưới đây theo quyết định của nhóm:
+> - **Nhiều danh sách / household** thay cho một danh sách: `households/{id}/shopping_lists/{listId}/items/{itemId}` (schema ở DATABASE.md §9.1–9.2). Route `/shopping-lists` và `/shopping-lists/:id`.
+> - Trạng thái món là `isPurchased` + `isAddedToInventory` (thay cho `pending`/`bought`): tick "đã mua" ghi trực tiếp (Rules kiểm tra), sau đó "Nhập kho (n)" gọi callable **`importShoppingItemsToInventory`** (thay cho `completeShoppingItems`), dùng chung `InventoryService.executeBatchAddInTransaction`.
+> - Xóa danh sách qua callable `deleteShoppingList` (recursive delete); gợi ý "Hay mua" và nhập giọng nói làm đúng §4.1, §4.2, §2.1, §5.4.
+> - Gộp món trùng (§5.3): client tìm món chưa mua cùng `normalizedName` + `unit` rồi cộng số lượng trong transaction (SDK client không query được trong transaction).
+
 > Chức năng 5 trong `PRM393_Project.docx` (tương ứng "Shopping cart" của project mẫu).
 > Phụ thuộc: nên làm sau PLAN 05 (household sharing) vì danh sách dùng chung cả household.
 > Được dùng bởi: PLAN 02 (nhắc đi chợ), PLAN 03 (nút "Đi chợ" → Map), PLAN 04 (AI thêm nguyên liệu thiếu).

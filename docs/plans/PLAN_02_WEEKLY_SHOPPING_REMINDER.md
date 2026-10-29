@@ -1,5 +1,7 @@
 # PLAN 02 – Nhắc đi chợ hằng tuần (push) + đồng bộ cài đặt thông báo
 
+> **Ghi chú triển khai (2026-10-29)**: làm theo plan này (backend `hourlyReminderCron`, `users.notificationSettings`, xóa `checkExpiryDailyCron`). Bản PR đầu dùng local notification trên máy đã được gỡ. Theo §3.4, món hết hạn **hôm nay** (`daysUntil = 0`) không còn được nhắc riêng; `expiration_alert` chỉ gửi một lần vào ngày đầu sau hạn.
+
 > Phần còn thiếu của chức năng 7 (Notifications): *"weekly 'time to go shopping' reminder"* và
 > *"settings: alerts 1/3/7 days before expiry, daily reminder time"*.
 > Phụ thuộc: PLAN 01 (đọc `shopping_list` và dùng `buildShoppingSuggestions`).

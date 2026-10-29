@@ -31,6 +31,12 @@ class AppRouteNames {
   static const String paymentQr = '/payment/:paymentId';
   static const String paymentResult = '/payment/:paymentId/result';
 
+  static const String shoppingLists = '/shopping-lists';
+  static const String shoppingListDetail = '/shopping-lists/:id';
+
+  static String shoppingListDetailPath(String listId) =>
+      '/shopping-lists/$listId';
+
   static String paymentQrPath(String paymentId) => '/payment/$paymentId';
   static String paymentResultPath(String paymentId) =>
       '/payment/$paymentId/result';

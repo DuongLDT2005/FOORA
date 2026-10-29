@@ -1,5 +1,6 @@
 export const EXPIRY_TIME_ZONE = "Asia/Ho_Chi_Minh";
-export const UPCOMING_EXPIRATION_MAX_DAYS = 3;
+/** Days after expiry on which the one-time "expired" alert is sent. */
+export const EXPIRED_ALERT_DAY = -1;
 
 export type ExpiryNotificationType =
   | "expiration_alert"
@@ -29,10 +30,17 @@ export interface PlannedExpiryNotification {
   isRead: false;
 }
 
+/** Per-user alert preferences taken from `notificationSettings`. */
+export interface ExpiryRecipient {
+  expiryAlertDays: readonly number[];
+}
+
 export interface PlanExpiryInput {
   now: Date;
   households: ExpiryHousehold[];
   items: ExpiryInventoryItem[];
+  /** Only members listed here receive notifications. */
+  recipients: ReadonlyMap<string, ExpiryRecipient>;
   timeZone?: string;
 }
 
@@ -67,13 +75,18 @@ export function calendarDaysUntil(
   return Math.round((expiration - today) / 86400000);
 }
 
+/**
+ * "Expired" is sent once, the day after expiry. "Upcoming" is sent only on
+ * the days before expiry the user picked (1/3/7).
+ */
 export function classifyExpiry(
-  daysUntil: number
+  daysUntil: number,
+  expiryAlertDays: readonly number[]
 ): ExpiryNotificationType | null {
-  if (daysUntil < 0) {
+  if (daysUntil === EXPIRED_ALERT_DAY) {
     return "expiration_alert";
   }
-  if (daysUntil <= UPCOMING_EXPIRATION_MAX_DAYS) {
+  if (daysUntil >= 0 && expiryAlertDays.includes(daysUntil)) {
     return "upcoming_expiration";
   }
   return null;
@@ -141,18 +154,22 @@ export function planExpiryNotifications(
       input.now,
       timeZone
     );
-    const type = classifyExpiry(daysUntil);
-    if (!type) {
-      continue;
-    }
     const members = membersByHousehold.get(item.householdId) ?? [];
     const copy = buildExpiryCopy(item.name, daysUntil);
-    const notificationId = expiryNotificationId(
-      dateKey,
-      type,
-      item.inventoryItemId
-    );
     for (const userId of members) {
+      const recipient = input.recipients.get(userId);
+      if (!recipient) {
+        continue;
+      }
+      const type = classifyExpiry(daysUntil, recipient.expiryAlertDays);
+      if (!type) {
+        continue;
+      }
+      const notificationId = expiryNotificationId(
+        dateKey,
+        type,
+        item.inventoryItemId
+      );
       const key = `${userId}/${notificationId}`;
       if (seen.has(key)) {
         continue;

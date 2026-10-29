@@ -69,10 +69,9 @@ functions/src/
 │   └── index.ts
 │
 ├── inventory/                      # 2. INVENTORY MODULE
-│   ├── schedulers/
-│   │   └── check_expiry_cron.ts    # Cron quét hạn sử dụng hàng ngày lúc 07:00 sáng
 │   ├── services/
-│   │   └── expiry_service.ts       # Logic quét FEFO, tính số ngày còn lại & tạo notifications
+│   │   ├── expiry_planner.ts       # Pure: ngày còn lại theo giờ VN, lọc theo expiryAlertDays từng user
+│   │   └── expiry_service.ts       # runForHour: user có reminderHour == giờ hiện tại -> tạo notifications
 │   └── index.ts
 │
 ├── receipt/                        # 3. RECEIPT MODULE
@@ -94,8 +93,13 @@ functions/src/
 ├── notification/                   # 5. NOTIFICATION MODULE
 │   ├── triggers/
 │   │   └── on_notification_new.ts  # Trigger lắng nghe users/{userId}/notifications -> gửi FCM
+│   ├── schedulers/
+│   │   └── hourly_reminder_cron.ts # Job nhắc duy nhất: nhắc hạn dùng + nhắc đi chợ theo reminderHour
 │   ├── services/
-│   │   └── fcm_service.ts          # Logic lấy device token và gửi tin nhắn đẩy FCM đa nền tảng
+│   │   ├── fcm_service.ts          # Logic lấy device token và gửi tin nhắn đẩy FCM đa nền tảng
+│   │   ├── notification_settings.ts # Pure: parse users.notificationSettings, vnClock (giờ/tuần ISO VN)
+│   │   ├── reminder_planner.ts     # Pure: nội dung nhắc đi chợ
+│   │   └── shopping_reminder_service.ts # Query user đúng thứ + giờ, ghi notification shopping_{YYYY}W{ww}
 │   └── index.ts
 │
 ├── membership/                     # 6. MEMBERSHIP MODULE
@@ -134,7 +138,18 @@ functions/src/
 │   │   └── invite_code.ts          # Pure: sinh / chuẩn hóa / validate mã 6 ký tự
 │   └── index.ts
 │
-├── admin/                          # 9. ADMIN MODULE
+├── shopping/                       # 9. SHOPPING MODULE (PLAN_01)
+│   ├── callables/
+│   │   ├── delete_shopping_list.ts         # Xóa danh sách + toàn bộ món (recursive delete)
+│   │   ├── import_shopping_items.ts        # importShoppingItemsToInventory: món đã mua -> kho
+│   │   └── get_shopping_suggestions.ts     # Gợi ý "Hay mua"
+│   ├── services/
+│   │   ├── purchase_frequency.ts   # Pure: thuật toán "Hay mua" (median khoảng cách, tồn kho)
+│   │   ├── shopping_validation.ts  # Pure: validate payload nhập kho
+│   │   └── shopping_service.ts     # Transaction nhập kho, đọc lịch sử mua & món đang chờ
+│   └── index.ts
+│
+├── admin/                          # 10. ADMIN MODULE
 │   ├── callables/
 │   │   ├── set_user_role.ts        # Callable gán quyền Admin / Member (Custom Claims & Firestore)
 │   │   ├── toggle_user_active.ts   # Callable khóa/mở tài khoản + revokeRefreshTokens tức thì
@@ -143,7 +158,7 @@ functions/src/
 │   │   └── admin_service.ts        # Logic tương tác Admin SDK Auth & tổng hợp số liệu
 │   └── index.ts
 │
-└── index.ts                        # Cổng export tập trung 9 namespace ra ngoài Firebase
+└── index.ts                        # Cổng export tập trung các module ra ngoài Firebase
 ```
 
 ---
@@ -156,12 +171,15 @@ functions/src/
 | **`inventory`** | `addInventoryItem` | Callable | `onCall` | `{ householdId, name, categoryId, quantity, unit, storageLocationId, ... }` | Chạy Firestore Transaction kiểm tra `foodLimit` đọc từ `memberships/{membershipId}` (seed: `Free: 30`, `Premium: null`), tính hạn dùng và tăng `activeItemCount` lên 1. Đây là đường duy nhất để client tạo `inventory_items` (Rules chặn create trực tiếp). |
 | | `batchAddInventoryItems` | Callable | `onCall` | `{ householdId, items[], receiptId? }` | Thêm nhiều món từ hóa đơn trong một transaction, kiểm tra `foodLimit` và tăng `activeItemCount`. |
 | | `onInventoryItemMutation` | Firestore | `households/{householdId}/inventory_items/{itemId}` | Snapshot document update/delete | Lắng nghe `onUpdate` & `onDelete` (không bắt `onCreate` để tránh double count) đồng bộ `activeItemCount` khi đổi trạng thái sang `consumed`/`discarded`. |
-| | `checkExpiryDailyCron` | Scheduled | `0 7 * * *` (07:00 VN) | Không có (Tự động) | Quét các item sắp hết hạn (<= 3 ngày) / hết hạn (< 0 ngày) -> ghi `notifications`. |
 | **`receipt`** | `parseReceiptAi` | Callable | `onCall` | `{ ocrText: string; householdId: string }` | Trích xuất JSON danh sách thực phẩm (`name`, `quantity`, `unit`, `storageLocationId`). |
 | **`ai`** | `aiAssistant` | Callable | `onCall` | `{ requestId, sessionId, householdId, message, inputMode }` | `sessionId` là UUID v4 do client tạo cho mỗi cuộc trò chuyện; lịch sử gửi model chỉ lấy trong session đó. Trả JSON gồm `reply`, recipe đã validate và action **đề xuất** (`add_inventory` được khớp với `foods` như quét hóa đơn; `consume`/`discard` giữ nguyên đơn vị người dùng nói, áp dụng FEFO khi xác nhận); xác thực household, quota AI theo ngày Việt Nam và request idempotency; không ghi kho. |
 | | `applyAiActions` | Callable | `onCall` | `{ messageId, decisions[] }` | Duyệt/loại toàn bộ action của một message, kiểm tra lại batch và quyền trong transaction, FEFO, foodLimit, lưu kết quả từng action; retry cùng decisions không ghi lần hai. |
 | | `cleanupExpiredAiRequests` | Scheduled | Mỗi 5 phút | Request AI hết lease | Chuyển pending request treo sang failed và hoàn quota đúng ngày đã giữ. |
 | **`notification`** | `onNotificationCreated` | Firestore | `users/{userId}/notifications/{id}` | Snapshot document thông báo mới | Gửi tin nhắn FCM đến toàn bộ thiết bị đang active trong `users/{userId}/devices`. |
+| | `hourlyReminderCron` | Scheduled | `0 * * * *` (giờ VN) | Không có (Tự động) | Với user có `notificationSettings.reminderHour` = giờ hiện tại: ghi `expiration_alert` (ngày đầu sau hạn) và `upcoming_expiration` (đúng 1/3/7 ngày đã chọn). Với user đúng thứ + giờ nhắc đi chợ: ghi `shopping_reminder` (id `shopping_{YYYY}W{ww}`, `create()` nên chạy lại không gửi trùng; bỏ qua nếu danh sách và gợi ý đều rỗng hoặc `pushEnabled = false`). Thay cho `checkExpiryDailyCron` đã xóa → tổng **2** Scheduler job (`hourlyReminderCron`, `expirePendingPayments`). |
+| **`shopping`** | `deleteShoppingList` | Callable | `onCall` (Member) | `{ householdId, shoppingListId }` | Xóa danh sách và toàn bộ `items` (client không được xóa list trực tiếp). |
+| | `importShoppingItemsToInventory` | Callable | `onCall` (Member) | `{ householdId, shoppingListId, items: [{ shoppingItemId, storageLocationId, categoryId, actualQuantity, purchaseDate? }] }` (1..50) | Một transaction: đọc lại món (phải đã tick, chưa nhập), tạo batch qua `InventoryService.executeBatchAddInTransaction` (foodLimit, `activeItemCount`, hạn dùng theo shelf-life rule), đánh dấu món đã nhập. Vượt `foodLimit` → `resource-exhausted`; người khác đã nhập → `failed-precondition`; gọi lại sau khi thành công trả id cũ. `categoryId` phải tồn tại và khác `other`. |
+| | `getShoppingSuggestions` | Callable | `onCall` (Member) | `{ householdId }` | Gợi ý "Hay mua" từ lịch sử `inventory_items` 180 ngày (≥ 3 ngày mua, median khoảng cách, đang hết/sắp hết, chưa có trong danh sách), tối đa 10, kèm `reason`. Không ghi dữ liệu, không tốn quota AI. |
 | **`membership`** | `resetMonthlyQuotaCron` | Scheduled | `0 0 1 * *` (00:00 ngày 1) | Không có (Tự động) | Batch update reset `ai_usage/current.receiptScanUsed = 0` cho toàn bộ user Free. |
 | | `getMembershipInfo` | Callable | `onCall` | Không có | Thông tin chi tiết gói và hạn mức sử dụng. |
 | **`payment`** | `createCasPaymentOrder` | Callable | `onCall` | `{ membershipId: string }` | Creates or reuses a server-priced payOS QR order. |

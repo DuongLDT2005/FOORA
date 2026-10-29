@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_widget.dart';
@@ -78,113 +79,31 @@ class HomePage extends ConsumerWidget {
                 expiredCount: expiredCount,
                 onExpiredTap: () => context.push(AppRouteNames.wasteStatistics),
               ),
-              SizedBox(height: 18.h),
-              Material(
-                color: AppColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(16.r),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16.r),
-                  onTap: () => context.push(AppRouteNames.aiAssistant),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 15.h,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          LucideIcons.sparkles,
-                          size: 21.r,
-                          color: AppColors.primary,
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Hỏi trợ lý FOORA',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.slate800,
-                                ),
-                              ),
-                              SizedBox(height: 3.h),
-                              Text(
-                                'Gõ hoặc nói để hỏi về thực phẩm trong tủ',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: AppColors.slate600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          LucideIcons.chevronRight,
-                          size: 18.r,
-                          color: AppColors.slate500,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Material(
-                color: AppColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(16.r),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16.r),
-                  onTap: () => context.push(AppRouteNames.nearbyStores),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 15.h,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          LucideIcons.mapPinned,
-                          size: 21.r,
-                          color: AppColors.primary,
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Tìm nơi đi chợ',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.slate800,
-                                ),
-                              ),
-                              SizedBox(height: 3.h),
-                              Text(
-                                'Xem siêu thị và chợ ở gần vị trí của bạn',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: AppColors.slate600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          LucideIcons.chevronRight,
-                          size: 18.r,
-                          color: AppColors.slate500,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
 
+              // Quick action: shopping lists (PLAN_01 §5.1)
+              Padding(
+                padding: EdgeInsets.only(bottom: 12.h),
+                child: FeatureCard(
+                  icon: LucideIcons.shoppingBag,
+                  iconColor: AppColors.primary,
+                  iconBgColor: AppColors.emerald50,
+                  title: 'Danh sách mua sắm',
+                  subtitle: 'Lên kế hoạch đi chợ & tự động nhập kho',
+                  onTap: () => context.push(AppRouteNames.shoppingLists),
+                ),
+              ),
+              // Quick action: nearby stores (PLAN_03)
+              Padding(
+                padding: EdgeInsets.only(bottom: 24.h),
+                child: FeatureCard(
+                  icon: LucideIcons.mapPinned,
+                  iconColor: AppColors.primary,
+                  iconBgColor: AppColors.emerald50,
+                  title: 'Tìm nơi đi chợ',
+                  subtitle: 'Xem siêu thị và chợ ở gần vị trí của bạn',
+                  onTap: () => context.push(AppRouteNames.nearbyStores),
+                ),
+              ),
               if (totalCount == 0)
                 Padding(
                   padding: EdgeInsets.only(top: 32.h),

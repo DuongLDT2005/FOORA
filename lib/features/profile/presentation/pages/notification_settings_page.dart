@@ -7,18 +7,43 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_header.dart';
+import '../../../../shared/helpers/bottom_sheet_helper.dart';
+import '../../../../shared/helpers/toast_helper.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
 import '../providers/notification_settings_provider.dart';
 
-/// Notification settings: push toggle, expiry-alert rules and daily reminder time.
-/// Values are persisted via [NotificationSettingsNotifier].
+/// Vietnamese weekday labels indexed by ISO weekday (1 = Monday).
+const Map<int, String> _weekdayLabels = {
+  1: 'Thứ Hai',
+  2: 'Thứ Ba',
+  3: 'Thứ Tư',
+  4: 'Thứ Năm',
+  5: 'Thứ Sáu',
+  6: 'Thứ Bảy',
+  7: 'Chủ nhật',
+};
+
+/// Notification settings: push toggle, expiry-alert days, reminder hour and
+/// the weekly shopping reminder. Synced to Firestore so the backend reminder
+/// job honors them (PLAN_02).
 class NotificationSettingsPage extends ConsumerWidget {
   const NotificationSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(notificationSettingsProvider);
+    final state = ref.watch(notificationSettingsProvider);
+    final settings = state.settings;
     final notifier = ref.read(notificationSettingsProvider.notifier);
+
+    ref.listen(notificationSettingsProvider.select((s) => s.errorMessage), (
+      _,
+      message,
+    ) {
+      if (message != null) {
+        ToastHelper.show(context, message, isError: true);
+        notifier.clearError();
+      }
+    });
 
     return SubpageLayout(
       header: AppHeader(
@@ -37,7 +62,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                 icon: LucideIcons.bellRing,
                 title: 'Thông báo đẩy (Push)',
                 subtitle: 'Nhận cảnh báo ngay cả khi không mở ứng dụng',
-                value: settings.isPushEnabled,
+                value: settings.pushEnabled,
                 onChanged: notifier.togglePush,
               ),
               _buildDivider(),
@@ -45,7 +70,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                 icon: LucideIcons.volume2,
                 title: 'Âm thanh thông báo',
                 subtitle: 'Phát âm thanh khi có cảnh báo mới',
-                value: settings.soundEnabled,
+                value: state.soundEnabled,
                 onChanged: notifier.toggleSound,
               ),
             ]),
@@ -60,8 +85,8 @@ class NotificationSettingsPage extends ConsumerWidget {
                 iconBgColor: AppColors.red50,
                 title: 'Trước 1 ngày (Khẩn cấp)',
                 subtitle: 'Thực phẩm sẽ hết hạn vào ngày mai',
-                value: settings.expiryAlert1Day,
-                onChanged: notifier.toggleExpiry1Day,
+                value: settings.hasExpiryAlert(1),
+                onChanged: (v) => notifier.toggleExpiryAlert(1, v),
               ),
               _buildDivider(),
               _buildSwitchTile(
@@ -70,8 +95,8 @@ class NotificationSettingsPage extends ConsumerWidget {
                 iconBgColor: AppColors.amber50,
                 title: 'Trước 3 ngày (Sớm)',
                 subtitle: 'Ưu tiên tiêu thụ trước khi bị hỏng',
-                value: settings.expiryAlert3Days,
-                onChanged: notifier.toggleExpiry3Days,
+                value: settings.hasExpiryAlert(3),
+                onChanged: (v) => notifier.toggleExpiryAlert(3, v),
               ),
               _buildDivider(),
               _buildSwitchTile(
@@ -80,107 +105,138 @@ class NotificationSettingsPage extends ConsumerWidget {
                 iconBgColor: AppColors.emerald50,
                 title: 'Trước 7 ngày (Kế hoạch)',
                 subtitle: 'Lên thực đơn tuần cho thực phẩm sắp tới hạn',
-                value: settings.expiryAlert7Days,
-                onChanged: notifier.toggleExpiry7Days,
+                value: settings.hasExpiryAlert(7),
+                onChanged: (v) => notifier.toggleExpiryAlert(7, v),
               ),
             ]),
             SizedBox(height: 20.h),
 
-            // Section 3: Daily Reminder Time
-            _buildSectionHeader('Thời gian nhắc nhở hàng ngày'),
+            // Section 3: Reminder hour (the backend job runs hourly)
+            _buildSectionHeader('Giờ nhắc nhở'),
             _buildCard([
-              InkWell(
-                onTap: () async {
-                  final initialTime = TimeOfDay(
-                    hour: settings.reminderHour,
-                    minute: settings.reminderMinute,
-                  );
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: initialTime,
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: AppColors.primary,
-                            onPrimary: Colors.white,
-                            onSurface: AppColors.slate900,
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    await notifier.setReminderTime(picked.hour, picked.minute);
-                  }
-                },
-                borderRadius: BorderRadius.circular(16.r),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 14.h,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 38.r,
-                        height: 38.r,
-                        decoration: BoxDecoration(
-                          color: AppColors.emerald50,
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Icon(
-                          LucideIcons.alarmClock,
-                          size: 18.r,
-                          color: AppColors.primary,
-                        ),
+              _buildValueTile(
+                icon: LucideIcons.alarmClock,
+                title: 'Giờ nhắc nhở mỗi ngày',
+                subtitle:
+                    'Thông báo được gửi khoảng ${state.formattedReminderHour} '
+                    '(giờ Việt Nam)',
+                value: state.formattedReminderHour,
+                onTap: () => BottomSheetHelper.showSelect<int>(
+                  context,
+                  title: 'Chọn giờ nhắc',
+                  selectedValue: settings.reminderHour,
+                  isGrid: true,
+                  options: [
+                    for (var h = 0; h < 24; h++)
+                      SelectOption(
+                        value: h,
+                        label: '${h.toString().padLeft(2, '0')}:00',
                       ),
-                      SizedBox(width: 14.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Giờ nhắc nhở mỗi ngày',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.slate800,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              'Thời điểm hệ thống gửi thông báo tổng hợp',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.slate500,
-                                fontSize: 12.sp,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.emerald100,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Text(
-                          settings.formattedReminderTime,
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
+                  onSelected: notifier.setReminderHour,
                 ),
               ),
             ]),
+            SizedBox(height: 20.h),
+
+            // Section 4: Weekly shopping reminder
+            _buildSectionHeader('Nhắc đi chợ hằng tuần'),
+            _buildCard([
+              _buildSwitchTile(
+                icon: LucideIcons.shoppingCart,
+                title: 'Nhắc đi chợ',
+                subtitle: 'Nhắc danh sách cần mua và gợi ý hay mua',
+                value: settings.shoppingReminderEnabled,
+                onChanged: notifier.toggleShoppingReminder,
+              ),
+              if (settings.shoppingReminderEnabled) ...[
+                _buildDivider(),
+                _buildValueTile(
+                  icon: LucideIcons.calendarDays,
+                  title: 'Ngày nhắc',
+                  subtitle: 'Gửi vào giờ nhắc nhở đã chọn ở trên',
+                  value: _weekdayLabels[settings.shoppingReminderWeekday]!,
+                  onTap: () => BottomSheetHelper.showSelect<int>(
+                    context,
+                    title: 'Chọn ngày nhắc đi chợ',
+                    selectedValue: settings.shoppingReminderWeekday,
+                    options: [
+                      for (final entry in _weekdayLabels.entries)
+                        SelectOption(value: entry.key, label: entry.value),
+                    ],
+                    onSelected: notifier.setShoppingWeekday,
+                  ),
+                ),
+              ],
+            ]),
+            SizedBox(height: 20.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Row with a value chip on the right that opens a picker.
+  Widget _buildValueTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        child: Row(
+          children: [
+            Container(
+              width: 38.r,
+              height: 38.r,
+              decoration: BoxDecoration(
+                color: AppColors.emerald50,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(icon, size: 18.r, color: AppColors.primary),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.slate800,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.slate500,
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: AppColors.emerald100,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(
+                value,
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -23,5 +23,6 @@ export * from "./payment";
 export * from "./analytics";
 export * from "./household";
 export * from "./places";
+export * from "./shopping";
 
 
