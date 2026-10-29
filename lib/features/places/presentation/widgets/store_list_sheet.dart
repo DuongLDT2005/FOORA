@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_shimmer.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
 import '../../domain/entities/nearby_store.dart';
+import 'open_google_maps_button.dart';
+import 'store_labels.dart';
 
 class StoreListSheet extends StatelessWidget {
   const StoreListSheet({
@@ -92,12 +95,26 @@ class StoreListSheet extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-          if (isLoading) const _StoreListLoading()
-          else if (errorMessage != null) _StoreListError(message: errorMessage!, onRetry: onRetry)
-          else if (stores.isEmpty) const _StoreListEmpty()
+          if (isLoading)
+            const _StoreListLoading()
+          else if (errorMessage != null) ...[
+            ErrorStateWidget(
+              title: 'Không tải được cửa hàng',
+              message: errorMessage!,
+              onRetry: onRetry,
+            ),
+            const Center(child: OpenGoogleMapsButton()),
+          ] else if (stores.isEmpty)
+            const EmptyStateWidget(
+              title: 'Không tìm thấy cửa hàng trong 5 km.',
+              subtitle: 'Dữ liệu OpenStreetMap có thể thiếu cửa hàng nhỏ.',
+              icon: LucideIcons.store,
+              action: OpenGoogleMapsButton(),
+            )
           else
             ...stores.map(
-              (store) => _StoreRow(store: store, onTap: () => onStoreTap(store)),
+              (store) =>
+                  _StoreRow(store: store, onTap: () => onStoreTap(store)),
             ),
         ],
       ),
@@ -130,22 +147,28 @@ class _StoreRow extends StatelessWidget {
                     store.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.titleSmall.copyWith(color: AppColors.slate800),
+                    style: AppTextStyles.titleSmall.copyWith(
+                      color: AppColors.slate800,
+                    ),
                   ),
                   SizedBox(height: 3.h),
                   Text(
                     _metaText(store),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.slate500),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.slate500,
+                    ),
                   ),
                 ],
               ),
             ),
             SizedBox(width: 8.w),
             Text(
-              _distanceLabel(store.distanceMeters),
-              style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary),
+              formatStoreDistance(store.distanceMeters),
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.primary,
+              ),
             ),
           ],
         ),
@@ -175,63 +198,4 @@ class _StoreListLoading extends StatelessWidget {
       ),
     ),
   );
-}
-
-class _StoreListEmpty extends StatelessWidget {
-  const _StoreListEmpty();
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.symmetric(vertical: 28.h),
-    child: Column(
-      children: [
-        Text(
-          'Không tìm thấy cửa hàng trong 5 km.',
-          textAlign: TextAlign.center,
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.slate600),
-        ),
-        SizedBox(height: 8.h),
-        const _OpenGoogleMapsButton(),
-      ],
-    ),
-  );
-}
-
-class _StoreListError extends StatelessWidget {
-  const _StoreListError({required this.message, this.onRetry});
-
-  final String message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.symmetric(vertical: 20.h),
-    child: Column(
-      children: [
-        Text(message, textAlign: TextAlign.center),
-        if (onRetry != null)
-          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
-        const _OpenGoogleMapsButton(),
-      ],
-    ),
-  );
-}
-
-class _OpenGoogleMapsButton extends StatelessWidget {
-  const _OpenGoogleMapsButton();
-
-  @override
-  Widget build(BuildContext context) => TextButton.icon(
-    onPressed: () => launchUrl(
-      Uri.parse('https://www.google.com/maps/search/?api=1&query=siêu+thị'),
-      mode: LaunchMode.externalApplication,
-    ),
-    icon: const Icon(LucideIcons.externalLink, size: 15),
-    label: const Text('Tìm trên Google Maps'),
-  );
-}
-
-String _distanceLabel(double distanceMeters) {
-  if (distanceMeters < 1000) return '≈ ${distanceMeters.round()} m';
-  return '≈ ${(distanceMeters / 1000).toStringAsFixed(1)} km';
 }

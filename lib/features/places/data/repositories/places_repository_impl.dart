@@ -55,4 +55,8 @@ class PlacesRepositoryImpl implements PlacesRepository {
       throw Failure.fromException(error);
     }
   }
+
+  @override
+  Future<void> openLocationSettings({required bool appSettings}) =>
+      locationDataSource.openLocationSettings(appSettings: appSettings);
 }

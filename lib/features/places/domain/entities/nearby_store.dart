@@ -2,34 +2,6 @@ import 'package:meta/meta.dart';
 
 enum StoreKind { supermarket, convenience, greengrocer, butcher, marketplace }
 
-enum StoreFilter { all, supermarket, convenience, marketplace }
-
-extension StoreKindLabels on StoreKind {
-  String get label => switch (this) {
-    StoreKind.supermarket => 'Siêu thị',
-    StoreKind.convenience => 'Cửa hàng tiện lợi',
-    StoreKind.greengrocer => 'Rau củ',
-    StoreKind.butcher => 'Thịt tươi',
-    StoreKind.marketplace => 'Chợ',
-  };
-}
-
-extension StoreFilterLabels on StoreFilter {
-  String get label => switch (this) {
-    StoreFilter.all => 'Tất cả',
-    StoreFilter.supermarket => 'Siêu thị',
-    StoreFilter.convenience => 'Tiện lợi',
-    StoreFilter.marketplace => 'Chợ',
-  };
-
-  bool includes(StoreKind kind) => switch (this) {
-    StoreFilter.all => true,
-    StoreFilter.supermarket => kind == StoreKind.supermarket,
-    StoreFilter.convenience => kind == StoreKind.convenience,
-    StoreFilter.marketplace => kind == StoreKind.marketplace,
-  };
-}
-
 @immutable
 class NearbyStore {
   const NearbyStore({
@@ -48,6 +20,8 @@ class NearbyStore {
   final StoreKind kind;
   final double latitude;
   final double longitude;
+
+  /// Straight-line distance from the user's location.
   final double distanceMeters;
   final String? address;
   final String? openingHours;

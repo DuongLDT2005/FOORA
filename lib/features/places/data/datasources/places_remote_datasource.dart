@@ -24,7 +24,12 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
   }) async {
     try {
       final result = await _functions
-          .httpsCallable('getNearbyStores')
+          .httpsCallable(
+            'getNearbyStores',
+            // Longer than the callable's 70 s timeout, which covers one
+            // 30 s Overpass back-off.
+            options: HttpsCallableOptions(timeout: const Duration(seconds: 75)),
+          )
           .call<Map<String, dynamic>>({
             'lat': latitude,
             'lng': longitude,
@@ -32,7 +37,9 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
           });
       final data = result.data;
       if (data['success'] != true) {
-        throw ServerException(data['message'] as String? ?? 'Không thể tìm cửa hàng gần đây.');
+        throw ServerException(
+          data['message'] as String? ?? 'Không thể tìm cửa hàng gần đây.',
+        );
       }
       final payload = data['data'] as Map<String, dynamic>? ?? const {};
       final stores = payload['stores'] as List<dynamic>? ?? const [];
@@ -41,7 +48,13 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
           .map(NearbyStoreModel.fromJson)
           .toList(growable: false);
     } on FirebaseFunctionsException catch (error) {
-      throw ServerException(error.message ?? 'Không thể tải cửa hàng gần đây.', error.code);
+      throw ServerException(
+        error.message ?? 'Không thể tải cửa hàng gần đây.',
+        error.code,
+      );
+    } catch (error) {
+      if (error is AppException) rethrow;
+      throw ServerException('Không thể tải cửa hàng gần đây: $error');
     }
   }
 }

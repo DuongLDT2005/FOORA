@@ -10,4 +10,8 @@ abstract class PlacesRepository {
     required UserLocation userLocation,
     required int radiusMeters,
   });
+
+  /// Opens the device location settings, or the app's permission settings
+  /// when [appSettings] is true.
+  Future<void> openLocationSettings({required bool appSettings});
 }

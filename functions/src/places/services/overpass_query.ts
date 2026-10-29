@@ -24,6 +24,10 @@ export interface OverpassElement {
   tags?: Record<string, string | undefined>;
 }
 
+/** Overpass returns elements by id, not distance, so fetch a wide pool. */
+export const OVERPASS_RESULT_LIMIT = 1000;
+export const MAX_CACHED_STORES = 200;
+
 const STORE_KINDS: ReadonlySet<StoreKind> = new Set([
   "supermarket",
   "convenience",
@@ -45,7 +49,7 @@ export function buildOverpassQuery(
   lng: number,
   radiusMeters: number
 ): string {
-  return `[out:json][timeout:25];\n(\n  nwr["shop"~"^(supermarket|convenience|greengrocer|butcher)$"](around:${radiusMeters},${lat},${lng});\n  nwr["amenity"="marketplace"](around:${radiusMeters},${lat},${lng});\n);\nout center tags 200;`;
+  return `[out:json][timeout:25];\n(\n  nwr["shop"~"^(supermarket|convenience|greengrocer|butcher)$"](around:${radiusMeters},${lat},${lng});\n  nwr["amenity"="marketplace"](around:${radiusMeters},${lat},${lng});\n);\nout center tags ${OVERPASS_RESULT_LIMIT};`;
 }
 
 export function parseNearbyStores(
@@ -83,7 +87,40 @@ export function parseNearbyStores(
     });
   }
 
-  return stores.slice(0, 200);
+  return stores;
+}
+
+/** Keeps the stores closest to the query centre. */
+export function selectNearestStores(
+  stores: readonly NearbyStoreRecord[],
+  lat: number,
+  lng: number,
+  limit = MAX_CACHED_STORES
+): NearbyStoreRecord[] {
+  return stores
+    .map((store) => ({
+      store,
+      distance: distanceMeters(lat, lng, store.lat, store.lng),
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, limit)
+    .map(({store}) => store);
+}
+
+/** Haversine distance in metres. */
+export function distanceMeters(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const toRadians = (degrees: number) => degrees * Math.PI / 180;
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+    Math.sin(dLng / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(a));
 }
 
 function resolveKind(tags: Record<string, string | undefined>): StoreKind | null {
@@ -95,7 +132,18 @@ function resolveKind(tags: Record<string, string | undefined>): StoreKind | null
 }
 
 function defaultName(kind: StoreKind): string {
-  return kind === "marketplace" ? "Chợ" : "Siêu thị";
+  switch (kind) {
+  case "marketplace":
+    return "Chợ";
+  case "convenience":
+    return "Cửa hàng tiện lợi";
+  case "greengrocer":
+    return "Cửa hàng rau củ";
+  case "butcher":
+    return "Cửa hàng thịt";
+  default:
+    return "Siêu thị";
+  }
 }
 
 function buildAddress(tags: Record<string, string | undefined>): string | null {

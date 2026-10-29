@@ -24,11 +24,9 @@ export const getNearbyStores = onCall<Partial<GetNearbyStoresInput>>(
   {region: REGION, timeoutSeconds: 70, maxInstances: 5},
   async (request): Promise<ApiResponse<NearbyStoresResult>> => {
     try {
-      // The local Emulator Suite is used for UI development without a
-      // Firebase Auth session. Keep the production endpoint protected, while
-      // allowing an unauthenticated Android emulator to exercise the nearby
-      // places flow.
-      if (process.env.FUNCTIONS_EMULATOR !== "true") {
+      // Emulator runs skip the auth check so the map can be exercised from a
+      // fresh Auth Emulator; production always requires a signed-in user.
+      if (!isEmulator()) {
         await getAuthenticatedUser(request);
       }
       const {lat, lng, radiusMeters} = request.data ?? {};
@@ -41,7 +39,7 @@ export const getNearbyStores = onCall<Partial<GetNearbyStoresInput>>(
       }
 
       const radius = Math.min(5000, Math.max(500, radiusMeters ?? 3000));
-      if (process.env.FUNCTIONS_EMULATOR === "true") {
+      if (useEmulatorFixtures()) {
         return {
           success: true,
           data: {
@@ -63,6 +61,19 @@ export const getNearbyStores = onCall<Partial<GetNearbyStoresInput>>(
     }
   }
 );
+
+function isEmulator(): boolean {
+  return process.env.FUNCTIONS_EMULATOR === "true";
+}
+
+/**
+ * Emulator runs return fixtures because many dev networks cannot reach
+ * Overpass. Set PLACES_LIVE_OVERPASS=true in functions/.env.local to query
+ * the real service from the emulator.
+ */
+function useEmulatorFixtures(): boolean {
+  return isEmulator() && process.env.PLACES_LIVE_OVERPASS !== "true";
+}
 
 function isLatitude(value: unknown): value is number {
   return typeof value === "number" &&

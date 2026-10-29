@@ -6,9 +6,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/nearby_store.dart';
+import 'store_labels.dart';
 
 class StoreDetailCard extends StatelessWidget {
-  const StoreDetailCard({super.key, required this.store, required this.onClose});
+  const StoreDetailCard({
+    super.key,
+    required this.store,
+    required this.onClose,
+  });
 
   final NearbyStore store;
   final VoidCallback onClose;
@@ -49,8 +54,10 @@ class StoreDetailCard extends StatelessWidget {
               ],
             ),
             Text(
-              '${_distanceLabel(store.distanceMeters)} · ${store.kind.label}',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.slate600),
+              '${formatStoreDistance(store.distanceMeters)} · ${store.kind.label}',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.slate600,
+              ),
             ),
             if (store.address != null) ...[
               SizedBox(height: 6.h),
@@ -58,7 +65,9 @@ class StoreDetailCard extends StatelessWidget {
                 store.address!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.slate500),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.slate500,
+                ),
               ),
             ],
             SizedBox(height: 12.h),
@@ -92,9 +101,4 @@ class StoreDetailCard extends StatelessWidget {
     });
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
-}
-
-String _distanceLabel(double distanceMeters) {
-  if (distanceMeters < 1000) return '≈ ${distanceMeters.round()} m';
-  return '≈ ${(distanceMeters / 1000).toStringAsFixed(1)} km';
 }

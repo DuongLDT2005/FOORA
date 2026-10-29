@@ -1,4 +1,6 @@
 import {Firestore} from "firebase-admin/firestore";
+import {HttpsError} from "firebase-functions/v2/https";
+import * as logger from "firebase-functions/logger";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
 import {
@@ -6,8 +8,9 @@ import {
   buildOverpassQuery,
   NearbyStoreRecord,
   parseNearbyStores,
+  selectNearestStores,
 } from "./overpass_query";
-import {OverpassClient} from "./overpass_client";
+import {OverpassClient, OverpassError} from "./overpass_client";
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -51,7 +54,11 @@ export class PlacesService {
         radiusMeters + 800
       );
       const elements = await this.overpassClient.query(query);
-      const stores = parseNearbyStores(elements);
+      const stores = selectNearestStores(
+        parseNearbyStores(elements),
+        center.lat,
+        center.lng
+      );
       await cacheRef.set({
         stores,
         fetchedAt: this.now(),
@@ -62,6 +69,13 @@ export class PlacesService {
     } catch (error) {
       if (cached) {
         return {stores: cached.stores, cached: true, source: "openstreetmap"};
+      }
+      if (error instanceof OverpassError) {
+        logger.warn("[PlacesService] Overpass unavailable", error.message);
+        throw new HttpsError(
+          "unavailable",
+          "Máy chủ bản đồ đang bận, thử lại sau ít phút."
+        );
       }
       throw error;
     }

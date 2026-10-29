@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/environment.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/firebase/firebase_providers.dart';
@@ -9,12 +10,24 @@ import '../../data/datasources/places_remote_datasource.dart';
 import '../../data/repositories/places_repository_impl.dart';
 import '../../domain/entities/nearby_store.dart';
 import '../../domain/entities/user_location.dart';
+import '../../domain/repositories/places_repository.dart';
 import '../../domain/usecases/get_current_location.dart';
 import '../../domain/usecases/get_nearby_stores.dart';
+import '../../domain/usecases/open_location_settings.dart';
+import '../widgets/store_labels.dart';
 
-final _placesRepositoryProvider = Provider<PlacesRepositoryImpl>((ref) {
+final _placesRepositoryProvider = Provider<PlacesRepository>((ref) {
+  final devLocation = AppEnv.devLocation;
   return PlacesRepositoryImpl(
-    locationDataSource: const LocationDataSourceImpl(),
+    locationDataSource: LocationDataSourceImpl(
+      fixedLocation: devLocation == null
+          ? null
+          : UserLocation(
+              latitude: devLocation.latitude,
+              longitude: devLocation.longitude,
+              accuracy: 20,
+            ),
+    ),
     remoteDataSource: PlacesRemoteDataSourceImpl(ref.watch(functionsProvider)),
   );
 });
@@ -41,8 +54,9 @@ class NearbyStoresState {
   final StoreFilter filter;
   final NearbyStore? selectedStore;
 
-  List<NearbyStore> get filteredStores =>
-      stores.where((store) => filter.includes(store.kind)).toList(growable: false);
+  List<NearbyStore> get filteredStores => stores
+      .where((store) => filter.includes(store.kind))
+      .toList(growable: false);
 
   NearbyStoresState copyWith({
     UserLocation? userLocation,
@@ -65,7 +79,9 @@ class NearbyStoresState {
       locationFailure: clearLocationFailure
           ? null
           : locationFailure ?? this.locationFailure,
-      storesFailure: clearStoresFailure ? null : storesFailure ?? this.storesFailure,
+      storesFailure: clearStoresFailure
+          ? null
+          : storesFailure ?? this.storesFailure,
       filter: filter ?? this.filter,
       selectedStore: clearSelectedStore
           ? null
@@ -75,23 +91,24 @@ class NearbyStoresState {
 }
 
 final nearbyStoresControllerProvider =
-    NotifierProvider<NearbyStoresController, NearbyStoresState>(
+    NotifierProvider.autoDispose<NearbyStoresController, NearbyStoresState>(
       NearbyStoresController.new,
     );
 
-class NearbyStoresController extends Notifier<NearbyStoresState> {
-  late final GetCurrentLocation _getCurrentLocation;
-  late final GetNearbyStores _getNearbyStores;
+class NearbyStoresController extends AutoDisposeNotifier<NearbyStoresState> {
+  GetCurrentLocation get _getCurrentLocation =>
+      GetCurrentLocation(ref.read(_placesRepositoryProvider));
+  GetNearbyStores get _getNearbyStores =>
+      GetNearbyStores(ref.read(_placesRepositoryProvider));
+  OpenLocationSettings get _openLocationSettings =>
+      OpenLocationSettings(ref.read(_placesRepositoryProvider));
 
   @override
-  NearbyStoresState build() {
-    final repository = ref.watch(_placesRepositoryProvider);
-    _getCurrentLocation = GetCurrentLocation(repository);
-    _getNearbyStores = GetNearbyStores(repository);
-    return const NearbyStoresState();
-  }
+  NearbyStoresState build() => const NearbyStoresState();
 
   Future<void> load() async {
+    // A second permission request while one is open throws on Android.
+    if (state.isLocating) return;
     state = state.copyWith(
       isLocating: true,
       clearLocationFailure: true,
@@ -100,19 +117,32 @@ class NearbyStoresController extends Notifier<NearbyStoresState> {
     try {
       final location = await _getCurrentLocation();
       state = state.copyWith(userLocation: location, isLocating: false);
-      await _loadStores(location);
     } on LocationFailure catch (error) {
       state = state.copyWith(isLocating: false, locationFailure: error);
-    } on Failure catch (error) {
+      return;
+    } catch (error) {
       state = state.copyWith(
         isLocating: false,
         locationFailure: LocationFailure(
           LocationErrorCode.timeout,
-          error.message,
+          error is Failure ? error.message : null,
         ),
       );
+      return;
+    }
+    await _loadStores(state.userLocation!);
+  }
+
+  /// Retries after the user returns from the system settings screen.
+  Future<void> onAppResumed() async {
+    if (state.userLocation == null && state.locationFailure != null) {
+      await load();
     }
   }
+
+  Future<void> openSettings(LocationErrorCode code) => _openLocationSettings(
+    appSettings: code == LocationErrorCode.deniedForever,
+  );
 
   Future<void> refreshStores() async {
     final location = state.userLocation;
@@ -141,6 +171,7 @@ class NearbyStoresController extends Notifier<NearbyStoresState> {
     state = state.copyWith(
       isLoadingStores: true,
       clearStoresFailure: true,
+      clearSelectedStore: true,
     );
     try {
       final stores = await _getNearbyStores(
@@ -151,12 +182,18 @@ class NearbyStoresController extends Notifier<NearbyStoresState> {
       state = state.copyWith(isLoadingStores: false, stores: stores);
     } on Failure catch (error) {
       state = state.copyWith(isLoadingStores: false, storesFailure: error);
+    } catch (_) {
+      state = state.copyWith(
+        isLoadingStores: false,
+        storesFailure: const ServerFailure('Không thể tải cửa hàng gần đây.'),
+      );
     }
   }
 
   void setFilter(StoreFilter filter) => state = state.copyWith(filter: filter);
 
-  void selectStore(NearbyStore store) => state = state.copyWith(selectedStore: store);
+  void selectStore(NearbyStore store) =>
+      state = state.copyWith(selectedStore: store);
 
   void clearSelection() => state = state.copyWith(clearSelectedStore: true);
 }
