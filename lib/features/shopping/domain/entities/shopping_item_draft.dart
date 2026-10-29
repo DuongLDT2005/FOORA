@@ -53,3 +53,18 @@ class AddShoppingItemResult {
 
   const AddShoppingItemResult({required this.itemId, required this.merged});
 }
+
+/// Result of adding several items: how many were new, how many were merged
+/// into existing pending items, and the names that could not be saved.
+@immutable
+class AddShoppingItemsResult {
+  final int added;
+  final int merged;
+  final List<String> failedNames;
+
+  const AddShoppingItemsResult({
+    required this.added,
+    required this.merged,
+    this.failedNames = const [],
+  });
+}

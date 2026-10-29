@@ -54,6 +54,7 @@ class FirebaseInitializer {
         'Storage',
         () => FirebaseStorage.instance.useStorageEmulator(host, 9199),
       );
+      await _ensureUsableEmulatorAuthSession();
 
       AppLogger.i(
         'Connected to Firebase Emulators at $host '
@@ -73,6 +74,31 @@ class FirebaseInitializer {
       // Keep configuring the remaining services and make unexpected mismatches
       // visible instead of silently leaving only part of Firebase on emulators.
       AppLogger.e('Could not configure $service emulator.', error, stackTrace);
+    }
+  }
+
+  /// Auth Emulator data is reset whenever its process restarts, while Android
+  /// can retain the old refresh token. Sign that stale user out so the router
+  /// shows the login screen instead of failing every authenticated call.
+  static Future<void> _ensureUsableEmulatorAuthSession() async {
+    final auth = FirebaseAuth.instance;
+    final user = auth.currentUser;
+    if (user == null) return;
+    try {
+      await user.reload();
+    } on FirebaseAuthException catch (error) {
+      const staleCodes = {
+        'user-not-found',
+        'user-token-expired',
+        'invalid-user-token',
+        'user-disabled',
+      };
+      // Network errors (Auth Emulator not started yet) keep the session.
+      if (staleCodes.contains(error.code)) {
+        await auth.signOut();
+      } else {
+        AppLogger.w('Could not verify the emulator session: ${error.code}');
+      }
     }
   }
 

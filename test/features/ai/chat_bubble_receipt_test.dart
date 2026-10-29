@@ -399,6 +399,61 @@ void main() {
     expect(find.text('Thịt bò'), findsNWidgets(2));
     expect(find.text('Tủ không đủ, cần mua thêm'), findsOneWidget);
   });
+
+  testWidgets('a recipe with items to buy offers the shopping list', (
+    tester,
+  ) async {
+    AiRecipe? tapped;
+    const recipe = AiRecipe(
+      title: 'Canh chua',
+      ingredients: [
+        AiRecipeIngredient(name: 'Cá lóc', quantity: 1, unit: 'con'),
+      ],
+    );
+    final message = AiChatMessage(
+      id: 'shop-assistant',
+      content: 'Gợi ý món.',
+      isUser: false,
+      timestamp: DateTime(2026),
+      recipes: const [recipe],
+    );
+    await tester.pumpWidget(
+      _bubble(
+        _FakeAiRepository(),
+        message,
+        onAddToShopping: (value) => tapped = value,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Thêm vào danh sách mua'));
+    expect(tapped, recipe);
+  });
+
+  testWidgets('a recipe fully in the fridge hides the shopping button', (
+    tester,
+  ) async {
+    final message = AiChatMessage(
+      id: 'stocked-assistant',
+      content: 'Gợi ý món.',
+      isUser: false,
+      timestamp: DateTime(2026),
+      recipes: const [
+        AiRecipe(
+          title: 'Trứng chiên',
+          ingredients: [
+            AiRecipeIngredient(name: 'Trứng', quantity: 2, itemId: 'egg'),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      _bubble(_FakeAiRepository(), message, onAddToShopping: (_) {}),
+    );
+    await tester.pump();
+
+    expect(find.text('Thêm vào danh sách mua'), findsNothing);
+  });
 }
 
 AiChatMessage _consumeMessage(AiAction action) => AiChatMessage(
@@ -414,6 +469,7 @@ Widget _bubble(
   _FakeAiRepository repository,
   AiChatMessage message, {
   VoidCallback? onReview,
+  ValueChanged<AiRecipe>? onAddToShopping,
 }) {
   final now = DateTime(2026);
   return ProviderScope(
@@ -448,7 +504,11 @@ Widget _bubble(
       builder: (context, child) => MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: ChatBubble(message: message, onReviewActions: onReview),
+            child: ChatBubble(
+              message: message,
+              onReviewActions: onReview,
+              onAddToShopping: onAddToShopping,
+            ),
           ),
         ),
       ),
