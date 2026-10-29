@@ -54,6 +54,7 @@ class FirebaseInitializer {
         'Storage',
         () => FirebaseStorage.instance.useStorageEmulator(host, 9199),
       );
+      await _ensureUsableEmulatorAuthSession();
 
       AppLogger.i(
         'Connected to Firebase Emulators at $host '
@@ -73,6 +74,25 @@ class FirebaseInitializer {
       // Keep configuring the remaining services and make unexpected mismatches
       // visible instead of silently leaving only part of Firebase on emulators.
       AppLogger.e('Could not configure $service emulator.', error, stackTrace);
+    }
+  }
+
+  /// Auth Emulator data is reset whenever its process restarts, while Android
+  /// can retain the old refresh token. Replace that stale token with a local
+  /// anonymous session so development-only features can call emulated
+  /// Functions without making the developer sign in again.
+  static Future<void> _ensureUsableEmulatorAuthSession() async {
+    final auth = FirebaseAuth.instance;
+    try {
+      if (auth.currentUser != null) {
+        await auth.currentUser!.reload();
+      }
+    } on FirebaseAuthException {
+      await auth.signOut();
+    }
+
+    if (auth.currentUser == null) {
+      await auth.signInAnonymously();
     }
   }
 

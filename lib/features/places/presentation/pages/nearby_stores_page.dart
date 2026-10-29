@@ -81,7 +81,10 @@ class _NearbyStoresPageState extends ConsumerState<NearbyStoresPage> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                // The base tile hostname is resolved to localhost by some
+                // Android emulator DNS setups. The official `a` hostname
+                // serves the same OSM tiles and avoids that bad resolution.
+                urlTemplate: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.foora.foora',
               ),
               CircleLayer(

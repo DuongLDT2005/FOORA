@@ -14,7 +14,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 export interface NearbyStoresResult {
   stores: NearbyStoreRecord[];
   cached: boolean;
-  source: "openstreetmap";
+  source: "openstreetmap" | "emulator-mock";
 }
 
 interface PlaceCacheDocument {
