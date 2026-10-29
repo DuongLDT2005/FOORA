@@ -1,294 +1,220 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/errors/failures.dart';
 import '../../../../core/firebase/firebase_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../household/presentation/providers/household_provider.dart';
+import '../../../inventory/domain/entities/food_suggestion.dart';
+import '../../../inventory/presentation/providers/inventory_provider.dart';
 import '../../data/datasources/shopping_remote_datasource.dart';
 import '../../data/repositories/shopping_repository_impl.dart';
-import '../../domain/entities/shopping_list.dart';
+import '../../domain/entities/import_shopping_item_request.dart';
 import '../../domain/entities/shopping_item.dart';
+import '../../domain/entities/shopping_item_draft.dart';
+import '../../domain/entities/shopping_list.dart';
+import '../../domain/entities/shopping_suggestion.dart';
 import '../../domain/repositories/shopping_repository.dart';
+import '../../domain/usecases/add_shopping_item.dart';
+import '../../domain/usecases/delete_shopping_item.dart';
+import '../../domain/usecases/delete_shopping_list.dart';
+import '../../domain/usecases/get_shopping_suggestions.dart';
+import '../../domain/usecases/import_shopping_items_to_inventory.dart';
+import '../../domain/usecases/parse_voice_shopping_text.dart';
+import '../../domain/usecases/save_shopping_list.dart';
+import '../../domain/usecases/set_shopping_item_purchased.dart';
+import '../../domain/usecases/update_shopping_item.dart';
+import '../../domain/usecases/watch_shopping_items.dart';
+import '../../domain/usecases/watch_shopping_list.dart';
+import '../../domain/usecases/watch_shopping_lists.dart';
 
 // --- Data & Domain Providers ---
 
-final shoppingRemoteDataSourceProvider = Provider<ShoppingRemoteDataSource>((ref) {
-  return ShoppingRemoteDataSourceImpl(
-    firestore: ref.watch(firestoreProvider),
-    functions: ref.watch(functionsProvider),
-  );
-});
-
 final shoppingRepositoryProvider = Provider<ShoppingRepository>((ref) {
   return ShoppingRepositoryImpl(
-    remoteDataSource: ref.watch(shoppingRemoteDataSourceProvider),
+    remoteDataSource: ShoppingRemoteDataSourceImpl(
+      firestore: ref.watch(firestoreProvider),
+      functions: ref.watch(functionsProvider),
+    ),
   );
 });
 
-// --- Stream Providers ---
+final parseVoiceShoppingTextProvider = Provider(
+  (ref) => const ParseVoiceShoppingTextUseCase(),
+);
 
-/// Stream real-time toàn bộ danh sách mua sắm của household hiện tại
-final shoppingListsStreamProvider = StreamProvider<List<ShoppingList>>((ref) {
-  final householdAsync = ref.watch(currentHouseholdStreamProvider);
-  final household = householdAsync.valueOrNull;
-  if (household == null || household.id.isEmpty) {
-    return Stream.value([]);
-  }
-  return ref.watch(shoppingRepositoryProvider).watchShoppingLists(household.id);
+/// Active household of the signed-in user; lists follow it when the user
+/// switches or leaves a household.
+final _activeHouseholdIdProvider = Provider<String?>((ref) {
+  final id = ref.watch(currentUserProvider)?.activeHouseholdId;
+  return id == null || id.isEmpty ? null : id;
 });
 
-/// Alias for active household shopping lists
-final activeHouseholdShoppingListsStreamProvider = shoppingListsStreamProvider;
+// --- Streams ---
 
-/// Stream chi tiết một Shopping List
-final shoppingListDetailStreamProvider =
-    StreamProvider.family<ShoppingList?, String>((ref, listId) {
-  final householdAsync = ref.watch(currentHouseholdStreamProvider);
-  final household = householdAsync.valueOrNull;
-  if (household == null || household.id.isEmpty || listId.isEmpty) {
-    return Stream.value(null);
-  }
-  return ref.watch(shoppingRepositoryProvider).watchShoppingList(household.id, listId);
-});
+final shoppingListsStreamProvider =
+    StreamProvider.autoDispose<List<ShoppingList>>((ref) {
+      final householdId = ref.watch(_activeHouseholdIdProvider);
+      if (householdId == null) return Stream.value(const []);
+      return WatchShoppingListsUseCase(ref.watch(shoppingRepositoryProvider))(
+        householdId,
+      );
+    });
 
-/// Alias for single shopping list stream
-final shoppingListStreamProvider = shoppingListDetailStreamProvider;
+final shoppingListStreamProvider = StreamProvider.autoDispose
+    .family<ShoppingList?, String>((ref, listId) {
+      final householdId = ref.watch(_activeHouseholdIdProvider);
+      if (householdId == null) return Stream.value(null);
+      return WatchShoppingListUseCase(ref.watch(shoppingRepositoryProvider))(
+        householdId,
+        listId,
+      );
+    });
 
-/// Stream danh sách các món trong Shopping List
-final shoppingItemsStreamProvider =
-    StreamProvider.family<List<ShoppingItem>, String>((ref, listId) {
-  final householdAsync = ref.watch(currentHouseholdStreamProvider);
-  final household = householdAsync.valueOrNull;
-  if (household == null || household.id.isEmpty || listId.isEmpty) {
-    return Stream.value([]);
-  }
-  return ref.watch(shoppingRepositoryProvider).watchShoppingItems(household.id, listId);
-});
+final shoppingItemsStreamProvider = StreamProvider.autoDispose
+    .family<List<ShoppingItem>, String>((ref, listId) {
+      final householdId = ref.watch(_activeHouseholdIdProvider);
+      if (householdId == null) return Stream.value(const []);
+      return WatchShoppingItemsUseCase(ref.watch(shoppingRepositoryProvider))(
+        householdId,
+        listId,
+      );
+    });
 
-/// Tiến độ mua sắm được tính realtime từ items (Section 4 FR-06 & Section 8.1)
-/// Trả về (purchasedCount, totalCount)
-final shoppingListProgressProvider =
-    Provider.family<(int, int), String>((ref, listId) {
-  final items = ref.watch(shoppingItemsStreamProvider(listId)).valueOrNull ?? [];
-  final total = items.length;
-  final purchased = items.where((i) => i.isPurchased).length;
-  return (purchased, total);
-});
+/// (purchased, total) for a list, computed from its items.
+final shoppingListProgressProvider = Provider.autoDispose
+    .family<(int, int), String>((ref, listId) {
+      final items =
+          ref.watch(shoppingItemsStreamProvider(listId)).valueOrNull ??
+          const <ShoppingItem>[];
+      return (items.where((i) => i.isPurchased).length, items.length);
+    });
 
-// --- Controller Provider ---
+/// "Frequently bought" suggestions; refresh with `ref.invalidate`.
+final shoppingSuggestionsProvider =
+    FutureProvider.autoDispose<List<ShoppingSuggestion>>((ref) {
+      final householdId = ref.watch(_activeHouseholdIdProvider);
+      if (householdId == null) return Future.value(const []);
+      return GetShoppingSuggestionsUseCase(
+        ref.watch(shoppingRepositoryProvider),
+      )(householdId);
+    });
 
-class ShoppingController extends StateNotifier<AsyncValue<void>> {
-  final Ref ref;
-  ShoppingController(this.ref) : super(const AsyncValue.data(null));
+// --- Commands ---
 
-  ShoppingRepository get _repository => ref.read(shoppingRepositoryProvider);
-  String? get _householdId =>
-      ref.read(currentHouseholdStreamProvider).valueOrNull?.id ??
-      ref.read(currentUserProvider)?.activeHouseholdId;
-  String? get _userId => ref.read(currentUserProvider)?.id;
+/// Coordinates shopping use cases for the UI. Errors are rethrown as
+/// [Failure]s (or [ArgumentError] for invalid input) so widgets can toast them.
+class ShoppingController {
+  final Ref _ref;
 
-  String _getHouseholdId(String? customHouseholdId) {
-    final hId = customHouseholdId ?? _householdId;
-    if (hId == null || hId.isEmpty) {
-      throw Exception('Bạn chưa chọn gia đình hoạt động.');
+  const ShoppingController(this._ref);
+
+  ShoppingRepository get _repository => _ref.read(shoppingRepositoryProvider);
+
+  String get _householdId {
+    final id = _ref.read(_activeHouseholdIdProvider);
+    if (id == null) {
+      throw StateError('Bạn chưa chọn gia đình hoạt động.');
     }
-    return hId;
+    return id;
   }
 
-  Future<String> createShoppingList({
-    String? householdId,
+  String get _userId => _ref.read(currentUserProvider)?.id ?? '';
+
+  Future<String> saveList({
+    String? listId,
     required String name,
     String? note,
-  }) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      final listId = await _repository.createShoppingList(
-        householdId: hId,
-        name: name,
-        note: note,
-        createdBy: _userId ?? '',
-      );
-      state = const AsyncValue.data(null);
-      return listId;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  Future<void> updateShoppingList({
-    String? householdId,
-    required String listId,
-    required String name,
-    String? note,
-  }) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      await _repository.updateShoppingList(
-        householdId: hId,
-        listId: listId,
-        name: name,
-        note: note,
-      );
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteShoppingList(String listId, {String? householdId}) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      await _repository.deleteShoppingList(
-        householdId: hId,
-        listId: listId,
-      );
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  Future<String> addShoppingItem({
-    String? householdId,
-    required String listId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
-  }) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      final id = await _repository.addShoppingItem(
-        householdId: hId,
-        shoppingListId: listId,
-        name: name,
-        quantity: quantity,
-        unit: unit,
-        note: note,
-        foodId: foodId,
-      );
-      state = const AsyncValue.data(null);
-      return id;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  Future<void> updateShoppingItem({
-    String? householdId,
-    required String listId,
-    required String itemId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
-  }) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      await _repository.updateShoppingItem(
-        householdId: hId,
-        shoppingListId: listId,
-        itemId: itemId,
-        name: name,
-        quantity: quantity,
-        unit: unit,
-        note: note,
-        foodId: foodId,
-      );
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteShoppingItem(
-    String listId,
-    String itemId, {
-    String? householdId,
-  }) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      await _repository.deleteShoppingItem(
-        householdId: hId,
-        shoppingListId: listId,
-        itemId: itemId,
-      );
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  Future<void> togglePurchased(
-    String listId,
-    ShoppingItem item, {
-    String? householdId,
-  }) async {
-    return toggleShoppingItemPurchased(
-      householdId: householdId,
-      shoppingListId: listId,
-      itemId: item.id,
-      targetStatus: !item.isPurchased,
+  }) {
+    return SaveShoppingListUseCase(_repository)(
+      householdId: _householdId,
+      listId: listId,
+      name: name,
+      note: note,
+      userId: _userId,
     );
   }
 
-  Future<void> toggleShoppingItemPurchased({
-    String? householdId,
-    required String shoppingListId,
-    required String itemId,
-    required bool targetStatus,
-  }) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      await _repository.toggleShoppingItemPurchased(
-        householdId: hId,
-        shoppingListId: shoppingListId,
-        itemId: itemId,
-        targetStatus: targetStatus,
-      );
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
+  Future<void> deleteList(String listId) {
+    return DeleteShoppingListUseCase(_repository)(
+      householdId: _householdId,
+      listId: listId,
+    );
   }
 
-  Future<int> importShoppingItemsToInventory({
-    String? householdId,
-    required String listId,
-    required List<Map<String, dynamic>> items,
-  }) async {
-    final hId = _getHouseholdId(householdId);
-    state = const AsyncValue.loading();
-    try {
-      final addedCount = await _repository.importShoppingItemsToInventory(
-        householdId: hId,
-        shoppingListId: listId,
-        items: items,
-      );
-      state = const AsyncValue.data(null);
-      return addedCount;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
+  Future<AddShoppingItemResult> addItem(
+    String listId,
+    ShoppingItemDraft draft,
+  ) async {
+    final result = await AddShoppingItemUseCase(_repository)(
+      householdId: _householdId,
+      listId: listId,
+      draft: draft,
+      userId: _userId,
+    );
+    _ref.invalidate(shoppingSuggestionsProvider);
+    return result;
+  }
+
+  Future<void> updateItem(ShoppingItem item, ShoppingItemDraft draft) {
+    return UpdateShoppingItemUseCase(_repository)(
+      householdId: _householdId,
+      listId: item.shoppingListId,
+      itemId: item.id,
+      draft: draft,
+    );
+  }
+
+  Future<void> deleteItem(ShoppingItem item) {
+    return DeleteShoppingItemUseCase(_repository)(
+      householdId: _householdId,
+      listId: item.shoppingListId,
+      itemId: item.id,
+    );
+  }
+
+  Future<void> setPurchased(ShoppingItem item, bool purchased) {
+    return SetShoppingItemPurchasedUseCase(_repository)(
+      householdId: _householdId,
+      item: item,
+      purchased: purchased,
+      userId: _userId,
+    );
+  }
+
+  Future<int> importToInventory(
+    String listId,
+    List<ImportShoppingItemRequest> items,
+  ) async {
+    final count = await ImportShoppingItemsToInventoryUseCase(_repository)(
+      householdId: _householdId,
+      listId: listId,
+      items: items,
+    );
+    _ref.invalidate(shoppingSuggestionsProvider);
+    return count;
   }
 }
 
-final shoppingControllerProvider =
-    StateNotifierProvider<ShoppingController, AsyncValue<void>>((ref) {
-  return ShoppingController(ref);
-});
+final shoppingControllerProvider = Provider<ShoppingController>(
+  (ref) => ShoppingController(ref),
+);
+
+/// User-facing message for errors thrown by [ShoppingController].
+String shoppingErrorMessage(Object error) {
+  if (error is Failure) return error.message;
+  if (error is ArgumentError) return '${error.message}';
+  if (error is StateError) return error.message;
+  return 'Đã xảy ra lỗi. Vui lòng thử lại.';
+}
+
+/// Food name autocomplete shared with the inventory form (master foods and
+/// household history).
+final shoppingFoodSuggestionsProvider = FutureProvider.autoDispose
+    .family<List<FoodSuggestion>, String>((ref, query) {
+      if (query.trim().isEmpty) return Future.value(const []);
+      return ref
+          .watch(inventoryRepositoryProvider)
+          .searchFoodSuggestions(
+            query: query,
+            householdId: ref.watch(_activeHouseholdIdProvider),
+          );
+    });

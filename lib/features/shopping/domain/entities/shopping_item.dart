@@ -1,17 +1,26 @@
 import 'package:meta/meta.dart';
 
+import '../../../../core/constants/app_enums.dart';
+
+/// One line of a shopping list
+/// (`households/{householdId}/shopping_lists/{listId}/items/{itemId}`).
 @immutable
 class ShoppingItem {
   final String id;
   final String shoppingListId;
   final String name;
+  final String normalizedName;
   final double quantity;
   final String unit;
   final String? note;
   final String? foodId;
+  final String? categoryId;
+  final ShoppingItemSource source;
   final bool isPurchased;
+  final String? purchasedBy;
   final bool isAddedToInventory;
   final String? inventoryItemId;
+  final String addedBy;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,62 +28,39 @@ class ShoppingItem {
     required this.id,
     required this.shoppingListId,
     required this.name,
+    required this.normalizedName,
     this.quantity = 1.0,
     required this.unit,
     this.note,
     this.foodId,
+    this.categoryId,
+    this.source = ShoppingItemSource.manual,
     this.isPurchased = false,
+    this.purchasedBy,
     this.isAddedToInventory = false,
     this.inventoryItemId,
+    this.addedBy = '',
     required this.createdAt,
     required this.updatedAt,
   });
 
-  /// Món đã mua nhưng chưa được nhập vào kho tủ lạnh
+  /// Purchased but not yet moved into the fridge.
   bool get canAddToInventory => isPurchased && !isAddedToInventory;
 
-  /// Món đã nhập kho thì bị khóa tick và khóa sửa
+  /// Items already moved into the fridge can no longer be edited or ticked.
   bool get isLocked => isAddedToInventory;
-
-  ShoppingItem copyWith({
-    String? id,
-    String? shoppingListId,
-    String? name,
-    double? quantity,
-    String? unit,
-    String? note,
-    bool clearNote = false,
-    String? foodId,
-    bool clearFoodId = false,
-    bool? isPurchased,
-    bool? isAddedToInventory,
-    String? inventoryItemId,
-    bool clearInventoryItemId = false,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return ShoppingItem(
-      id: id ?? this.id,
-      shoppingListId: shoppingListId ?? this.shoppingListId,
-      name: name ?? this.name,
-      quantity: quantity ?? this.quantity,
-      unit: unit ?? this.unit,
-      note: clearNote ? null : (note ?? this.note),
-      foodId: clearFoodId ? null : (foodId ?? this.foodId),
-      isPurchased: isPurchased ?? this.isPurchased,
-      isAddedToInventory: isAddedToInventory ?? this.isAddedToInventory,
-      inventoryItemId: clearInventoryItemId ? null : (inventoryItemId ?? this.inventoryItemId),
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is ShoppingItem && other.id == id && other.updatedAt == updatedAt;
+    return other is ShoppingItem &&
+        other.id == id &&
+        other.updatedAt == updatedAt &&
+        other.isPurchased == isPurchased &&
+        other.isAddedToInventory == isAddedToInventory;
   }
 
   @override
-  int get hashCode => Object.hash(id, updatedAt);
+  int get hashCode =>
+      Object.hash(id, updatedAt, isPurchased, isAddedToInventory);
 }

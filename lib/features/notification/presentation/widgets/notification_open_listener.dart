@@ -3,18 +3,23 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/routes/app_router.dart';
 import '../../../../core/routes/route_names.dart';
-import '../../../../core/services/local_notification_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../providers/notification_provider.dart';
 
 /// Builds the in-app location opened from an FCM payload.
 ///
-/// The item form route accepts an [InventoryItem] extra, not an id, so a push
-/// always lands on the notice list. The list resolves the item when it is
-/// already loaded for the active household.
+/// A weekly shopping reminder opens the shopping lists. The item form route
+/// accepts an [InventoryItem] extra, not an id, so other pushes land on the
+/// notice list, which resolves the item when it is already loaded for the
+/// active household.
 String notificationOpenLocation(Map<String, String> data) {
+  if (data['type'] == NotificationType.shoppingReminder.value) {
+    return AppRouteNames.shoppingLists;
+  }
   final params = <String, String>{};
   final itemId = data['inventoryItemId'] ?? '';
   final householdId = data['householdId'] ?? '';
@@ -63,7 +68,6 @@ class NotificationOpenListener extends ConsumerStatefulWidget {
 class _NotificationOpenListenerState
     extends ConsumerState<NotificationOpenListener> {
   StreamSubscription<Map<String, String>>? _openedSub;
-  StreamSubscription<String>? _localOpenedSub;
 
   @override
   void initState() {
@@ -82,23 +86,26 @@ class _NotificationOpenListenerState
         });
     _openedSub = source.onMessageOpenedApp.listen(_open);
 
-    // Listen to local notification tap events (e.g., Weekly Shopping Reminder FR-05)
-    final localNotificationService = ref.read(localNotificationServiceProvider);
-    _localOpenedSub = localNotificationService.onNotificationTapped.listen((payload) {
-      if (!mounted) return;
-      if (payload == LocalNotificationServiceImpl.weeklyShoppingPayload ||
-          payload == AppRouteNames.shoppingLists) {
-        ref.read(routerProvider).push(AppRouteNames.shoppingLists);
-      } else if (payload.startsWith('/')) {
-        ref.read(routerProvider).push(payload);
-      }
-    });
+    // Every signed-in user needs `notificationSettings` so the hourly backend
+    // reminder job can find them (PLAN_02 §4.2).
+    ref.listenManual<AsyncValue<String?>>(currentNotificationUserIdProvider, (
+      _,
+      next,
+    ) {
+      final userId = next.valueOrNull;
+      if (userId == null) return;
+      ref.read(ensureNotificationSettingsUseCaseProvider)(userId).catchError((
+        Object e,
+        StackTrace st,
+      ) {
+        AppLogger.e('Could not initialize notification settings', e, st);
+      });
+    }, fireImmediately: true);
   }
 
   @override
   void dispose() {
     _openedSub?.cancel();
-    _localOpenedSub?.cancel();
     super.dispose();
   }
 

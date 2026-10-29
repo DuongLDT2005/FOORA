@@ -1,27 +1,31 @@
-import '../../domain/entities/shopping_list.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../core/errors/failures.dart';
+import '../../domain/entities/import_shopping_item_request.dart';
 import '../../domain/entities/shopping_item.dart';
+import '../../domain/entities/shopping_item_draft.dart';
+import '../../domain/entities/shopping_list.dart';
+import '../../domain/entities/shopping_suggestion.dart';
 import '../../domain/repositories/shopping_repository.dart';
 import '../datasources/shopping_remote_datasource.dart';
 
 class ShoppingRepositoryImpl implements ShoppingRepository {
   final ShoppingRemoteDataSource remoteDataSource;
 
-  ShoppingRepositoryImpl({required this.remoteDataSource});
+  const ShoppingRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Stream<List<ShoppingList>> watchShoppingLists(String householdId) {
-    return remoteDataSource.watchShoppingLists(householdId);
-  }
+  Stream<List<ShoppingList>> watchShoppingLists(String householdId) =>
+      remoteDataSource.watchShoppingLists(householdId);
 
   @override
-  Stream<ShoppingList?> watchShoppingList(String householdId, String listId) {
-    return remoteDataSource.watchShoppingList(householdId, listId);
-  }
+  Stream<ShoppingList?> watchShoppingList(String householdId, String listId) =>
+      remoteDataSource.watchShoppingList(householdId, listId);
 
   @override
-  Stream<List<ShoppingItem>> watchShoppingItems(String householdId, String listId) {
-    return remoteDataSource.watchShoppingItems(householdId, listId);
-  }
+  Stream<List<ShoppingItem>> watchShoppingItems(
+    String householdId,
+    String listId,
+  ) => remoteDataSource.watchShoppingItems(householdId, listId);
 
   @override
   Future<String> createShoppingList({
@@ -29,14 +33,14 @@ class ShoppingRepositoryImpl implements ShoppingRepository {
     required String name,
     String? note,
     required String createdBy,
-  }) {
-    return remoteDataSource.createShoppingList(
+  }) => _guard(
+    () => remoteDataSource.createShoppingList(
       householdId: householdId,
       name: name,
       note: note,
       createdBy: createdBy,
-    );
-  }
+    ),
+  );
 
   @override
   Future<void> updateShoppingList({
@@ -44,108 +48,119 @@ class ShoppingRepositoryImpl implements ShoppingRepository {
     required String listId,
     required String name,
     String? note,
-  }) {
-    return remoteDataSource.updateShoppingList(
+  }) => _guard(
+    () => remoteDataSource.updateShoppingList(
       householdId: householdId,
       listId: listId,
       name: name,
       note: note,
-    );
-  }
+    ),
+  );
 
   @override
   Future<void> deleteShoppingList({
     required String householdId,
     required String listId,
-  }) {
-    return remoteDataSource.deleteShoppingList(
+  }) => _guard(
+    () => remoteDataSource.deleteShoppingList(
       householdId: householdId,
       listId: listId,
-    );
-  }
+    ),
+  );
 
   @override
-  Future<String> addShoppingItem({
+  Future<AddShoppingItemResult> addShoppingItem({
     required String householdId,
-    required String shoppingListId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
-  }) {
-    return remoteDataSource.addShoppingItem(
+    required String listId,
+    required ShoppingItemDraft draft,
+    required String normalizedName,
+    required String addedBy,
+  }) => _guard(
+    () => remoteDataSource.addShoppingItem(
       householdId: householdId,
-      shoppingListId: shoppingListId,
-      name: name,
-      quantity: quantity,
-      unit: unit,
-      note: note,
-      foodId: foodId,
-    );
-  }
+      listId: listId,
+      draft: draft,
+      normalizedName: normalizedName,
+      addedBy: addedBy,
+    ),
+  );
 
   @override
   Future<void> updateShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
-  }) {
-    return remoteDataSource.updateShoppingItem(
+    required ShoppingItemDraft draft,
+    required String normalizedName,
+  }) => _guard(
+    () => remoteDataSource.updateShoppingItem(
       householdId: householdId,
-      shoppingListId: shoppingListId,
+      listId: listId,
       itemId: itemId,
-      name: name,
-      quantity: quantity,
-      unit: unit,
-      note: note,
-      foodId: foodId,
-    );
-  }
+      draft: draft,
+      normalizedName: normalizedName,
+    ),
+  );
 
   @override
   Future<void> deleteShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-  }) {
-    return remoteDataSource.deleteShoppingItem(
+  }) => _guard(
+    () => remoteDataSource.deleteShoppingItem(
       householdId: householdId,
-      shoppingListId: shoppingListId,
+      listId: listId,
       itemId: itemId,
-    );
-  }
+    ),
+  );
 
   @override
-  Future<void> toggleShoppingItemPurchased({
+  Future<void> setItemPurchased({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required bool targetStatus,
-  }) {
-    return remoteDataSource.toggleShoppingItemPurchased(
+    required bool purchased,
+    required String userId,
+  }) => _guard(
+    () => remoteDataSource.setItemPurchased(
       householdId: householdId,
-      shoppingListId: shoppingListId,
+      listId: listId,
       itemId: itemId,
-      targetStatus: targetStatus,
-    );
-  }
+      purchased: purchased,
+      userId: userId,
+    ),
+  );
 
   @override
-  Future<int> importShoppingItemsToInventory({
+  Future<int> importToInventory({
     required String householdId,
-    required String shoppingListId,
-    required List<Map<String, dynamic>> items,
-  }) {
-    return remoteDataSource.importShoppingItemsToInventory(
+    required String listId,
+    required List<ImportShoppingItemRequest> items,
+  }) => _guard(
+    () => remoteDataSource.importToInventory(
       householdId: householdId,
-      shoppingListId: shoppingListId,
+      listId: listId,
       items: items,
-    );
+    ),
+  );
+
+  @override
+  Future<List<ShoppingSuggestion>> getSuggestions(String householdId) =>
+      _guard(() => remoteDataSource.getSuggestions(householdId));
+
+  /// Converts data-layer exceptions to [Failure]s; the plan's food limit
+  /// becomes [ResourceExhaustedFailure] so the UI can offer an upgrade.
+  Future<T> _guard<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } on ServerException catch (e) {
+      if (e.code == 'resource-exhausted') {
+        throw ResourceExhaustedFailure(e.message, e.code);
+      }
+      throw Failure.fromException(e);
+    } on AppException catch (e) {
+      throw Failure.fromException(e);
+    }
   }
 }

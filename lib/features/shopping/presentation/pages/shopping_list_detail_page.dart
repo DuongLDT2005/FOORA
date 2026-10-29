@@ -6,8 +6,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/components/app_bottom_bar.dart';
+import '../../../../shared/components/app_header.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
+import '../../../../shared/layouts/subpage_layout.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_widget.dart';
@@ -15,10 +19,18 @@ import '../../domain/entities/shopping_item.dart';
 import '../../domain/entities/shopping_list.dart';
 import '../providers/shopping_providers.dart';
 import '../widgets/add_edit_shopping_item_sheet.dart';
+import '../widgets/add_mode_sheet.dart';
 import '../widgets/batch_import_inventory_sheet.dart';
 import '../widgets/create_edit_shopping_list_sheet.dart';
+import '../widgets/frequent_suggestions_section.dart';
 import '../widgets/shopping_item_tile.dart';
+import '../widgets/shopping_section_title.dart';
+import '../widgets/voice_add_sheet.dart';
 
+enum _ListAction { rename, delete }
+
+/// One shopping list: suggestions, items to buy, purchased items and the
+/// "move into the fridge" action.
 class ShoppingListDetailPage extends ConsumerWidget {
   final String listId;
   final ShoppingList? initialList;
@@ -29,388 +41,262 @@ class ShoppingListDetailPage extends ConsumerWidget {
     this.initialList,
   });
 
-  Future<void> _deleteList(BuildContext context, WidgetRef ref, String listName) async {
+  Future<void> _chooseAddMode(BuildContext context) async {
+    final mode = await AddModeSheet.show(context);
+    if (!context.mounted) return;
+    switch (mode) {
+      case ShoppingAddMode.manual:
+        await AddEditShoppingItemSheet.show(context, listId: listId);
+      case ShoppingAddMode.voice:
+        await VoiceAddSheet.show(context, listId: listId);
+      case null:
+        break;
+    }
+  }
+
+  Future<void> _onListAction(
+    BuildContext context,
+    WidgetRef ref,
+    ShoppingList list,
+    _ListAction action,
+  ) async {
+    if (action == _ListAction.rename) {
+      await CreateEditShoppingListSheet.show(context, listToEdit: list);
+      return;
+    }
     final confirmed = await DialogHelper.showDeleteDialog(
       context,
       title: 'Xóa danh sách mua sắm',
-      message: 'Bạn có chắc chắn muốn xóa danh sách "$listName"?',
+      message: 'Xóa danh sách "${list.name}" và toàn bộ món trong đó?',
     );
-
-    if (confirmed == true) {
-      try {
-        await ref.read(shoppingControllerProvider.notifier).deleteShoppingList(listId);
-        if (context.mounted) {
-          ToastHelper.show(context, 'Đã xóa danh sách mua sắm');
-          context.pop();
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ToastHelper.show(context, 'Lỗi khi xóa: $e', isError: true);
-        }
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ref.read(shoppingControllerProvider).deleteList(list.id);
+      if (context.mounted) {
+        ToastHelper.show(context, 'Đã xóa danh sách');
+        context.pop();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ToastHelper.show(context, shoppingErrorMessage(e), isError: true);
       }
     }
   }
 
-  Future<void> _deleteItem(BuildContext context, WidgetRef ref, ShoppingItem item) async {
+  Future<void> _run(
+    BuildContext context,
+    Future<void> Function() action,
+  ) async {
+    try {
+      await action();
+    } catch (e) {
+      if (context.mounted) {
+        ToastHelper.show(context, shoppingErrorMessage(e), isError: true);
+      }
+    }
+  }
+
+  Future<void> _deleteItem(
+    BuildContext context,
+    WidgetRef ref,
+    ShoppingItem item,
+  ) async {
     final confirmed = await DialogHelper.showDeleteDialog(
       context,
       title: 'Xóa món cần mua',
-      message: 'Bạn có muốn xóa "${item.name}" khỏi danh sách?',
+      message: 'Xóa "${item.name}" khỏi danh sách?',
     );
-
-    if (confirmed == true) {
-      try {
-        await ref.read(shoppingControllerProvider.notifier).deleteShoppingItem(listId, item.id);
-      } catch (e) {
-        if (context.mounted) {
-          ToastHelper.show(context, 'Lỗi khi xóa món: $e', isError: true);
-        }
-      }
+    if (confirmed == true && context.mounted) {
+      await _run(
+        context,
+        () => ref.read(shoppingControllerProvider).deleteItem(item),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final listAsync = ref.watch(shoppingListStreamProvider(listId));
+    final list =
+        ref.watch(shoppingListStreamProvider(listId)).valueOrNull ??
+        initialList;
     final itemsAsync = ref.watch(shoppingItemsStreamProvider(listId));
+    final items = itemsAsync.valueOrNull ?? const <ShoppingItem>[];
+    final toImport = items.where((i) => i.canAddToInventory).toList();
 
-    final currentList = listAsync.valueOrNull ?? initialList;
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          currentList?.name ?? 'Danh sách mua sắm',
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamilyHeadline,
-            fontWeight: FontWeight.bold,
-            fontSize: 18.sp,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 1,
-        surfaceTintColor: Colors.transparent,
-        actions: [
-          if (currentList != null)
-            PopupMenuButton<String>(
-              icon: Icon(
-                LucideIcons.ellipsisVertical,
-                size: 20.r,
-                color: AppColors.slate600,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              onSelected: (value) {
-                if (value == 'rename') {
-                  CreateEditShoppingListSheet.show(context, listToEdit: currentList);
-                } else if (value == 'delete') {
-                  _deleteList(context, ref, currentList.name);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'rename',
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.pencil, size: 16, color: AppColors.slate600),
-                      SizedBox(width: 8),
-                      Text('Đổi tên danh sách'),
-                    ],
+    return SubpageLayout(
+      header: AppHeader(
+        title: list?.name ?? 'Danh sách mua sắm',
+        onBack: () => context.pop(),
+        trailing: list == null
+            ? null
+            : ShoppingHeaderMenuButton<_ListAction>(
+                onSelected: (a) => _onListAction(context, ref, list, a),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: _ListAction.rename,
+                    child: Text('Đổi tên danh sách'),
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.trash2, size: 16, color: AppColors.red500),
-                      SizedBox(width: 8),
-                      Text('Xóa danh sách', style: TextStyle(color: AppColors.red500)),
-                    ],
+                  PopupMenuItem(
+                    value: _ListAction.delete,
+                    child: Text(
+                      'Xóa danh sách',
+                      style: TextStyle(color: AppColors.red500),
+                    ),
                   ),
-                ),
-              ],
-            ),
-        ],
+                ],
+              ),
+      ),
+      // Two buttons share the bar, so icons are dropped to keep labels on
+      // one line.
+      bottomBar: AppBottomBar(
+        child: toImport.isEmpty
+            ? AppButton.primary(
+                label: 'Thêm món',
+                icon: LucideIcons.plus,
+                onPressed: () => _chooseAddMode(context),
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: AppButton.secondary(
+                      label: 'Thêm món',
+                      onPressed: () => _chooseAddMode(context),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: AppButton.primary(
+                      label: 'Nhập kho (${toImport.length})',
+                      onPressed: () => BatchImportInventorySheet.show(
+                        context,
+                        listId: listId,
+                        candidateItems: toImport,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
       body: itemsAsync.when(
-        loading: () => const LoadingWidget(message: 'Đang tải các món cần mua...'),
-        error: (err, stack) => ErrorStateWidget(
-          message: 'Không thể tải danh sách món: $err',
+        loading: () => const LoadingWidget(message: 'Đang tải các món...'),
+        error: (e, _) => ErrorStateWidget(
+          message: shoppingErrorMessage(e),
           onRetry: () => ref.invalidate(shoppingItemsStreamProvider(listId)),
         ),
-        data: (items) {
-          final toBuyItems = items.where((i) => !i.isPurchased).toList();
-          final purchasedItems = items.where((i) => i.isPurchased).toList();
-
-          final totalCount = items.length;
-          final purchasedCount = purchasedItems.length;
-          final progressRatio = totalCount > 0 ? (purchasedCount / totalCount).clamp(0.0, 1.0) : 0.0;
-          final candidateForInventory =
-              purchasedItems.where((i) => !i.isAddedToInventory).toList();
-
-          return Column(
+        data: (items) => RefreshIndicator(
+          onRefresh: () async => ref.invalidate(shoppingSuggestionsProvider),
+          child: ListView(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
             children: [
-              // Progress Banner
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-                color: AppColors.surface,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Tiến độ mua sắm',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.slate700,
-                          ),
-                        ),
-                        Text(
-                          '$purchasedCount/$totalCount món (${(progressRatio * 100).toInt()}%)',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.bold,
-                            color: progressRatio == 1.0 && totalCount > 0
-                                ? AppColors.primary
-                                : AppColors.slate700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6.r),
-                      child: LinearProgressIndicator(
-                        value: progressRatio,
-                        minHeight: 8.h,
-                        backgroundColor: AppColors.slate100,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: AppColors.slate100),
+              FrequentSuggestionsSection(listId: listId),
+              if (items.isEmpty)
+                const EmptyStateWidget(
+                  title: 'Danh sách trống',
+                  subtitle:
+                      'Bấm "Thêm món" để nhập tay hoặc nói, ví dụ "2 hộp sữa '
+                      'và 6 quả trứng".',
+                )
+              else
+                ..._buildSections(context, ref, items),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // Items List or Empty
+  List<Widget> _buildSections(
+    BuildContext context,
+    WidgetRef ref,
+    List<ShoppingItem> items,
+  ) {
+    final toBuy = items.where((i) => !i.isPurchased).toList();
+    final purchased = items.where((i) => i.isPurchased).toList();
+    final controller = ref.read(shoppingControllerProvider);
+
+    Widget tile(ShoppingItem item) => ShoppingItemTile(
+      item: item,
+      onTogglePurchased: (value) =>
+          _run(context, () => controller.setPurchased(item, value)),
+      onEdit: () => AddEditShoppingItemSheet.show(
+        context,
+        listId: listId,
+        itemToEdit: item,
+      ),
+      onDelete: () => _deleteItem(context, ref, item),
+    );
+
+    return [
+      _ProgressHeader(purchased: purchased.length, total: items.length),
+      SizedBox(height: 20.h),
+      if (toBuy.isNotEmpty) ...[
+        ShoppingSectionTitle(title: 'Cần mua', count: toBuy.length),
+        ...toBuy.map(tile),
+        SizedBox(height: 10.h),
+      ],
+      if (purchased.isNotEmpty) ...[
+        ShoppingSectionTitle(title: 'Đã mua', count: purchased.length),
+        ...purchased.map(tile),
+      ],
+    ];
+  }
+}
+
+class _ProgressHeader extends StatelessWidget {
+  final int purchased;
+  final int total;
+
+  const _ProgressHeader({required this.purchased, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = total == 0 ? 0.0 : purchased / total;
+    final isDone = total > 0 && purchased == total;
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Expanded(
-                child: items.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              EmptyStateWidget(
-                                title: 'Chưa có món nào',
-                                subtitle:
-                                    'Hãy thêm những món thực phẩm bạn cần mua cho gia đình.',
-                              ),
-                              SizedBox(height: 16.h),
-                              ElevatedButton.icon(
-                                onPressed: () => AddEditShoppingItemSheet.show(
-                                  context,
-                                  listId: listId,
-                                ),
-                                icon: const Icon(LucideIcons.plus),
-                                label: const Text('Thêm món đầu tiên'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : ListView(
-                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-                        children: [
-                          // Section: Cần mua
-                          if (toBuyItems.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                Text(
-                                  'Cần mua',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.slate800,
-                                  ),
-                                ),
-                                SizedBox(width: 6.w),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.slate200,
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Text(
-                                    '${toBuyItems.length}',
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.slate700,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8.h),
-                            ...toBuyItems.map(
-                              (item) => ShoppingItemTile(
-                                item: item,
-                                onTogglePurchased: (_) {
-                                  ref
-                                      .read(shoppingControllerProvider.notifier)
-                                      .togglePurchased(listId, item);
-                                },
-                                onEdit: () => AddEditShoppingItemSheet.show(
-                                  context,
-                                  listId: listId,
-                                  itemToEdit: item,
-                                ),
-                                onDelete: () => _deleteItem(context, ref, item),
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-                          ],
-
-                          // Section: Đã mua
-                          if (purchasedItems.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                Text(
-                                  'Đã mua',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                                SizedBox(width: 6.w),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Text(
-                                    '${purchasedItems.length}',
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8.h),
-                            ...purchasedItems.map(
-                              (item) => ShoppingItemTile(
-                                item: item,
-                                onTogglePurchased: (_) {
-                                  ref
-                                      .read(shoppingControllerProvider.notifier)
-                                      .togglePurchased(listId, item);
-                                },
-                                onEdit: () => AddEditShoppingItemSheet.show(
-                                  context,
-                                  listId: listId,
-                                  itemToEdit: item,
-                                ),
-                                onDelete: () => _deleteItem(context, ref, item),
-                              ),
-                            ),
-                          ],
-                          SizedBox(height: 80.h), // space for bottom bar
-                        ],
-                      ),
-              ),
-
-              // Bottom Actions Bar
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.slate900.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
-                    children: [
-                      // Add Item Button
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => AddEditShoppingItemSheet.show(
-                            context,
-                            listId: listId,
-                          ),
-                          icon: const Icon(LucideIcons.plus, size: 18),
-                          label: const Text('Thêm món', style: TextStyle(fontWeight: FontWeight.w600)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 12.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                      if (candidateForInventory.isNotEmpty) ...[
-                        SizedBox(width: 12.w),
-                        // Add to Inventory Button
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => BatchImportInventorySheet.show(
-                              context,
-                              listId: listId,
-                              candidateItems: candidateForInventory,
-                            ),
-                            icon: const Icon(LucideIcons.packagePlus, size: 18),
-                            label: Text(
-                              'Nhập kho (${candidateForInventory.length})',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(vertical: 12.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                child: Text(
+                  'Tiến độ mua sắm',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamilySans,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.slate700,
                   ),
+                ),
+              ),
+              Text(
+                '$purchased/$total món',
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamilySans,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: isDone ? AppColors.primary : AppColors.slate700,
                 ),
               ),
             ],
-          );
-        },
+          ),
+          SizedBox(height: 10.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6.r),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 8.h,
+              backgroundColor: AppColors.slate100,
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            ),
+          ),
+        ],
       ),
     );
   }

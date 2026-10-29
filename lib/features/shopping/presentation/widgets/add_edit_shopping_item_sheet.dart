@@ -1,37 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/helpers/bottom_sheet_helper.dart';
+import '../../../../shared/helpers/debouncer.dart';
 import '../../../../shared/helpers/toast_helper.dart';
-import '../../../inventory/presentation/providers/inventory_provider.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_text_field.dart';
+import '../../../inventory/domain/entities/food_suggestion.dart';
+import '../../../inventory/presentation/widgets/food_suggestion_dropdown.dart';
+import '../../../inventory/presentation/widgets/unit_picker_field.dart';
 import '../../domain/entities/shopping_item.dart';
+import '../../domain/entities/shopping_item_draft.dart';
+import '../../domain/usecases/parse_voice_shopping_text.dart';
 import '../providers/shopping_providers.dart';
+import 'shopping_item_tile.dart';
 
+/// Adds an item to [listId] (manual entry or a pre-filled suggestion), or
+/// edits [itemToEdit].
 class AddEditShoppingItemSheet extends ConsumerStatefulWidget {
   final String listId;
   final ShoppingItem? itemToEdit;
+  final ShoppingItemDraft? initialDraft;
 
   const AddEditShoppingItemSheet({
     super.key,
     required this.listId,
     this.itemToEdit,
+    this.initialDraft,
   });
 
   static Future<void> show(
     BuildContext context, {
     required String listId,
     ShoppingItem? itemToEdit,
+    ShoppingItemDraft? initialDraft,
   }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AddEditShoppingItemSheet(
+    return BottomSheetHelper.show<void>(
+      context,
+      title: itemToEdit == null ? 'Thêm món cần mua' : 'Sửa món cần mua',
+      child: AddEditShoppingItemSheet(
         listId: listId,
         itemToEdit: itemToEdit,
+        initialDraft: initialDraft,
       ),
     );
   }
@@ -44,525 +57,197 @@ class AddEditShoppingItemSheet extends ConsumerStatefulWidget {
 class _AddEditShoppingItemSheetState
     extends ConsumerState<AddEditShoppingItemSheet> {
   final _formKey = GlobalKey<FormState>();
+  final _searchDebouncer = Debouncer(delay: const Duration(milliseconds: 300));
   late final TextEditingController _nameController;
   late final TextEditingController _quantityController;
-  late final TextEditingController _unitController;
   late final TextEditingController _noteController;
 
-  String? _selectedFoodId;
-  bool _isLoading = false;
-
-  final List<String> _commonUnits = [
-    'kg',
-    'g',
-    'quả',
-    'trái',
-    'bó',
-    'hộp',
-    'gói',
-    'chai',
-    'lon',
-    'lít',
-    'ml',
-    'túi',
-  ];
-
-  bool get _isEditing => widget.itemToEdit != null;
+  late String _unit;
+  String? _foodId;
+  String? _categoryId;
+  String _searchQuery = '';
+  String _lastName = '';
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     final item = widget.itemToEdit;
-    _nameController = TextEditingController(text: item?.name ?? '');
+    final draft = widget.initialDraft;
+    _nameController = TextEditingController(text: item?.name ?? draft?.name);
     _quantityController = TextEditingController(
-      text: item != null
-          ? (item.quantity == item.quantity.roundToDouble()
-              ? item.quantity.toInt().toString()
-              : item.quantity.toString())
-          : '1',
+      text: formatShoppingQuantity(item?.quantity ?? draft?.quantity ?? 1),
     );
-    _unitController = TextEditingController(text: item?.unit ?? 'kg');
-    _noteController = TextEditingController(text: item?.note ?? '');
-    _selectedFoodId = item?.foodId;
+    _noteController = TextEditingController(text: item?.note ?? draft?.note);
+    _unit = item?.unit ?? draft?.unit ?? shoppingUnits.first;
+    _foodId = item?.foodId ?? draft?.foodId;
+    _categoryId = item?.categoryId ?? draft?.categoryId;
+    _lastName = _nameController.text;
+    _nameController.addListener(_onNameChanged);
   }
 
   @override
   void dispose() {
+    _searchDebouncer.dispose();
     _nameController.dispose();
     _quantityController.dispose();
-    _unitController.dispose();
     _noteController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final quantity = double.tryParse(_quantityController.text.trim()) ?? 0;
-    if (quantity <= 0) {
-      ToastHelper.show(context, 'Số lượng phải lớn hơn 0', isError: true);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final name = _nameController.text.trim();
-      final unit = _unitController.text.trim();
-      final note = _noteController.text.trim();
-
-      if (_isEditing) {
-        await ref.read(shoppingControllerProvider.notifier).updateShoppingItem(
-              listId: widget.listId,
-              itemId: widget.itemToEdit!.id,
-              name: name,
-              quantity: quantity,
-              unit: unit,
-              note: note.isEmpty ? null : note,
-              foodId: _selectedFoodId,
-            );
-        if (mounted) {
-          ToastHelper.show(context, 'Đã cập nhật món mua');
-          Navigator.of(context).pop();
-        }
-      } else {
-        await ref.read(shoppingControllerProvider.notifier).addShoppingItem(
-              listId: widget.listId,
-              name: name,
-              quantity: quantity,
-              unit: unit,
-              note: note.isEmpty ? null : note,
-              foodId: _selectedFoodId,
-            );
-        if (mounted) {
-          ToastHelper.show(context, 'Đã thêm vào danh sách');
-          Navigator.of(context).pop();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ToastHelper.show(context, 'Có lỗi xảy ra: $e', isError: true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+  void _onNameChanged() {
+    final value = _nameController.text;
+    if (value == _lastName) return;
+    _lastName = value;
+    // Typing a new name drops the master food picked earlier.
+    _foodId = null;
+    _searchDebouncer.run(() {
+      if (mounted) setState(() => _searchQuery = value.trim());
+    });
   }
 
-  void _showInventoryPicker() {
-    final inventoryItemsAsync = ref.read(activeHouseholdInventoryStreamProvider);
-    final items = inventoryItemsAsync.valueOrNull ?? [];
+  void _onSuggestionSelected(FoodSuggestion suggestion) {
+    _searchDebouncer.cancel();
+    _lastName = suggestion.name;
+    _nameController.text = suggestion.name;
+    setState(() {
+      _foodId = suggestion.foodId;
+      _categoryId = suggestion.categoryId;
+      if (suggestion.defaultUnit.isNotEmpty) _unit = suggestion.defaultUnit;
+      _searchQuery = '';
+    });
+  }
 
-    if (items.isEmpty) {
-      ToastHelper.show(context, 'Tủ lạnh chưa có thực phẩm nào');
-      return;
-    }
-
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (bottomSheetContext) {
-        return Container(
-          height: 0.6.sh,
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Chọn thực phẩm từ tủ lạnh',
-                    style: TextStyle(
-                      fontFamily: AppTextStyles.fontFamilyHeadline,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.slate800,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(LucideIcons.x, size: 20.r, color: AppColors.slate500),
-                    onPressed: () => Navigator.of(bottomSheetContext).pop(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.slate100),
-                  itemBuilder: (context, index) {
-                    final invItem = items[index];
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 40.r,
-                        height: 40.r,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Icon(
-                          LucideIcons.salad,
-                          color: AppColors.primary,
-                          size: 20.r,
-                        ),
-                      ),
-                      title: Text(
-                        invItem.name,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.slate800,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Đơn vị: ${invItem.unit}',
-                        style: TextStyle(fontSize: 12.sp, color: AppColors.slate500),
-                      ),
-                      trailing: Icon(LucideIcons.plus, size: 18.r, color: AppColors.primary),
-                      onTap: () {
-                        setState(() {
-                          _nameController.text = invItem.name;
-                          _unitController.text = invItem.unit;
-                          _selectedFoodId = invItem.foodId;
-                        });
-                        Navigator.of(bottomSheetContext).pop();
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    final draft = ShoppingItemDraft(
+      name: _nameController.text,
+      quantity: double.parse(_quantityController.text.replaceAll(',', '.')),
+      unit: _unit,
+      note: _noteController.text,
+      foodId: _foodId,
+      categoryId: _categoryId,
+      source: widget.initialDraft?.source ?? ShoppingItemSource.manual,
     );
+
+    setState(() => _isSaving = true);
+    final controller = ref.read(shoppingControllerProvider);
+    try {
+      final item = widget.itemToEdit;
+      if (item != null) {
+        await controller.updateItem(item, draft);
+        if (mounted) ToastHelper.show(context, 'Đã cập nhật món');
+      } else {
+        final result = await controller.addItem(widget.listId, draft);
+        if (mounted) {
+          ToastHelper.show(
+            context,
+            result.merged
+                ? 'Đã cộng thêm vào món có sẵn trong danh sách'
+                : 'Đã thêm vào danh sách',
+          );
+        }
+      }
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ToastHelper.show(context, shoppingErrorMessage(e), isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final suggestions = _searchQuery.isEmpty
+        ? const <FoodSuggestion>[]
+        : ref
+                  .watch(shoppingFoodSuggestionsProvider(_searchQuery))
+                  .valueOrNull ??
+              const <FoodSuggestion>[];
+    final units = {...shoppingUnits, _unit}.toList();
 
-    return Container(
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 20.h,
-        bottom: bottomInset + 20.h,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Form(
+          key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _isEditing ? 'Sửa món cần mua' : 'Thêm món cần mua',
-                    style: TextStyle(
-                      fontFamily: AppTextStyles.fontFamilyHeadline,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.slate800,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(LucideIcons.x, size: 20.r, color: AppColors.slate500),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-
-              // Quick Pick Button
-              if (!_isEditing) ...[
-                OutlinedButton.icon(
-                  onPressed: _showInventoryPicker,
-                  icon: Icon(LucideIcons.refrigerator, size: 16.r, color: AppColors.primary),
-                  label: Text(
-                    'Chọn nhanh từ tủ lạnh',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-              ],
-
-              // Tên thực phẩm
-              Text(
-                'Tên thực phẩm *',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 6.h),
-              TextFormField(
+              AppTextField(
+                label: 'Tên món',
+                fillColor: AppColors.surfaceContainerLowest,
+                placeholder: 'Ví dụ: Sữa tươi, Trứng gà...',
                 controller: _nameController,
-                autofocus: !_isEditing,
-                style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.w500),
-                decoration: InputDecoration(
-                  hintText: 'Ví dụ: Thịt bò, Cà chua, Sữa tươi...',
-                  hintStyle: TextStyle(fontSize: 14.sp, color: AppColors.slate400),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: AppColors.slate200),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: AppColors.slate200),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Vui lòng nhập tên thực phẩm';
-                  }
-                  return null;
+                isRequired: true,
+                textInputAction: TextInputAction.next,
+                validator: (v) {
+                  final name = v?.trim() ?? '';
+                  if (name.isEmpty) return 'Vui lòng nhập tên món.';
+                  return name.length > 100 ? 'Tối đa 100 ký tự.' : null;
                 },
               ),
-              SizedBox(height: 14.h),
-
-              // Row: Số lượng & Đơn vị tính
+              if (suggestions.isNotEmpty) ...[
+                SizedBox(height: 6.h),
+                FoodSuggestionDropdown(
+                  suggestions: suggestions,
+                  onSelected: _onSuggestionSelected,
+                ),
+              ],
+              SizedBox(height: 16.h),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Số lượng
                   Expanded(
-                    flex: 4,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Số lượng *',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        TextFormField(
-                          controller: _quantityController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.w500),
-                          decoration: InputDecoration(
-                            hintText: '1',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(color: AppColors.slate200),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(color: AppColors.slate200),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                            ),
-                            contentPadding:
-                                EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                          ),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return 'Cần nhập số lượng';
-                            }
-                            final d = double.tryParse(val.trim());
-                            if (d == null || d <= 0) {
-                              return '> 0';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
+                    child: AppTextField(
+                      label: 'Số lượng',
+                      fillColor: AppColors.surfaceContainerLowest,
+                      controller: _quantityController,
+                      isRequired: true,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator: (v) {
+                        final value = double.tryParse(
+                          (v ?? '').trim().replaceAll(',', '.'),
+                        );
+                        if (value == null || value <= 0) {
+                          return 'Phải lớn hơn 0.';
+                        }
+                        return value > 10000 ? 'Tối đa 10000.' : null;
+                      },
                     ),
                   ),
-                  SizedBox(width: 12.w),
-                  // Đơn vị
+                  SizedBox(width: 14.w),
                   Expanded(
-                    flex: 5,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Đơn vị tính *',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        TextFormField(
-                          controller: _unitController,
-                          style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.w500),
-                          decoration: InputDecoration(
-                            hintText: 'kg, hộp...',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(color: AppColors.slate200),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(color: AppColors.slate200),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                            ),
-                            contentPadding:
-                                EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                          ),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return 'Cần đơn vị';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
+                    child: UnitPickerField(
+                      unit: _unit,
+                      units: units,
+                      onChanged: (unit) => setState(() => _unit = unit),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 8.h),
-
-              // Chip gợi ý đơn vị tính phổ biến
-              Wrap(
-                spacing: 6.w,
-                runSpacing: 6.h,
-                children: _commonUnits.map((u) {
-                  final isSelected = _unitController.text == u;
-                  return ActionChip(
-                    label: Text(
-                      u,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: isSelected ? AppColors.primary : Colors.black,
-                      ),
-                    ),
-                    backgroundColor: Colors.white,
-                    side: BorderSide(
-                      color: AppColors.primary,
-                      width: isSelected ? 2.0 : 1.2,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _unitController.text = u;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 14.h),
-
-              // Ghi chú
-              Text(
-                'Ghi chú (tùy chọn)',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 6.h),
-              TextFormField(
+              SizedBox(height: 16.h),
+              AppTextField(
+                label: 'Ghi chú',
+                fillColor: AppColors.surfaceContainerLowest,
+                placeholder: 'Không bắt buộc',
                 controller: _noteController,
-                style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.w500),
-                decoration: InputDecoration(
-                  hintText: 'Ví dụ: Mua loại tươi ngon, không lấy mỡ...',
-                  hintStyle: TextStyle(fontSize: 14.sp, color: AppColors.slate400),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: AppColors.slate200),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: AppColors.slate200),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                ),
+                maxLines: 2,
+                validator: (v) =>
+                    (v?.trim().length ?? 0) > 200 ? 'Tối đa 200 ký tự.' : null,
               ),
               SizedBox(height: 24.h),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 48.h,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 20.r,
-                          height: 20.r,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          _isEditing ? 'Lưu thay đổi' : 'Thêm vào danh sách',
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
+              PrimaryButton(
+                text: widget.itemToEdit == null ? 'Thêm vào danh sách' : 'Lưu',
+                isLoading: _isSaving,
+                onPressed: _submit,
               ),
             ],
           ),

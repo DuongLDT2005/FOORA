@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_widget.dart';
@@ -79,78 +80,18 @@ class HomePage extends ConsumerWidget {
                 onExpiredTap: () => context.push(AppRouteNames.wasteStatistics),
               ),
 
-              // Quick action: Shopping List banner
-              Container(
-                margin: EdgeInsets.only(bottom: 24.h),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.12),
-                      AppColors.primary.withValues(alpha: 0.04),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16.r),
-                    onTap: () => context.push(AppRouteNames.shoppingLists),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(10.r),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Icon(
-                            LucideIcons.shoppingBag,
-                            color: Colors.white,
-                            size: 20.r,
-                          ),
-                        ),
-                        SizedBox(width: 14.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Danh sách mua sắm',
-                                style: TextStyle(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.slate800,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'Lên kế hoạch đi chợ & tự động nhập kho',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: AppColors.slate500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          LucideIcons.chevronRight,
-                          size: 18.r,
-                          color: AppColors.slate400,
-                        ),
-                      ],
-                    ),
-                  ),
+              // Quick action: shopping lists (PLAN_01 §5.1)
+              Padding(
+                padding: EdgeInsets.only(bottom: 24.h),
+                child: FeatureCard(
+                  icon: LucideIcons.shoppingBag,
+                  iconColor: AppColors.primary,
+                  iconBgColor: AppColors.emerald50,
+                  title: 'Danh sách mua sắm',
+                  subtitle: 'Lên kế hoạch đi chợ & tự động nhập kho',
+                  onTap: () => context.push(AppRouteNames.shoppingLists),
                 ),
               ),
-
               if (totalCount == 0)
                 Padding(
                   padding: EdgeInsets.only(top: 32.h),

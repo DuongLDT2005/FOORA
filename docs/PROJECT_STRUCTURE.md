@@ -43,7 +43,7 @@ foora/
 lib/
 ├── core/       # Hạ tầng kỹ thuật, cấu hình môi trường, dịch vụ toàn cục & tiện ích
 ├── shared/     # Thành phần UI dùng chung, components, extensions, helpers
-└── features/   # 11 module nghiệp vụ độc lập theo Clean Architecture
+└── features/   # 12 module nghiệp vụ độc lập theo Clean Architecture
 ```
 
 ---
@@ -85,6 +85,7 @@ lib/core/
 | **`services`** | `connectivity_service.dart` | Theo dõi kết nối Internet thời gian thực (`connectivity_plus`), cung cấp `isConnectedProvider`. |
 | | `notification_service.dart` | Xử lý nhận Push Notification FCM và handler `@pragma('vm:entry-point')` chạy nền. |
 | | `storage_service.dart` | Wrapper cho `SharedPreferences` lưu trữ cài đặt phi nhạy cảm, cung cấp `storageServiceProvider`. |
+| | `voice_input_service.dart` | Bọc `speech_to_text` (khởi tạo, chọn locale tiếng Việt, nghe có kết quả tạm thời) để feature không gọi plugin trực tiếp. |
 | **`theme`** | `app_colors.dart` | Bảng màu thiết kế (Emerald chủ đạo, Slate trung tính, Amber cảnh báo, Red hết hạn, `slate900` nền dark). |
 | | `app_text_styles.dart` | Typography chuẩn Material 3 sử dụng font `Inter` (nội dung) và `Lexend` (tiêu đề). |
 | | `app_theme.dart` | Cấu hình hoàn chỉnh Material 3 `lightTheme` và `darkTheme`. |
@@ -138,7 +139,7 @@ lib/shared/
 
 ---
 
-## 5. Chi tiết 11 Feature Modules (`lib/features/`)
+## 5. Chi tiết 12 Feature Modules (`lib/features/`)
 
 Mỗi feature hoạt động độc lập và tuân thủ tuyệt đối quy chuẩn 3 tầng **Clean Architecture**:
 
@@ -160,7 +161,7 @@ features/{feature_name}/
     └── providers/
 ```
 
-### Bảng phân bổ 11 Feature Modules
+### Bảng phân bổ 12 Feature Modules
 
 | # | Feature | Mục đích & Nghiệp vụ chính | Các file chính |
 | :---: | :--- | :--- | :--- |
@@ -171,9 +172,10 @@ features/{feature_name}/
 | **5** | **`household`** | Quản lý gia đình/nhóm: tạo kho chung (Scope hiện tại), tham gia qua mã mời (Hạ tầng cho sau). | `household.dart`, `household_model.dart`, `invite_member.dart`, `household_page.dart`, `household_provider.dart`. |
 | **6** | **`inventory`** | Quản lý kho thực phẩm trong tủ lạnh (`inventory_items`), theo dõi hạn dùng FEFO & Master Data Catalog (`foods`, `food_categories`, `storage_locations`, `shelf_life_rules`). | `inventory_item.dart`, `inventory_item_model.dart`, usecases (`add_inventory_item.dart`, `update_inventory_item.dart`, `get_inventory_items.dart`), pages (`inventory_page.dart`, `item_form_page.dart`), providers (`inventory_provider.dart`, `inventory_form_state.dart`), `inventory_item_card.dart`. |
 | **7** | **`receipt`** | Chụp/quét hóa đơn bằng Camera OCR (ML Kit) & trích xuất AI. | `receipt.dart`, `receipt_model.dart`, `receipt_item.dart`, `receipt_item_model.dart`, `scan_receipt.dart`, `receipt_scan_page.dart`, `receipt_review_page.dart`. |
-| **8** | **`notification`** | Danh sách thông báo đẩy cảnh báo thực phẩm sắp hết hạn & Quản lý thiết bị (Devices). | `app_notification.dart`, `app_notification_model.dart`, `device.dart`, `device_model.dart`, `get_notifications.dart`, `notification_page.dart`. |
+| **8** | **`notification`** | Danh sách thông báo đẩy cảnh báo thực phẩm sắp hết hạn, nhắc đi chợ hằng tuần, cài đặt thông báo đồng bộ `users.notificationSettings` & Quản lý thiết bị (Devices). | `app_notification.dart`, `notification_settings.dart`, `notification_settings_repository_impl.dart`, `save_notification_settings.dart`, `ensure_notification_settings.dart`, `device.dart`, `get_notifications.dart`, `notification_page.dart`. |
 | **9** | **`ai`** | Trò chuyện với Trợ lý AI (gợi ý món ăn, tra cứu dinh dưỡng, quản lý quota). | `ai_usage_quota.dart`, `ai_usage_quota_model.dart`, `ai_chat_message.dart`, `send_ai_query.dart`, `get_ai_usage_quota.dart`, `ai_chat_page.dart`. |
 | **10** | **`home`** | Trang chủ tổng quan: tóm tắt kho, cảnh báo thực phẩm cấp bách, gợi ý nhanh. | `dashboard_summary.dart`, `dashboard_summary_model.dart`, `get_dashboard_summary.dart`, `home_page.dart`, `dashboard_summary_card.dart`, `home_provider.dart`. |
+| **12** | **`shopping`** | Nhiều danh sách mua sắm dùng chung trong household (realtime), thêm món tay / giọng nói / gợi ý "Hay mua", tick đã mua và nhập kho qua Cloud Function. | `shopping_list.dart`, `shopping_item.dart`, `shopping_suggestion.dart`, usecases (`add_shopping_item.dart`, `parse_voice_shopping_text.dart`, `import_shopping_items_to_inventory.dart`, ...), `shopping_remote_datasource.dart`, pages (`shopping_lists_page.dart`, `shopping_list_detail_page.dart`), `voice_add_sheet.dart`, `batch_import_inventory_sheet.dart`. |
 | **11** | **`admin`** | Web Dashboard quản trị: Users, Memberships, AI Quota, Shelf-Life Rules, Payments. | `admin_metrics.dart`, `admin_metrics_model.dart`, `admin_user.dart`, `admin_user_model.dart`, 7 admin pages, 6 admin providers. |
 
 ---
@@ -185,10 +187,11 @@ Chứa mã nguồn Node.js/TypeScript chạy trên Firebase Cloud Functions đ�
 | Module Function | Trách nhiệm Backend |
 | :--- | :--- |
 | **`auth/`** | Khởi tạo document `users/{userId}` khi người dùng mới đăng ký qua Firebase Auth trigger. |
-| **`inventory/`** | Cron job tự động quét hạn sử dụng hàng ngày và gửi cảnh báo FEFO. |
+| **`inventory/`** | Thêm món qua callable (kiểm tra foodLimit), đồng bộ `activeItemCount`, lập kế hoạch thông báo hạn dùng (FEFO). |
 | **`receipt/`** | Gọi Gemini API parse hóa đơn từ văn bản OCR thô, chống giả mạo client. |
 | **`ai/`** | Proxy gọi Gemini API, ghi nhận số lần dùng và kiểm tra quota gói thành viên. |
-| **`notification/`** | Gửi tin nhắn đẩy FCM cho toàn bộ thiết bị trong Household khi có sự kiện quan trọng. |
+| **`notification/`** | Gửi tin nhắn đẩy FCM; `hourlyReminderCron` nhắc hạn dùng và nhắc đi chợ theo cài đặt từng user. |
+| **`shopping/`** | Xóa danh sách mua sắm, nhập món đã mua vào kho (transaction + foodLimit), gợi ý "Hay mua". |
 | **`membership/`** | Quản lý nâng cấp/hạ cấp gói, reset quota quét hàng tháng. |
 | **`payment/`** | Tạo đơn QR payOS, xác thực webhook, đối soát và kích hoạt subscription Premium (`autoRenew: false`). |
 | **`household/`** | `createHousehold` (Scope hiện tại), chuẩn bị hạ tầng `joinHousehold` cho giai đoạn sau. |

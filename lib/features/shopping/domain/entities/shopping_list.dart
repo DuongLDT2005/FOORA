@@ -43,7 +43,9 @@ class ShoppingList {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is ShoppingList && other.id == id && other.updatedAt == updatedAt;
+    return other is ShoppingList &&
+        other.id == id &&
+        other.updatedAt == updatedAt;
   }
 
   @override

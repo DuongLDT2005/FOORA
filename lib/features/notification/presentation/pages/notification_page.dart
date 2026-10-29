@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../shared/components/app_header.dart';
 import '../../../../shared/helpers/toast_helper.dart';
@@ -148,6 +149,10 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
           .markAsRead(userId, item.id);
     }
     if (!mounted) {
+      return;
+    }
+    if (item.type == NotificationType.shoppingReminder) {
+      context.push(AppRouteNames.shoppingLists);
       return;
     }
     final itemId = item.inventoryItemId;

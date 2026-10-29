@@ -1,5 +1,4 @@
 import {onCall} from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
 import {REGION} from "../../config/firebase";
 import {ApiResponse} from "../../types";
 import {getAuthenticatedUser} from "../../utils/auth";
@@ -12,33 +11,19 @@ interface DeleteShoppingListPayload {
 }
 
 export const deleteShoppingList = onCall<Partial<DeleteShoppingListPayload>>(
-  {
-    region: REGION,
-    maxInstances: 10,
-  },
+  {region: REGION, maxInstances: 10},
   async (request): Promise<ApiResponse<{deleted: boolean}>> => {
     try {
       const user = await getAuthenticatedUser(request);
-      const data = request.data || {};
-
-      if (!data.householdId || typeof data.householdId !== "string") {
+      const {householdId, shoppingListId} = request.data || {};
+      if (typeof householdId !== "string" || !householdId) {
         throwInvalidArgument("Thiếu hoặc sai định dạng householdId.");
       }
-
-      if (!data.shoppingListId || typeof data.shoppingListId !== "string") {
+      if (typeof shoppingListId !== "string" || !shoppingListId) {
         throwInvalidArgument("Thiếu hoặc sai định dạng shoppingListId.");
       }
 
-      logger.info(
-        `[deleteShoppingList] User ${user.uid} is safely deleting shopping list ${data.shoppingListId}`
-      );
-
-      await ShoppingService.deleteShoppingList(
-        user.uid,
-        data.householdId,
-        data.shoppingListId
-      );
-
+      await ShoppingService.deleteShoppingList(user.uid, householdId, shoppingListId);
       return {
         success: true,
         data: {deleted: true},

@@ -4,13 +4,20 @@ import '../../../../core/firebase/firebase_providers.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/notification_remote_datasource.dart';
+import '../../data/datasources/notification_settings_local_datasource.dart';
+import '../../data/datasources/notification_settings_remote_datasource.dart';
 import '../../data/repositories/notification_repository_impl.dart';
+import '../../data/repositories/notification_settings_repository_impl.dart';
 import '../../domain/entities/app_notification.dart';
 import '../../domain/repositories/notification_repository.dart';
+import '../../domain/repositories/notification_settings_repository.dart';
+import '../../domain/usecases/ensure_notification_settings.dart';
 import '../../domain/usecases/get_notifications.dart';
 import '../../domain/usecases/mark_notification_as_read.dart';
 import '../../domain/usecases/register_device.dart';
+import '../../domain/usecases/save_notification_settings.dart';
 import '../../domain/usecases/unregister_device.dart';
+import '../../domain/usecases/watch_notification_settings.dart';
 
 final currentNotificationUserIdProvider = StreamProvider<String?>((ref) {
   return ref
@@ -59,6 +66,41 @@ final markNotificationAsReadUseCaseProvider =
     Provider<MarkNotificationAsReadUseCase>((ref) {
       return MarkNotificationAsReadUseCase(
         ref.watch(notificationRepositoryProvider),
+      );
+    });
+
+// --- Notification Settings Providers (PLAN_02) ---
+
+final notificationSettingsRepositoryProvider =
+    Provider<NotificationSettingsRepository>((ref) {
+      return NotificationSettingsRepositoryImpl(
+        remoteDataSource: NotificationSettingsRemoteDataSourceImpl(
+          firestore: ref.watch(firestoreProvider),
+        ),
+        localDataSource: NotificationSettingsLocalDataSource(
+          prefs: ref.watch(sharedPreferencesProvider),
+        ),
+      );
+    });
+
+final watchNotificationSettingsUseCaseProvider =
+    Provider<WatchNotificationSettingsUseCase>((ref) {
+      return WatchNotificationSettingsUseCase(
+        ref.watch(notificationSettingsRepositoryProvider),
+      );
+    });
+
+final saveNotificationSettingsUseCaseProvider =
+    Provider<SaveNotificationSettingsUseCase>((ref) {
+      return SaveNotificationSettingsUseCase(
+        ref.watch(notificationSettingsRepositoryProvider),
+      );
+    });
+
+final ensureNotificationSettingsUseCaseProvider =
+    Provider<EnsureNotificationSettingsUseCase>((ref) {
+      return EnsureNotificationSettingsUseCase(
+        ref.watch(notificationSettingsRepositoryProvider),
       );
     });
 

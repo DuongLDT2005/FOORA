@@ -47,8 +47,13 @@ Firestore
 │
 ├── households
 │   └── {householdId}
-│       └── inventory_items
-│           └── {inventoryItemId}
+│       ├── inventory_items
+│       │   └── {inventoryItemId}
+│       │
+│       └── shopping_lists
+│           └── {shoppingListId}
+│               └── items
+│                   └── {shoppingItemId}
 │
 ├── memberships
 │   └── {membershipId}
@@ -87,6 +92,7 @@ users/{userId}
 | `membershipId`      | String    |      Yes | Current membership ID            |
 | `activeHouseholdId` | String    |      Yes | Reference to active household ID |
 | `avatarUrl`         | String    |       No | Profile photo URL (Storage)      |
+| `notificationSettings` | Map    |       No | Reminder preferences read by `hourlyReminderCron` (see below) |
 | `isActive`          | Boolean   |      Yes | true or false                    |
 | `createdAt`         | Timestamp |      Yes | Creation time                    |
 | `updatedAt`         | Timestamp |      Yes | Last update time                 |
@@ -109,6 +115,20 @@ inside this document.
 > - `email`: The owner may only sync it to the **verified** email of the Firebase Auth token (`request.auth.token.email`, `email_verified == true`). An email change is requested with `verifyBeforeUpdateEmail`; the client copies the new address after the user confirms the link.
 > - `role`, `membershipId`, `isActive`, `activeHouseholdId`, `createdAt`: System-protected fields strictly guarded by Security Rules; clients cannot mutate them (managed exclusively via Cloud Functions / Admin SDK).
 > - Create: the `onUserCreated` trigger creates the document. If the client writes first, it may only create `fullName` and `updatedAt`.
+> - `notificationSettings`: the owner may write it; Rules validate every key (see below) and require `updatedAt == request.time`.
+
+**`notificationSettings` (PLAN_02)**
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `pushEnabled` | Boolean | `true` | Off = no expiry or shopping reminders |
+| `expiryAlertDays` | Array<Number> | `[1, 3]` | Subset of `[1, 3, 7]`: days before expiry that send `upcoming_expiration` |
+| `reminderHour` | Number (int) | `8` | Vietnam hour 0–23 for expiry and shopping reminders |
+| `shoppingReminderEnabled` | Boolean | `true` | Weekly "time to go shopping" reminder |
+| `shoppingReminderWeekday` | Number (int) | `6` | ISO weekday, 1 = Monday … 7 = Sunday |
+| `updatedAt` | Timestamp | | Last change |
+
+The app writes defaults (merged with the old on-device `pref_notif_*` values) after sign-in when the field is missing, because the backend cannot query users without it. Users who have not opened the new app version receive no reminders until they do. Notification sound stays on the device only.
 
 ---
 
@@ -373,6 +393,62 @@ households/{householdId}/inventory_items/{inventoryItemId}
 
 ---
 
+# 9.1 Subcollection: shopping_lists
+
+**Path**
+
+```text
+households/{householdId}/shopping_lists/{shoppingListId}
+```
+
+A household can have several lists; every member sees them in real time.
+
+| Field       | Type      | Required | Description                     |
+| ----------- | --------- | -------: | ------------------------------- |
+| `name`      | String    |      Yes | 1–100 characters                |
+| `note`      | String    |       No | ≤ 200 characters                |
+| `createdBy` | String    |      Yes | uid of the creator              |
+| `createdAt` | Timestamp |      Yes | Creation time                   |
+| `updatedAt` | Timestamp |      Yes | Last change of the list itself  |
+
+> **Security Rules**: members read, create and rename lists. Clients cannot delete a list; the `deleteShoppingList` callable deletes it with its items (recursive delete).
+
+## 9.2 Subcollection: shopping list items
+
+**Path**
+
+```text
+households/{householdId}/shopping_lists/{shoppingListId}/items/{shoppingItemId}
+```
+
+| Field                | Type      | Required | Description                                                         |
+| -------------------- | --------- | -------: | ------------------------------------------------------------------- |
+| `name`               | String    |      Yes | 1–100 characters                                                    |
+| `normalizedName`     | String    |      Yes | `StringUtils.normalize(name)`, used for merging and suggestions     |
+| `foodId`             | String    |       No | Master food picked from autocomplete                                |
+| `categoryId`         | String    |       No | Suggested category; required (and not `other`) when imported        |
+| `quantity`           | Number    |      Yes | 0 < quantity ≤ 10000                                                |
+| `unit`               | String    |      Yes | 1–20 characters                                                     |
+| `note`               | String    |       No | ≤ 200 characters                                                    |
+| `source`             | String    |      Yes | `manual`, `voice`, `suggestion`, `ai_recipe`                        |
+| `isPurchased`        | Boolean   |      Yes | Ticked as bought                                                    |
+| `purchasedBy`        | String    |       No | uid who ticked it (`null` when not purchased)                       |
+| `purchasedAt`        | Timestamp |       No | Server time of the tick                                             |
+| `isAddedToInventory` | Boolean   |      Yes | Moved into the fridge (backend only)                                |
+| `inventoryItemId`    | String    |       No | Inventory batch created on import (backend only)                    |
+| `addedToInventoryAt` | Timestamp |       No | Import time (backend only)                                          |
+| `addedBy`            | String    |      Yes | uid who added it (`request.auth.uid`)                               |
+| `createdAt`          | Timestamp |      Yes | Creation time                                                       |
+| `updatedAt`          | Timestamp |      Yes | Last update                                                         |
+
+> **Merge rule**: adding an item whose `normalizedName` and `unit` match a not-yet-purchased item in the same list increases that item's quantity instead of creating a duplicate (client transaction).
+>
+> **Security Rules**: members create items with `isPurchased == false`, `isAddedToInventory == false`, `addedBy == request.auth.uid`; they may edit, tick (`purchasedBy == request.auth.uid`, `purchasedAt == request.time`) and delete items. Items with `isAddedToInventory == true` are read-only for clients, and clients can never set the inventory fields.
+>
+> **Moving into the fridge**: the `importShoppingItemsToInventory` callable re-reads the items in one transaction, creates the inventory batches through `InventoryService.executeBatchAddInTransaction` (foodLimit, `activeItemCount`, expiry from shelf-life rules, `source: manual`) and marks the items imported. A retry after success returns the existing inventory ids; a concurrent import by another member fails with `failed-precondition`.
+
+---
+
 # 10. Collection: shelf_life_rules
 
 **Path**
@@ -467,12 +543,14 @@ users/{userId}/notifications/{notificationId}
 | Field             | Type      | Required | Description                                                                             |
 | ----------------- | --------- | -------: | --------------------------------------------------------------------------------------- |
 | `householdId`     | String    |       No | Reference to the related household ID (if applicable)                                   |
-| `type`            | String    |      Yes | Notification type: `expiration_alert`, `upcoming_expiration`, `priority_food`, `system` |
+| `type`            | String    |      Yes | Notification type: `expiration_alert`, `upcoming_expiration`, `priority_food`, `shopping_reminder`, `system` |
 | `title`           | String    |      Yes | Notification title displayed to the user                                                |
 | `message`         | String    |      Yes | Notification message displayed to the user                                              |
 | `inventoryItemId` | String    |       No | Reference to the related inventory item                                                 |
 | `isRead`          | Boolean   |      Yes | Whether the user has read the notification                                              |
 | `createdAt`       | Timestamp |      Yes | Notification creation time                                                              |
+
+Notification ids are deterministic so a retried job never sends twice: expiry `{YYYYMMDD}_{type}_{inventoryItemId}`, weekly shopping reminder `shopping_{YYYY}W{ww}` (ISO week, Vietnam date). `expiration_alert` is sent once, the day after expiry; `upcoming_expiration` only on the user's `expiryAlertDays`. A `shopping_reminder` push opens the shopping lists.
 
 ---
 
@@ -680,10 +758,16 @@ households
 │
 ├── members (array contains userIds) ──→ users
 │
-└── inventory_items
-    ├── foodId (optional) ─────→ foods
-    ├── categoryId ────────────→ food_categories
-    └── storageLocationId ─────→ storage_locations
+├── inventory_items
+│   ├── foodId (optional) ─────→ foods
+│   ├── categoryId ────────────→ food_categories
+│   └── storageLocationId ─────→ storage_locations
+│
+└── shopping_lists
+    └── items
+        ├── foodId (optional) ─────→ foods
+        ├── categoryId (optional) ─→ food_categories
+        └── inventoryItemId ───────→ households/{householdId}/inventory_items
 
 
 foods

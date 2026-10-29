@@ -105,6 +105,7 @@ enum NotificationType {
   expirationAlert('expiration_alert'),
   upcomingExpiration('upcoming_expiration'),
   priorityFood('priority_food'),
+  shoppingReminder('shopping_reminder'),
   system('system');
 
   final String value;
@@ -205,27 +206,10 @@ enum HouseholdInvitationStatus {
   }
 }
 
-/// Trạng thái của một danh sách mua sắm
-enum ShoppingListStatus {
-  active('active'),
-  completed('completed'),
-  deleting('deleting');
-
-  final String value;
-  const ShoppingListStatus(this.value);
-
-  static ShoppingListStatus fromString(String? value) {
-    return ShoppingListStatus.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => ShoppingListStatus.active,
-    );
-  }
-}
-
-/// Nguồn gốc tạo ra món cần mua
+/// How a shopping item was added: 'manual', 'voice', 'suggestion', 'ai_recipe'
 enum ShoppingItemSource {
   manual('manual'),
-  inventory('inventory'),
+  voice('voice'),
   suggestion('suggestion'),
   aiRecipe('ai_recipe');
 
@@ -239,4 +223,3 @@ enum ShoppingItemSource {
     );
   }
 }
-

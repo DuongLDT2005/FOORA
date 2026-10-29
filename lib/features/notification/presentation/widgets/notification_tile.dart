@@ -44,6 +44,12 @@ class NotificationTile extends StatelessWidget {
         iconData = LucideIcons.sparkles;
         typeLabel = 'Gợi ý thông minh';
         break;
+      case NotificationType.shoppingReminder:
+        iconColor = AppColors.primary;
+        iconBgColor = AppColors.emerald50;
+        iconData = LucideIcons.shoppingCart;
+        typeLabel = 'Nhắc đi chợ';
+        break;
       case NotificationType.system:
         iconColor = AppColors.primary;
         iconBgColor = AppColors.emerald50;

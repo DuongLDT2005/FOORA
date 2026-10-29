@@ -167,42 +167,42 @@ class InventoryPage extends ConsumerWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                          Text(
-                            'Quản lý hạn dùng',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.red700,
-                            ),
-                          ),
-                          if (totalWarning > 0) ...[
-                            SizedBox(width: 6.w),
-                            Container(
-                              padding: EdgeInsets.all(4.r),
-                              decoration: const BoxDecoration(
-                                color: AppColors.red600,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                totalWarning.toString(),
+                              Text(
+                                'Quản lý hạn dùng',
                                 style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  fontFamily: 'Inter',
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.red700,
                                 ),
                               ),
-                            ),
-                          ],
-                        ],
+                              if (totalWarning > 0) ...[
+                                SizedBox(width: 6.w),
+                                Container(
+                                  padding: EdgeInsets.all(4.r),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.red600,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    totalWarning.toString(),
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
             // Search and Location Filters
             Padding(

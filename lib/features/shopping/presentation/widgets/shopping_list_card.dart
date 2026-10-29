@@ -25,19 +25,24 @@ class ShoppingListCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (purchasedCount, totalCount) =
-        ref.watch(shoppingListProgressProvider(shoppingList.id));
+    final (purchasedCount, totalCount) = ref.watch(
+      shoppingListProgressProvider(shoppingList.id),
+    );
 
-    final progressRatio = totalCount > 0 ? (purchasedCount / totalCount).clamp(0.0, 1.0) : 0.0;
+    final progressRatio = totalCount > 0
+        ? (purchasedCount / totalCount).clamp(0.0, 1.0)
+        : 0.0;
     final isCompleted = totalCount > 0 && purchasedCount == totalCount;
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: isCompleted ? AppColors.primary.withValues(alpha: 0.3) : AppColors.slate100,
+          color: isCompleted
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : AppColors.slate100,
         ),
         boxShadow: [
           BoxShadow(
@@ -71,8 +76,12 @@ class ShoppingListCard extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Icon(
-                        isCompleted ? LucideIcons.checkCheck : LucideIcons.shoppingBag,
-                        color: isCompleted ? AppColors.primary : AppColors.slate600,
+                        isCompleted
+                            ? LucideIcons.checkCheck
+                            : LucideIcons.shoppingBag,
+                        color: isCompleted
+                            ? AppColors.primary
+                            : AppColors.slate600,
                         size: 22.r,
                       ),
                     ),
@@ -93,7 +102,8 @@ class ShoppingListCard extends ConsumerWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (shoppingList.note != null && shoppingList.note!.isNotEmpty) ...[
+                          if (shoppingList.note != null &&
+                              shoppingList.note!.isNotEmpty) ...[
                             SizedBox(height: 3.h),
                             Text(
                               shoppingList.note!,
@@ -138,7 +148,11 @@ class ShoppingListCard extends ConsumerWidget {
                           value: 'rename',
                           child: Row(
                             children: [
-                              Icon(LucideIcons.pencil, size: 16, color: AppColors.slate600),
+                              Icon(
+                                LucideIcons.pencil,
+                                size: 16,
+                                color: AppColors.slate600,
+                              ),
                               SizedBox(width: 8),
                               Text('Đổi tên'),
                             ],
@@ -148,9 +162,16 @@ class ShoppingListCard extends ConsumerWidget {
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(LucideIcons.trash2, size: 16, color: AppColors.red500),
+                              Icon(
+                                LucideIcons.trash2,
+                                size: 16,
+                                color: AppColors.red500,
+                              ),
                               SizedBox(width: 8),
-                              Text('Xóa danh sách', style: TextStyle(color: AppColors.red500)),
+                              Text(
+                                'Xóa danh sách',
+                                style: TextStyle(color: AppColors.red500),
+                              ),
                             ],
                           ),
                         ),
@@ -181,7 +202,9 @@ class ShoppingListCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: isCompleted ? AppColors.primary : AppColors.slate600,
+                        color: isCompleted
+                            ? AppColors.primary
+                            : AppColors.slate600,
                       ),
                     ),
                   ],

@@ -1,17 +1,22 @@
-import '../entities/shopping_list.dart';
+import '../entities/import_shopping_item_request.dart';
 import '../entities/shopping_item.dart';
+import '../entities/shopping_item_draft.dart';
+import '../entities/shopping_list.dart';
+import '../entities/shopping_suggestion.dart';
 
 abstract class ShoppingRepository {
-  /// Stream real-time danh sách các Shopping Lists của Household
+  /// Real-time shopping lists of a household, most recently updated first.
   Stream<List<ShoppingList>> watchShoppingLists(String householdId);
 
-  /// Stream real-time một Shopping List cụ thể
+  /// Real-time single list; emits null once it is deleted.
   Stream<ShoppingList?> watchShoppingList(String householdId, String listId);
 
-  /// Stream real-time danh sách món trong subcollection items
-  Stream<List<ShoppingItem>> watchShoppingItems(String householdId, String listId);
+  /// Real-time items of a list, oldest first.
+  Stream<List<ShoppingItem>> watchShoppingItems(
+    String householdId,
+    String listId,
+  );
 
-  /// Tạo mới Shopping List
   Future<String> createShoppingList({
     required String householdId,
     required String name,
@@ -19,7 +24,6 @@ abstract class ShoppingRepository {
     required String createdBy,
   });
 
-  /// Chỉnh sửa tên danh sách
   Future<void> updateShoppingList({
     required String householdId,
     required String listId,
@@ -27,54 +31,52 @@ abstract class ShoppingRepository {
     String? note,
   });
 
-  /// Xóa danh sách (Qua Cloud Function deleteShoppingList)
+  /// Deletes the list and its items (deleteShoppingList callable).
   Future<void> deleteShoppingList({
     required String householdId,
     required String listId,
   });
 
-  /// Thêm món vào danh sách
-  Future<String> addShoppingItem({
+  /// Adds [draft] or, when a pending item with the same normalized name and
+  /// unit exists, increases its quantity atomically.
+  Future<AddShoppingItemResult> addShoppingItem({
     required String householdId,
-    required String shoppingListId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
+    required String listId,
+    required ShoppingItemDraft draft,
+    required String normalizedName,
+    required String addedBy,
   });
 
-  /// Chỉnh sửa thông tin món
   Future<void> updateShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
+    required ShoppingItemDraft draft,
+    required String normalizedName,
   });
 
-  /// Xóa món khỏi danh sách
   Future<void> deleteShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
   });
 
-  /// Tick / Bỏ tick đã mua
-  Future<void> toggleShoppingItemPurchased({
+  Future<void> setItemPurchased({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required bool targetStatus,
+    required bool purchased,
+    required String userId,
   });
 
-  /// Nhập các món đã mua vào tủ lạnh (Qua Cloud Function importShoppingItemsToInventory)
-  Future<int> importShoppingItemsToInventory({
+  /// Moves purchased items into the fridge (importShoppingItemsToInventory
+  /// callable). Returns how many inventory batches were created.
+  Future<int> importToInventory({
     required String householdId,
-    required String shoppingListId,
-    required List<Map<String, dynamic>> items,
+    required String listId,
+    required List<ImportShoppingItemRequest> items,
   });
+
+  /// "Frequently bought" suggestions (getShoppingSuggestions callable).
+  Future<List<ShoppingSuggestion>> getSuggestions(String householdId);
 }

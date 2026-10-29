@@ -14,9 +14,7 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import * as admin from "firebase-admin";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let sharp: any;
-try { sharp = require("sharp"); } catch {}
+import sharp from "sharp";
 import {Collections} from "../constants/collections";
 
 const PROJECT_ID = process.env.GCLOUD_PROJECT || "foora-app";

@@ -73,27 +73,12 @@
       ]
     },
     {
-      "collectionGroup": "shopping_lists",
+      "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "updatedAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "shopping_lists",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "completedAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "items",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "isPurchased", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "ASCENDING" }
+        {"fieldPath": "notificationSettings.shoppingReminderEnabled", "order": "ASCENDING"},
+        {"fieldPath": "notificationSettings.shoppingReminderWeekday", "order": "ASCENDING"},
+        {"fieldPath": "notificationSettings.reminderHour", "order": "ASCENDING"}
       ]
     }
   ],

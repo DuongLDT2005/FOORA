@@ -1,15 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+
 import '../../../../core/constants/firestore_constants.dart';
 import '../../../../core/errors/exceptions.dart';
-import '../../../../core/utils/app_logger.dart';
-import '../models/shopping_list_model.dart';
+import '../../domain/entities/import_shopping_item_request.dart';
+import '../../domain/entities/shopping_item_draft.dart';
+import '../../domain/usecases/validate_shopping_item_draft.dart';
 import '../models/shopping_item_model.dart';
+import '../models/shopping_list_model.dart';
+import '../models/shopping_suggestion_model.dart';
 
 abstract class ShoppingRemoteDataSource {
   Stream<List<ShoppingListModel>> watchShoppingLists(String householdId);
-  Stream<ShoppingListModel?> watchShoppingList(String householdId, String listId);
-  Stream<List<ShoppingItemModel>> watchShoppingItems(String householdId, String listId);
+  Stream<ShoppingListModel?> watchShoppingList(
+    String householdId,
+    String listId,
+  );
+  Stream<List<ShoppingItemModel>> watchShoppingItems(
+    String householdId,
+    String listId,
+  );
 
   Future<String> createShoppingList({
     required String householdId,
@@ -30,57 +40,53 @@ abstract class ShoppingRemoteDataSource {
     required String listId,
   });
 
-  Future<String> addShoppingItem({
+  Future<AddShoppingItemResult> addShoppingItem({
     required String householdId,
-    required String shoppingListId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
+    required String listId,
+    required ShoppingItemDraft draft,
+    required String normalizedName,
+    required String addedBy,
   });
 
   Future<void> updateShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
+    required ShoppingItemDraft draft,
+    required String normalizedName,
   });
 
   Future<void> deleteShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
   });
 
-  Future<void> toggleShoppingItemPurchased({
+  Future<void> setItemPurchased({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required bool targetStatus,
+    required bool purchased,
+    required String userId,
   });
 
-  Future<int> importShoppingItemsToInventory({
+  Future<int> importToInventory({
     required String householdId,
-    required String shoppingListId,
-    required List<Map<String, dynamic>> items,
+    required String listId,
+    required List<ImportShoppingItemRequest> items,
   });
+
+  Future<List<ShoppingSuggestionModel>> getSuggestions(String householdId);
 }
 
 class ShoppingRemoteDataSourceImpl implements ShoppingRemoteDataSource {
   final FirebaseFirestore firestore;
   final FirebaseFunctions functions;
 
-  ShoppingRemoteDataSourceImpl({
-    FirebaseFirestore? firestore,
-    FirebaseFunctions? functions,
-  })  : firestore = firestore ?? FirebaseFirestore.instance,
-        functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'asia-southeast1');
+  const ShoppingRemoteDataSourceImpl({
+    required this.firestore,
+    required this.functions,
+  });
 
   CollectionReference<Map<String, dynamic>> _listsRef(String householdId) {
     return firestore
@@ -90,25 +96,32 @@ class ShoppingRemoteDataSourceImpl implements ShoppingRemoteDataSource {
   }
 
   CollectionReference<Map<String, dynamic>> _itemsRef(
-      String householdId, String listId) {
-    return _listsRef(householdId).doc(listId).collection(FirestoreConstants.shoppingItems);
+    String householdId,
+    String listId,
+  ) {
+    return _listsRef(
+      householdId,
+    ).doc(listId).collection(FirestoreConstants.shoppingItems);
   }
 
   @override
   Stream<List<ShoppingListModel>> watchShoppingLists(String householdId) {
-    return _listsRef(householdId)
-        .snapshots()
-        .map((snapshot) {
-          final lists = snapshot.docs
-              .map((doc) => ShoppingListModel.fromFirestore(doc, householdId: householdId))
-              .toList();
-          lists.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-          return lists;
-        });
+    return _listsRef(householdId).snapshots().map((snapshot) {
+      return snapshot.docs
+          .map(
+            (doc) =>
+                ShoppingListModel.fromFirestore(doc, householdId: householdId),
+          )
+          .toList()
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    });
   }
 
   @override
-  Stream<ShoppingListModel?> watchShoppingList(String householdId, String listId) {
+  Stream<ShoppingListModel?> watchShoppingList(
+    String householdId,
+    String listId,
+  ) {
     return _listsRef(householdId).doc(listId).snapshots().map((doc) {
       if (!doc.exists) return null;
       return ShoppingListModel.fromFirestore(doc, householdId: householdId);
@@ -117,15 +130,22 @@ class ShoppingRemoteDataSourceImpl implements ShoppingRemoteDataSource {
 
   @override
   Stream<List<ShoppingItemModel>> watchShoppingItems(
-      String householdId, String listId) {
+    String householdId,
+    String listId,
+  ) {
     return _itemsRef(householdId, listId)
-        .orderBy('createdAt', descending: false)
+        .orderBy('createdAt')
         .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => ShoppingItemModel.fromFirestore(doc, shoppingListId: listId))
-              .toList();
-        });
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => ShoppingItemModel.fromFirestore(
+                  doc,
+                  shoppingListId: listId,
+                ),
+              )
+              .toList(),
+        );
   }
 
   @override
@@ -134,21 +154,19 @@ class ShoppingRemoteDataSourceImpl implements ShoppingRemoteDataSource {
     required String name,
     String? note,
     required String createdBy,
-  }) async {
-    try {
+  }) {
+    return _guard(() async {
       final docRef = _listsRef(householdId).doc();
       final now = FieldValue.serverTimestamp();
       await docRef.set({
-        'name': name.trim(),
-        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+        'name': name,
+        'note': note,
         'createdBy': createdBy,
         'createdAt': now,
         'updatedAt': now,
       });
       return docRef.id;
-    } catch (e) {
-      throw ServerException('Lỗi tạo danh sách mua sắm: $e');
-    }
+    });
   }
 
   @override
@@ -157,221 +175,194 @@ class ShoppingRemoteDataSourceImpl implements ShoppingRemoteDataSource {
     required String listId,
     required String name,
     String? note,
-  }) async {
-    try {
+  }) {
+    return _guard(() async {
       await _listsRef(householdId).doc(listId).update({
-        'name': name.trim(),
-        'note': (note != null && note.trim().isNotEmpty) ? note.trim() : FieldValue.delete(),
+        'name': name,
+        'note': note,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-    } catch (e) {
-      throw ServerException('Lỗi cập nhật danh sách mua sắm: $e');
-    }
+    });
   }
 
   @override
   Future<void> deleteShoppingList({
     required String householdId,
     required String listId,
-  }) async {
-    try {
-      final callable = functions.httpsCallable('deleteShoppingList');
-      await callable.call<Map<String, dynamic>>({
-        'householdId': householdId,
-        'shoppingListId': listId,
-      });
-    } on FirebaseFunctionsException catch (e) {
-      throw ServerException(e.message ?? 'Lỗi khi xóa danh sách.', e.code);
-    } catch (e) {
-      throw ServerException('Lỗi khi xóa danh sách: $e');
-    }
+  }) {
+    return _callable('deleteShoppingList', {
+      'householdId': householdId,
+      'shoppingListId': listId,
+    });
   }
 
+  /// Merge rule (PLAN_01 §5.3): a pending item with the same normalized name
+  /// and unit gets the extra quantity instead of a duplicate line. The match
+  /// is re-read inside a transaction so concurrent edits are not lost.
   @override
-  Future<String> addShoppingItem({
+  Future<AddShoppingItemResult> addShoppingItem({
     required String householdId,
-    required String shoppingListId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
-  }) async {
-    try {
-      final docRef = _itemsRef(householdId, shoppingListId).doc();
-      final now = FieldValue.serverTimestamp();
-      await docRef.set({
-        'name': name.trim(),
-        'quantity': quantity,
-        'unit': unit.trim(),
-        'note': (note != null && note.trim().isNotEmpty) ? note.trim() : null,
-        'foodId': foodId,
-        'isPurchased': false,
-        'isAddedToInventory': false,
-        'inventoryItemId': null,
-        'createdAt': now,
-        'updatedAt': now,
+    required String listId,
+    required ShoppingItemDraft draft,
+    required String normalizedName,
+    required String addedBy,
+  }) {
+    return _guard(() async {
+      final items = _itemsRef(householdId, listId);
+      final candidates = await items
+          .where('normalizedName', isEqualTo: normalizedName)
+          .where('isPurchased', isEqualTo: false)
+          .get();
+      final unit = draft.unit.toLowerCase();
+      final match = candidates.docs
+          .where(
+            (d) =>
+                (d.data()['unit'] as String? ?? '').toLowerCase() == unit &&
+                d.data()['isAddedToInventory'] != true,
+          )
+          .firstOrNull;
+
+      return firestore.runTransaction((tx) async {
+        if (match != null) {
+          final fresh = await tx.get(match.reference);
+          final data = fresh.data();
+          final quantity = (data?['quantity'] as num?)?.toDouble() ?? 0;
+          final merged = quantity + draft.quantity;
+          if (fresh.exists &&
+              data?['isPurchased'] == false &&
+              merged <= shoppingItemMaxQuantity) {
+            tx.update(match.reference, {
+              'quantity': merged,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+            return AddShoppingItemResult(itemId: match.id, merged: true);
+          }
+        }
+        final newRef = items.doc();
+        tx.set(
+          newRef,
+          ShoppingItemModel.newItemData(
+            draft: draft,
+            normalizedName: normalizedName,
+            addedBy: addedBy,
+          ),
+        );
+        return AddShoppingItemResult(itemId: newRef.id, merged: false);
       });
-      return docRef.id;
-    } catch (e) {
-      throw ServerException('Lỗi thêm món cần mua: $e');
-    }
+    });
   }
 
   @override
   Future<void> updateShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required String name,
-    required double quantity,
-    required String unit,
-    String? note,
-    String? foodId,
-  }) async {
-    try {
-      await _itemsRef(householdId, shoppingListId).doc(itemId).update({
-        'name': name.trim(),
-        'quantity': quantity,
-        'unit': unit.trim(),
-        'note': (note != null && note.trim().isNotEmpty) ? note.trim() : null,
-        'foodId': foodId,
+    required ShoppingItemDraft draft,
+    required String normalizedName,
+  }) {
+    return _guard(() async {
+      await _itemsRef(householdId, listId).doc(itemId).update({
+        ...ShoppingItemModel.editableData(
+          draft: draft,
+          normalizedName: normalizedName,
+        ),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-    } catch (e) {
-      throw ServerException('Lỗi cập nhật món: $e');
-    }
+    });
   }
 
   @override
   Future<void> deleteShoppingItem({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-  }) async {
-    try {
-      await _itemsRef(householdId, shoppingListId).doc(itemId).delete();
-    } catch (e) {
-      throw ServerException('Lỗi xóa món cần mua: $e');
-    }
+  }) {
+    return _guard(() => _itemsRef(householdId, listId).doc(itemId).delete());
   }
 
   @override
-  Future<void> toggleShoppingItemPurchased({
+  Future<void> setItemPurchased({
     required String householdId,
-    required String shoppingListId,
+    required String listId,
     required String itemId,
-    required bool targetStatus,
-  }) async {
-    try {
-      await _itemsRef(householdId, shoppingListId).doc(itemId).update({
-        'isPurchased': targetStatus,
+    required bool purchased,
+    required String userId,
+  }) {
+    return _guard(() async {
+      await _itemsRef(householdId, listId).doc(itemId).update({
+        'isPurchased': purchased,
+        'purchasedBy': purchased ? userId : null,
+        'purchasedAt': purchased ? FieldValue.serverTimestamp() : null,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-    } catch (e) {
-      throw ServerException('Lỗi cập nhật trạng thái đã mua: $e');
-    }
+    });
   }
 
   @override
-  Future<int> importShoppingItemsToInventory({
+  Future<int> importToInventory({
     required String householdId,
-    required String shoppingListId,
-    required List<Map<String, dynamic>> items,
+    required String listId,
+    required List<ImportShoppingItemRequest> items,
   }) async {
-    try {
-      final callable = functions.httpsCallable('importShoppingItemsToInventory');
-      final response = await callable.call<Map<String, dynamic>>({
-        'householdId': householdId,
-        'shoppingListId': shoppingListId,
-        'items': items,
-      });
+    final data = await _callable('importShoppingItemsToInventory', {
+      'householdId': householdId,
+      'shoppingListId': listId,
+      'items': [
+        for (final item in items)
+          {
+            'shoppingItemId': item.shoppingItemId,
+            'storageLocationId': item.storageLocation.name,
+            'categoryId': item.categoryId,
+            'actualQuantity': item.actualQuantity,
+            if (item.purchaseDate != null)
+              'purchaseDate': item.purchaseDate!.toUtc().toIso8601String(),
+          },
+      ],
+    });
+    return (data['addedCount'] as num?)?.toInt() ?? 0;
+  }
 
-      final data = response.data;
-      final payload = data['data'] as Map<dynamic, dynamic>?;
-      return (payload?['addedCount'] as num?)?.toInt() ?? items.length;
+  @override
+  Future<List<ShoppingSuggestionModel>> getSuggestions(
+    String householdId,
+  ) async {
+    final data = await _callable('getShoppingSuggestions', {
+      'householdId': householdId,
+    });
+    final raw = data['suggestions'] as List<dynamic>? ?? const [];
+    return raw
+        .map(
+          (e) => ShoppingSuggestionModel.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
+  /// Calls a FOORA callable and returns its `data` payload.
+  Future<Map<String, dynamic>> _callable(
+    String name,
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final response = await functions
+          .httpsCallable(name)
+          .call<Map<String, dynamic>>(payload);
+      final data = response.data['data'];
+      return data is Map ? Map<String, dynamic>.from(data) : const {};
     } on FirebaseFunctionsException catch (e) {
-      if (e.code == 'resource-exhausted') {
-        throw ServerException(
-          e.message ??
-              'Tủ lạnh đã đạt giới hạn thực phẩm của gói tài khoản. Vui lòng nâng cấp Premium.',
-          e.code,
-        );
-      }
-      throw ServerException(e.message ?? 'Lỗi khi nhập thực phẩm vào tủ lạnh.', e.code);
-    } catch (e) {
-      // In local testing or emulator without functions running, fallback to direct Firestore writes
-      AppLogger.w('Functions callable import error, falling back to direct Firestore: $e');
-      return await _directImportToInventoryFallback(
-        householdId: householdId,
-        shoppingListId: shoppingListId,
-        items: items,
+      throw ServerException(
+        e.message ?? 'Không thể kết nối máy chủ. Vui lòng thử lại.',
+        e.code,
       );
     }
   }
 
-  Future<int> _directImportToInventoryFallback({
-    required String householdId,
-    required String shoppingListId,
-    required List<Map<String, dynamic>> items,
-  }) async {
-    int imported = 0;
-    final now = DateTime.now();
-
-    for (final item in items) {
-      final shoppingItemId = item['shoppingItemId'] as String;
-      final name = (item['name'] as String? ?? '').trim();
-      final quantity = (item['quantity'] as num?)?.toDouble() ?? 1.0;
-      final unit = (item['unit'] as String? ?? 'món').trim();
-      final locationId = (item['locationId'] as String? ?? 'fridge').trim();
-      final categoryId = (item['categoryId'] as String? ?? 'dry').trim();
-      final foodId = item['foodId'] as String?;
-
-      final defaultShelfDays = locationId == 'freezer' ? 30 : 7;
-      final expirationDate = now.add(Duration(days: defaultShelfDays));
-
-      // 1. Create inventory item doc
-      final invRef = firestore
-          .collection(FirestoreConstants.households)
-          .doc(householdId)
-          .collection(FirestoreConstants.inventoryItems)
-          .doc();
-
-      await invRef.set({
-        'foodId': foodId,
-        'name': name,
-        'normalizedName': name.toLowerCase(),
-        'categoryId': categoryId,
-        'quantity': quantity,
-        'unit': unit,
-        'remainingPercentage': 100,
-        'storageLocationId': locationId,
-        'purchaseDate': Timestamp.fromDate(now),
-        'expirationDate': Timestamp.fromDate(expirationDate),
-        'source': 'shopping_list',
-        'status': 'active',
-        'statusChangedAt': FieldValue.serverTimestamp(),
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 2. Mark shopping item as imported
-      await firestore
-          .collection(FirestoreConstants.households)
-          .doc(householdId)
-          .collection(FirestoreConstants.shoppingLists)
-          .doc(shoppingListId)
-          .collection(FirestoreConstants.shoppingItems)
-          .doc(shoppingItemId)
-          .update({
-        'isAddedToInventory': true,
-        'inventoryItemId': invRef.id,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      imported++;
+  Future<T> _guard<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } on FirebaseException catch (e) {
+      throw ServerException.fromFirebase(e);
     }
-
-    return imported;
   }
 }

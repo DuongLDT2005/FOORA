@@ -1,127 +1,158 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/services/storage_service.dart';
+import '../../../../shared/helpers/debouncer.dart';
+import '../../../notification/domain/entities/notification_settings.dart';
+import '../../../notification/domain/repositories/notification_settings_repository.dart';
+import '../../../notification/domain/usecases/save_notification_settings.dart';
+import '../../../notification/domain/usecases/watch_notification_settings.dart';
+import '../../../notification/presentation/providers/notification_provider.dart';
 
-/// User preferences for notifications (push on/off, expiry alerts, reminder time, sound).
+// --- State ---
+
 @immutable
 class NotificationSettingsState {
-  final bool isPushEnabled;
-  final bool expiryAlert1Day;
-  final bool expiryAlert3Days;
-  final bool expiryAlert7Days;
-  final int reminderHour;
-  final int reminderMinute;
+  final NotificationSettings settings;
   final bool soundEnabled;
 
+  /// Set when the last save failed; the UI shows it once and clears it.
+  final String? errorMessage;
+
   const NotificationSettingsState({
-    this.isPushEnabled = true,
-    this.expiryAlert1Day = true,
-    this.expiryAlert3Days = true,
-    this.expiryAlert7Days = false,
-    this.reminderHour = 8,
-    this.reminderMinute = 0,
+    this.settings = NotificationSettings.defaults,
     this.soundEnabled = true,
+    this.errorMessage,
   });
 
-  String get formattedReminderTime {
-    final h = reminderHour.toString().padLeft(2, '0');
-    final m = reminderMinute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
+  String get formattedReminderHour =>
+      '${settings.reminderHour.toString().padLeft(2, '0')}:00';
 
-  /// Returns a copy with the given fields replaced.
   NotificationSettingsState copyWith({
-    bool? isPushEnabled,
-    bool? expiryAlert1Day,
-    bool? expiryAlert3Days,
-    bool? expiryAlert7Days,
-    int? reminderHour,
-    int? reminderMinute,
+    NotificationSettings? settings,
     bool? soundEnabled,
+    String? errorMessage,
+    bool clearError = false,
   }) {
     return NotificationSettingsState(
-      isPushEnabled: isPushEnabled ?? this.isPushEnabled,
-      expiryAlert1Day: expiryAlert1Day ?? this.expiryAlert1Day,
-      expiryAlert3Days: expiryAlert3Days ?? this.expiryAlert3Days,
-      expiryAlert7Days: expiryAlert7Days ?? this.expiryAlert7Days,
-      reminderHour: reminderHour ?? this.reminderHour,
-      reminderMinute: reminderMinute ?? this.reminderMinute,
+      settings: settings ?? this.settings,
       soundEnabled: soundEnabled ?? this.soundEnabled,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }
 
-/// Loads and persists notification preferences locally with [SharedPreferences].
+/// Applies changes immediately, saves them to Firestore after a 500 ms pause
+/// and rolls the UI back to the last synced value when the save fails.
 class NotificationSettingsNotifier
     extends StateNotifier<NotificationSettingsState> {
-  final SharedPreferences _prefs;
+  final String? _userId;
+  final NotificationSettingsRepository _repository;
+  final SaveNotificationSettingsUseCase _saveUseCase;
+  final Debouncer _debouncer;
+  StreamSubscription<NotificationSettings?>? _subscription;
 
-  static const String _keyPush = 'pref_notif_push';
-  static const String _key1Day = 'pref_notif_1day';
-  static const String _key3Days = 'pref_notif_3days';
-  static const String _key7Days = 'pref_notif_7days';
-  static const String _keyHour = 'pref_notif_hour';
-  static const String _keyMinute = 'pref_notif_minute';
-  static const String _keySound = 'pref_notif_sound';
+  NotificationSettings _lastSynced;
+  bool _hasPendingEdit = false;
 
-  NotificationSettingsNotifier(this._prefs)
-    : super(
-        NotificationSettingsState(
-          isPushEnabled: _prefs.getBool(_keyPush) ?? true,
-          expiryAlert1Day: _prefs.getBool(_key1Day) ?? true,
-          expiryAlert3Days: _prefs.getBool(_key3Days) ?? true,
-          expiryAlert7Days: _prefs.getBool(_key7Days) ?? false,
-          reminderHour: _prefs.getInt(_keyHour) ?? 8,
-          reminderMinute: _prefs.getInt(_keyMinute) ?? 0,
-          soundEnabled: _prefs.getBool(_keySound) ?? true,
-        ),
-      );
-
-  /// Enables / disables push notifications.
-  Future<void> togglePush(bool value) async {
-    state = state.copyWith(isPushEnabled: value);
-    await _prefs.setBool(_keyPush, value);
+  NotificationSettingsNotifier({
+    required String? userId,
+    required NotificationSettingsRepository repository,
+    required WatchNotificationSettingsUseCase watch,
+    required SaveNotificationSettingsUseCase save,
+    Duration saveDelay = const Duration(milliseconds: 500),
+  }) : _userId = userId,
+       _repository = repository,
+       _saveUseCase = save,
+       _debouncer = Debouncer(delay: saveDelay),
+       _lastSynced =
+           (userId == null ? null : repository.cached(userId)) ??
+           repository.legacyLocalSettings(),
+       super(const NotificationSettingsState()) {
+    state = NotificationSettingsState(
+      settings: _lastSynced,
+      soundEnabled: repository.soundEnabled,
+    );
+    if (userId != null) {
+      _subscription = watch(userId).listen((remote) {
+        if (remote == null) return;
+        _lastSynced = remote;
+        if (!_hasPendingEdit) {
+          state = state.copyWith(settings: remote);
+        }
+      }, onError: (_) {});
+    }
   }
 
-  /// Toggles the "1 day before expiry" alert.
-  Future<void> toggleExpiry1Day(bool value) async {
-    state = state.copyWith(expiryAlert1Day: value);
-    await _prefs.setBool(_key1Day, value);
-  }
+  void togglePush(bool value) =>
+      _update(state.settings.copyWith(pushEnabled: value));
 
-  /// Toggles the "3 days before expiry" alert.
-  Future<void> toggleExpiry3Days(bool value) async {
-    state = state.copyWith(expiryAlert3Days: value);
-    await _prefs.setBool(_key3Days, value);
-  }
+  void toggleExpiryAlert(int days, bool enabled) =>
+      _update(state.settings.withExpiryAlert(days, enabled));
 
-  /// Toggles the "7 days before expiry" alert.
-  Future<void> toggleExpiry7Days(bool value) async {
-    state = state.copyWith(expiryAlert7Days: value);
-    await _prefs.setBool(_key7Days, value);
-  }
+  void setReminderHour(int hour) =>
+      _update(state.settings.copyWith(reminderHour: hour));
 
-  /// Sets the daily reminder time.
-  Future<void> setReminderTime(int hour, int minute) async {
-    state = state.copyWith(reminderHour: hour, reminderMinute: minute);
-    await _prefs.setInt(_keyHour, hour);
-    await _prefs.setInt(_keyMinute, minute);
-  }
+  void toggleShoppingReminder(bool value) =>
+      _update(state.settings.copyWith(shoppingReminderEnabled: value));
 
-  /// Toggles notification sound.
+  void setShoppingWeekday(int isoWeekday) =>
+      _update(state.settings.copyWith(shoppingReminderWeekday: isoWeekday));
+
   Future<void> toggleSound(bool value) async {
     state = state.copyWith(soundEnabled: value);
-    await _prefs.setBool(_keySound, value);
+    await _repository.setSoundEnabled(value);
+  }
+
+  void clearError() => state = state.copyWith(clearError: true);
+
+  void _update(NotificationSettings next) {
+    final userId = _userId;
+    if (userId == null) return;
+    state = state.copyWith(settings: next, clearError: true);
+    _hasPendingEdit = true;
+    _debouncer.run(() => _persist(userId, state.settings));
+  }
+
+  Future<void> _persist(String userId, NotificationSettings toSave) async {
+    try {
+      await _saveUseCase(userId, toSave);
+      _lastSynced = toSave;
+    } catch (e) {
+      if (!mounted) return;
+      state = state.copyWith(
+        settings: _lastSynced,
+        errorMessage: 'Không lưu được cài đặt thông báo: $e',
+      );
+    } finally {
+      _hasPendingEdit = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _debouncer.dispose();
+    _subscription?.cancel();
+    // Leaving the page must not drop a change still waiting for the debounce.
+    final userId = _userId;
+    if (_hasPendingEdit && userId != null) {
+      unawaited(_saveUseCase(userId, state.settings).catchError((_) {}));
+    }
+    super.dispose();
   }
 }
 
 final notificationSettingsProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       NotificationSettingsNotifier,
       NotificationSettingsState
     >((ref) {
-      final prefs = ref.watch(sharedPreferencesProvider);
-      return NotificationSettingsNotifier(prefs);
+      final userId = ref.watch(currentNotificationUserIdProvider).valueOrNull;
+      return NotificationSettingsNotifier(
+        userId: userId,
+        repository: ref.watch(notificationSettingsRepositoryProvider),
+        watch: ref.watch(watchNotificationSettingsUseCaseProvider),
+        save: ref.watch(saveNotificationSettingsUseCaseProvider),
+      );
     });
