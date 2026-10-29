@@ -71,6 +71,15 @@
         {"fieldPath": "status", "order": "ASCENDING"},
         {"fieldPath": "statusChangedAt", "order": "DESCENDING"}
       ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "notificationSettings.shoppingReminderEnabled", "order": "ASCENDING"},
+        {"fieldPath": "notificationSettings.shoppingReminderWeekday", "order": "ASCENDING"},
+        {"fieldPath": "notificationSettings.reminderHour", "order": "ASCENDING"}
+      ]
     }
   ],
   "fieldOverrides": []

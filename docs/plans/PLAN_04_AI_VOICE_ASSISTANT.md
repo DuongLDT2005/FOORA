@@ -6,7 +6,8 @@
 
 - Đã triển khai structured JSON cho reply/recipe/action, lọc context và lịch sử theo household, recipe card, action review sheet, callable `applyAiActions`, kiểm tra snapshot/FEFO/foodLimit và `initialQuantity` trên các đường tạo/sửa item. Client chỉ ghi kho sau khi người dùng xác nhận action.
 - Đã thêm `firestore.indexes.json`, Rules, tài liệu dữ liệu, script backfill chạy trên Emulator và cấu hình `firebase.ai-test.json`. Kiểm tra: Functions 23 unit test, Flutter 112 test, Firestore Emulator cho apply đồng thời, retry, conflict, nhiều batch, giới hạn gói và migration mẫu.
-- Còn phải thử mic tiếng Việt và xử lý từ chối quyền trên thiết bị thật; gọi model OpenRouter với secret thật để đo timeout/chi phí và xác nhận model; kiểm tra App Check trên các nền tảng trước khi bật enforcement; chạy backfill trên dữ liệu thật theo quy trình triển khai. Chưa deploy production hoặc tạo APK thử nghiệm trong đợt này. Shopping list tiếp tục phụ thuộc PLAN 01.
+- Còn phải thử mic tiếng Việt và xử lý từ chối quyền trên thiết bị thật; gọi model OpenRouter với secret thật để đo timeout/chi phí và xác nhận model; kiểm tra App Check trên các nền tảng trước khi bật enforcement; chạy backfill trên dữ liệu thật theo quy trình triển khai. Chưa deploy production hoặc tạo APK thử nghiệm trong đợt này.
+- **29/10/2026 – Phase 5 xong:** recipe card có nút “Thêm vào danh sách mua” (chỉ khi có nguyên liệu cần mua và household đang hoạt động). Sheet `AddRecipeToShoppingSheet` cho chọn danh sách hoặc tạo danh sách mới “Nấu {món}”, bỏ tick và sửa số lượng/đơn vị; `BuildRecipeShoppingDraftsUseCase` điền lượng 1 / đơn vị `phần` khi thiếu, gộp nguyên liệu trùng và gắn `source: ai_recipe`; `ShoppingController.addItems` dùng lại cơ chế cộng dồn của PLAN 01, món lỗi không chặn món khác. Chỉ client, không callable/Rules mới, không trừ quota AI.
 
 ## 1. Hiện trạng trước đợt triển khai và phạm vi
 
@@ -15,7 +16,7 @@
 - Query lịch sử hiện giới hạn trước rồi mới lọc household; query inventory 150 item active theo hạn dùng có thể bị item quá hạn chiếm hết context. Sửa cả hai trước khi nghiệm thu Phase 1/2.
 - Inventory, household mặc định, membership, receipt scan và payment đã có luồng riêng; AI phải dùng lại repository, constants và quy tắc hiện có.
 - `speech_to_text` đã có trong `pubspec.yaml`; cần kiểm tra quyền và khả năng nhận tiếng Việt trên thiết bị thật.
-- Shopping list thuộc PLAN 01 và chưa hiện diện trong code đang chạy. Chat, recipe và cập nhật inventory **không phụ thuộc** PLAN 01. Chỉ nút “thêm nguyên liệu thiếu vào danh sách mua” triển khai sau khi API shopping list hoàn thành.
+- Shopping list thuộc PLAN 01. Chat, recipe và cập nhật inventory **không phụ thuộc** PLAN 01; chỉ nút “thêm nguyên liệu thiếu vào danh sách mua” (Phase 5) dùng API của nó.
 
 ### Phạm vi bản đầu
 
@@ -155,7 +156,7 @@ Document chat assistant lưu `requestId`, `householdId`, `actions`, `recipes`, `
 - Chat stream hiển thị 50 tin; send controller giữ cùng `requestId` khi retry. Disable nút gửi khi request đang xử lý, nhưng backend vẫn là nơi chống xử lý lặp.
 - Voice service giữ một instance `SpeechToText`, xin quyền cần thiết, ưu tiên locale tiếng Việt nếu khả dụng; cho sửa transcript trước khi gửi. `inputMode` chỉ ghi cách nhập; sau khi bấm Gửi, text và speech chạy cùng provider, callable, quota, lịch sử và màn kết quả. Nếu mic/locale không khả dụng, ô text vẫn dùng được. Thêm quyền Android/iOS theo yêu cầu plugin và test máy thật.
 - Action card hiển thị batch, HSD, lượng trước/sau và ô sửa cho `needsReview`. Không chọn sẵn action cần review. Sau conflict, làm mới tồn kho và yêu cầu user xác nhận lại.
-- Recipe card hiển thị nguyên liệu dùng, nguyên liệu thiếu và bước nấu; chưa có nút ghi shopping list trong bản đầu.
+- Recipe card hiển thị nguyên liệu dùng, nguyên liệu thiếu và bước nấu. Từ Phase 5, nút “Thêm vào danh sách mua” mở sheet để người dùng chọn danh sách và món rồi mới ghi; AI không tự ghi shopping list.
 - Hiển thị loading, lỗi, retry, quota và kết quả **từng action** (`pending/applied/dismissed/expired`); không hiển thị thành công cho action bị từ chối. Retry xác nhận giữ nguyên decisions để nhận lại đúng kết quả.
 
 ## 6. Thứ tự thực hiện
@@ -166,7 +167,7 @@ Document chat assistant lưu `requestId`, `householdId`, `actions`, `recipes`, `
 | 2. Recipe | Hỏi bằng gõ hoặc nói đều trả tối đa ba recipe có refs và nguyên liệu thiếu | Item còn dùng được được ưu tiên trong 150 context; test kho >150 item, item quá hạn, ref lạ, thiếu context |
 | 3. Chuẩn hóa dữ liệu | `quantity/initialQuantity/remainingPercentage` và migration thống nhất | Dry-run/backfill và test thêm/sửa/dùng hết item cũ/mới; rules, tài liệu cập nhật |
 | 4. Cập nhật kho | Tin nhắn gõ hoặc nói đều tạo action card, xác nhận bằng transaction và xử lý conflict | Chốt batch selection và kết quả từng action; test FEFO nhiều batch, unit, thay đổi đồng thời, retry cùng/khác decisions, bấm đôi |
-| 5. Tích hợp sau MVP | Thêm nguyên liệu thiếu vào shopping list | Chỉ bắt đầu khi PLAN 01 có repository/callable ổn định |
+| 5. Tích hợp sau MVP | Thêm nguyên liệu thiếu vào shopping list | Đã xong (29/10/2026): unit test build drafts/`addItems`, widget test nút trên recipe card và sheet |
 
 Không deploy production trong bước viết feature; quy trình deploy theo `docs/DEVELOPMENT_WORKFLOW.md`.
 
@@ -178,7 +179,7 @@ Các PR dưới đây theo thứ tự phụ thuộc. Mỗi PR cập nhật `docs
 2. **PR B — Phase 2 recipe.** Đổi cách chọn context để item chưa quá hạn được ưu tiên trong 150 chỗ; tách item quá hạn thành cảnh báo. Bật schema `recipes`, validate giới hạn, `usesRefs`, tên nguyên liệu thiếu và độ dài; map vào Firestore/Flutter và tạo recipe card. Test kho >150 item (kể cả nhiều item quá hạn), refs lạ, món thiếu nguyên liệu, dữ liệu không đầy đủ. Xong khi gõ/mic “Hôm nay nấu gì?” trả tối đa ba món có nguyên liệu dùng/thiếu và bước nấu, không tự trừ kho.
 3. **PR C — Phase 3 số lượng.** Thêm `initialQuantity` ở đường thêm thủ công, receipt batch, model, form sửa, rules và tài liệu. Viết backfill có dry-run báo số item suy ra được, phải reset mốc, item số lượng 0/bất thường; kiểm thử trên dữ liệu Emulator trước khi chạy dữ liệu thật. Test invariant `quantity`, `initialQuantity`, `remainingPercentage` và status ở đường thêm/sửa/dùng hết. Xong khi mọi item active dùng cho action có `initialQuantity > 0` và phần trăm nhất quán; chạy production migration theo quy trình duyệt riêng.
 4. **PR D — Phase 4 action.** Chốt `ValidatedAction` với batch ứng viên/snapshot, `reviewState`/`resolution`, hợp đồng quyết định ở mục 3.3 rồi mới mở `actions` từ model. Thêm `applyAiActions`, helper transaction dùng chung với inventory, FEFO, kiểm tra quyền/foodLimit, conflict và `decisionsHash`; Flutter có action card chọn/sửa/xác nhận và trạng thái từng action. Test 2 action nhận/bỏ lẫn nhau, nhiều batch/đơn vị, batch ngoài ứng viên, đồng thời hai lần apply, retry cùng/khác decisions, counter và receipt regression. Xong khi kho chỉ thay đổi sau xác nhận hợp lệ và mỗi action được áp dụng tối đa một lần.
-5. **PR E — tích hợp và bàn giao.** Chạy toàn bộ unit/emulator/regression, kiểm tra mic trên thiết bị thật và chi phí/timeout model. Tích hợp App Check ở client, test trên mọi nền tảng được hỗ trợ rồi mới bật enforcement cho callable; kiểm tra lại Rules/index, hướng dẫn setup/demo và APK thử nghiệm. Shopping-list button chỉ mở sau khi PLAN 01 có API ổn định.
+5. **PR E — tích hợp và bàn giao.** Chạy toàn bộ unit/emulator/regression, kiểm tra mic trên thiết bị thật và chi phí/timeout model. Tích hợp App Check ở client, test trên mọi nền tảng được hỗ trợ rồi mới bật enforcement cho callable; kiểm tra lại Rules/index, hướng dẫn setup/demo và APK thử nghiệm. Shopping-list button đã làm sau khi PLAN 01 merge (Phase 5).
 
 ## 7. Kiểm thử và Definition of Done
 

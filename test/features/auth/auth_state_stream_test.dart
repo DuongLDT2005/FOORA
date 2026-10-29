@@ -44,42 +44,39 @@ class _FakeAuth implements fb.FirebaseAuth {
 }
 
 void main() {
-  test(
-    'switching accounts emits the new user even though the previous '
-    'profile listener never completes',
-    () async {
-      final firestore = FakeFirebaseFirestore();
-      for (final uid in ['user-a', 'user-b']) {
-        await firestore.collection('users').doc(uid).set({
-          'fullName': uid,
-          'email': '$uid@foora.test',
-          'activeHouseholdId': 'home-$uid',
-        });
-      }
-      final auth = _FakeAuth();
-      final dataSource = AuthRemoteDataSourceImpl(
-        firebaseAuth: auth,
-        firestore: firestore,
-      );
+  test('switching accounts emits the new user even though the previous '
+      'profile listener never completes', () async {
+    final firestore = FakeFirebaseFirestore();
+    for (final uid in ['user-a', 'user-b']) {
+      await firestore.collection('users').doc(uid).set({
+        'fullName': uid,
+        'email': '$uid@foora.test',
+        'activeHouseholdId': 'home-$uid',
+      });
+    }
+    final auth = _FakeAuth();
+    final dataSource = AuthRemoteDataSourceImpl(
+      firebaseAuth: auth,
+      firestore: firestore,
+    );
 
-      final events = <UserModel?>[];
-      final sub = dataSource.authStateChanges.listen(events.add);
-      Future<void> settle() => Future<void>.delayed(Duration.zero);
+    final events = <UserModel?>[];
+    final sub = dataSource.authStateChanges.listen(events.add);
+    Future<void> settle() => Future<void>.delayed(Duration.zero);
 
-      auth.emit(_FakeUser('user-a'));
-      await pumpEventQueue();
-      expect(events.last?.activeHouseholdId, 'home-user-a');
+    auth.emit(_FakeUser('user-a'));
+    await pumpEventQueue();
+    expect(events.last?.activeHouseholdId, 'home-user-a');
 
-      auth.emit(null);
-      await settle();
-      expect(events.last, isNull);
+    auth.emit(null);
+    await settle();
+    expect(events.last, isNull);
 
-      auth.emit(_FakeUser('user-b'));
-      await pumpEventQueue();
-      expect(events.last?.id, 'user-b');
-      expect(events.last?.activeHouseholdId, 'home-user-b');
+    auth.emit(_FakeUser('user-b'));
+    await pumpEventQueue();
+    expect(events.last?.id, 'user-b');
+    expect(events.last?.activeHouseholdId, 'home-user-b');
 
-      await sub.cancel();
-    },
-  );
+    await sub.cancel();
+  });
 }

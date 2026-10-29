@@ -143,6 +143,7 @@ export class InventoryService {
     // 1. Resolve membership food limit (null = unlimited)
     const {foodLimit} = await MembershipService.getLimits(membershipId);
 
+
     // 2. Parse purchase and expiration dates
     const purchaseDate = input.purchaseDate ?
       new Date(input.purchaseDate) :
@@ -259,8 +260,6 @@ export class InventoryService {
       .collection(Collections.HOUSEHOLDS)
       .doc(householdId);
 
-    // 1. Resolve membership food limit (null = unlimited)
-    const {foodLimit} = await MembershipService.getLimits(membershipId);
 
     // 2. Pre-calculate expiration dates for all items
     const preparedItems = await Promise.all(
@@ -303,8 +302,7 @@ export class InventoryService {
       })
     );
 
-    const serverTimestamp = FieldValue.serverTimestamp();
-    const createdItemIds: string[] = [];
+    let createdItemIds: string[] = [];
 
     await db.runTransaction(async (transaction) => {
       const householdDoc = await transaction.get(householdRef);
@@ -319,57 +317,105 @@ export class InventoryService {
         throwPermissionDenied("Bạn không có quyền thêm món vào gia đình này.");
       }
 
-      const currentActiveCount = foodLimit === null ?
-        ((householdData.activeItemCount as number) || 0) :
-        (await transaction.get(
-          householdRef.collection(Collections.INVENTORY_ITEMS)
-            .where("status", "==", "active")
-            .limit(foodLimit + 1)
-        )).size;
-      const newTotal = currentActiveCount + items.length;
-
-      // Check foodLimit restriction for Free accounts
-      if (foodLimit !== null && newTotal > foodLimit) {
-        throwResourceExhausted(
-          `Tủ lạnh sẽ vượt quá giới hạn của gói chủ gia đình (${foodLimit} món). ` +
-          `Hiện tại: ${currentActiveCount}, chuẩn bị thêm: ${items.length}. ` +
-          "Vui lòng nâng cấp lên gói Premium để không giới hạn kho lưu trữ!"
-        );
-      }
-
-      // Add each item
-      for (const prep of preparedItems) {
-        const itemRef = householdRef.collection(Collections.INVENTORY_ITEMS).doc();
-        createdItemIds.push(itemRef.id);
-
-        transaction.set(itemRef, {
-          foodId: prep.input.foodId || null,
-          name: prep.input.name.trim(),
+      createdItemIds = await this.executeBatchAddInTransaction(
+        transaction,
+        householdRef,
+        householdData,
+        membershipId,
+        preparedItems.map((prep) => ({
+          input: {
+            ...prep.input,
+            source: prep.input.source || "receipt_scan",
+          },
           normalizedName: prep.normalizedName,
-          categoryId: prep.input.categoryId,
-          quantity: prep.input.quantity,
-          initialQuantity: prep.input.quantity,
-          unit: prep.input.unit.trim(),
-          remainingPercentage: 100,
-          storageLocationId: prep.input.storageLocationId,
-          purchaseDate: Timestamp.fromDate(prep.purchaseDate),
-          expirationDate: Timestamp.fromDate(prep.finalExpirationDate),
-          source: prep.input.source || "receipt_scan",
-          status: "active",
-          photoUrl: prep.photoUrl || null,
-          statusChangedAt: serverTimestamp,
-          createdAt: serverTimestamp,
-          updatedAt: serverTimestamp,
-        });
-      }
-
-      // Repair a stale counter while adding the batch atomically.
-      transaction.update(householdRef, {
-        activeItemCount: currentActiveCount + items.length,
-        updatedAt: serverTimestamp,
-      });
+          actualQuantity: prep.input.quantity,
+          purchaseDate: prep.purchaseDate,
+          finalExpirationDate: prep.finalExpirationDate,
+          photoUrl: prep.photoUrl,
+        }))
+      );
     });
 
     return {itemIds: createdItemIds};
+  }
+
+  /**
+   * Reusable helper to write multiple inventory items inside an existing transaction,
+   * enforcing the household's foodLimit and updating activeItemCount.
+   */
+  static async executeBatchAddInTransaction(
+    transaction: FirebaseFirestore.Transaction,
+    householdRef: FirebaseFirestore.DocumentReference,
+    householdData: FirebaseFirestore.DocumentData,
+    membershipId: string,
+    preparedItems: Array<{
+      input: {
+        foodId?: string | null;
+        categoryId: string;
+        storageLocationId: string;
+        unit: string;
+        name: string;
+        source?: string;
+      };
+      normalizedName: string;
+      actualQuantity: number;
+      purchaseDate: Date;
+      finalExpirationDate: Date;
+      photoUrl?: string | null;
+    }>
+  ): Promise<string[]> {
+    const {foodLimit} = await MembershipService.getLimits(membershipId);
+
+    const currentActiveCount = foodLimit === null ?
+      ((householdData.activeItemCount as number) || 0) :
+      (await transaction.get(
+        householdRef.collection(Collections.INVENTORY_ITEMS)
+          .where("status", "==", "active")
+          .limit(foodLimit + 1)
+      )).size;
+
+    const newTotal = currentActiveCount + preparedItems.length;
+    if (foodLimit !== null && newTotal > foodLimit) {
+      throwResourceExhausted(
+        `Tủ lạnh sẽ vượt quá giới hạn của gói chủ gia đình (${foodLimit} món). ` +
+        `Hiện tại: ${currentActiveCount}, chuẩn bị thêm: ${preparedItems.length}. ` +
+        "Vui lòng nâng cấp lên gói Premium để không giới hạn kho lưu trữ!"
+      );
+    }
+
+    const createdIds: string[] = [];
+    const serverTimestamp = FieldValue.serverTimestamp();
+
+    for (const prep of preparedItems) {
+      const itemRef = householdRef.collection(Collections.INVENTORY_ITEMS).doc();
+      createdIds.push(itemRef.id);
+
+      transaction.set(itemRef, {
+        foodId: prep.input.foodId || null,
+        name: prep.input.name.trim(),
+        normalizedName: prep.normalizedName,
+        categoryId: prep.input.categoryId,
+        quantity: prep.actualQuantity,
+        initialQuantity: prep.actualQuantity,
+        unit: prep.input.unit.trim(),
+        remainingPercentage: 100,
+        storageLocationId: prep.input.storageLocationId,
+        purchaseDate: Timestamp.fromDate(prep.purchaseDate),
+        expirationDate: Timestamp.fromDate(prep.finalExpirationDate),
+        source: prep.input.source || "manual",
+        status: "active",
+        photoUrl: prep.photoUrl || null,
+        statusChangedAt: serverTimestamp,
+        createdAt: serverTimestamp,
+        updatedAt: serverTimestamp,
+      });
+    }
+
+    transaction.update(householdRef, {
+      activeItemCount: currentActiveCount + preparedItems.length,
+      updatedAt: serverTimestamp,
+    });
+
+    return createdIds;
   }
 }

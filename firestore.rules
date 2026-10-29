@@ -24,6 +24,25 @@ service cloud.firestore {
         && !(request.auth.uid in household.get('lockedMembers', []));
     }
 
+    function validNotificationSettings(s) {
+      return s is map
+        && s.keys().hasOnly(['pushEnabled', 'expiryAlertDays', 'reminderHour',
+             'shoppingReminderEnabled', 'shoppingReminderWeekday', 'updatedAt'])
+        && s.pushEnabled is bool
+        && s.expiryAlertDays is list && s.expiryAlertDays.size() <= 3
+        && s.expiryAlertDays.toSet().difference([1, 3, 7].toSet()).size() == 0
+        && s.reminderHour is int && s.reminderHour >= 0 && s.reminderHour <= 23
+        && s.shoppingReminderEnabled is bool
+        && s.shoppingReminderWeekday is int
+        && s.shoppingReminderWeekday >= 1 && s.shoppingReminderWeekday <= 7
+        && s.updatedAt == request.time;
+    }
+
+    function optionalString(data, key, maxSize) {
+      return !(key in data) || data[key] == null
+        || (data[key] is string && data[key].size() <= maxSize);
+    }
+
     // Users collection & Subcollections
     match /users/{userId} {
       allow read: if isOwner(userId);
@@ -34,10 +53,13 @@ service cloud.firestore {
       // Owner may update profile fields only. `email` may be synced solely to
       // the verified address carried by the Firebase Auth token.
       allow update: if isOwner(userId)
-        && changedKeys().hasOnly(['fullName', 'avatarUrl', 'email', 'updatedAt'])
+        && changedKeys().hasOnly(['fullName', 'avatarUrl', 'email', 'updatedAt',
+             'notificationSettings'])
         && (!changedKeys().hasAny(['email'])
           || (request.auth.token.email_verified == true
-            && request.resource.data.email == request.auth.token.email));
+            && request.resource.data.email == request.auth.token.email))
+        && (!changedKeys().hasAny(['notificationSettings'])
+          || validNotificationSettings(request.resource.data.notificationSettings));
       allow delete: if false; // Users can only be deleted via Firebase Auth account deletion trigger
 
       // Devices Subcollection: only device owner can register/update/delete their device
@@ -158,6 +180,77 @@ service cloud.firestore {
           // Changing status to consumed/discarded requires statusChangedAt to be set.
           && (resource.data.status == request.resource.data.status
               || request.resource.data.statusChangedAt == request.time);
+      }
+
+      // Shopping lists are shared by all household members. Lists are deleted
+      // through the deleteShoppingList callable (recursive delete).
+      match /shopping_lists/{listId} {
+        function validListFields(data) {
+          return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+            && optionalString(data, 'note', 200);
+        }
+
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdMember(householdId)
+          && request.resource.data.keys().hasOnly(['name', 'note', 'createdBy', 'createdAt', 'updatedAt'])
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time
+          && validListFields(request.resource.data);
+        allow update: if isHouseholdMember(householdId)
+          && changedKeys().hasOnly(['name', 'note', 'updatedAt'])
+          && request.resource.data.updatedAt == request.time
+          && validListFields(request.resource.data);
+        allow delete: if false;
+
+        // Items: clients add, edit, tick and delete. Only the
+        // importShoppingItemsToInventory callable may set the inventory fields.
+        match /items/{itemId} {
+          function validItemFields(data) {
+            return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+              && data.normalizedName is string && data.normalizedName.size() <= 100
+              && data.quantity is number && data.quantity > 0 && data.quantity <= 10000
+              && data.unit is string && data.unit.size() > 0 && data.unit.size() <= 20
+              && data.source in ['manual', 'voice', 'suggestion', 'ai_recipe']
+              && optionalString(data, 'note', 200)
+              && optionalString(data, 'foodId', 100)
+              && optionalString(data, 'categoryId', 100)
+              && data.isPurchased is bool
+              && (data.isPurchased
+                ? data.purchasedBy is string
+                : (data.purchasedBy == null && data.purchasedAt == null));
+          }
+
+          allow read: if isHouseholdMember(householdId);
+          allow create: if isHouseholdMember(householdId)
+            && exists(/databases/$(database)/documents/households/$(householdId)/shopping_lists/$(listId))
+            && request.resource.data.keys().hasOnly([
+                 'name', 'normalizedName', 'foodId', 'categoryId', 'quantity', 'unit',
+                 'note', 'source', 'isPurchased', 'purchasedBy', 'purchasedAt',
+                 'isAddedToInventory', 'inventoryItemId', 'addedToInventoryAt',
+                 'addedBy', 'createdAt', 'updatedAt'])
+            && request.resource.data.addedBy == request.auth.uid
+            && request.resource.data.isPurchased == false
+            && request.resource.data.isAddedToInventory == false
+            && request.resource.data.inventoryItemId == null
+            && request.resource.data.addedToInventoryAt == null
+            && request.resource.data.createdAt == request.time
+            && request.resource.data.updatedAt == request.time
+            && validItemFields(request.resource.data);
+          allow update: if isHouseholdMember(householdId)
+            && resource.data.isAddedToInventory == false
+            && changedKeys().hasOnly([
+                 'name', 'normalizedName', 'foodId', 'categoryId', 'quantity', 'unit',
+                 'note', 'isPurchased', 'purchasedBy', 'purchasedAt', 'updatedAt'])
+            && request.resource.data.updatedAt == request.time
+            && (!changedKeys().hasAny(['isPurchased'])
+              || (request.resource.data.isPurchased
+                ? (request.resource.data.purchasedBy == request.auth.uid
+                  && request.resource.data.purchasedAt == request.time)
+                : true))
+            && validItemFields(request.resource.data);
+          allow delete: if isHouseholdMember(householdId);
+        }
       }
     }
 

@@ -27,6 +27,8 @@ class FirestoreConstants {
 
   // Households Subcollections
   static const String inventoryItems = 'inventory_items';
+  static const String shoppingLists = 'shopping_lists';
+  static const String shoppingItems = 'items';
 
   // Fixed Document IDs
   static const String aiUsageCurrentDoc = 'current';

@@ -93,6 +93,14 @@ class ProfilePage extends ConsumerWidget {
                       onTap: () => context.push(AppRouteNames.household),
                     ),
                     ProfileMenuTile(
+                      icon: Icons.shopping_cart_outlined,
+                      iconColor: AppColors.emerald600,
+                      iconBgColor: AppColors.emerald50,
+                      title: 'Danh sách mua sắm',
+                      showDivider: true,
+                      onTap: () => context.push(AppRouteNames.shoppingLists),
+                    ),
+                    ProfileMenuTile(
                       icon: Icons.bar_chart_rounded,
                       iconColor: AppColors.emerald600,
                       iconBgColor: AppColors.emerald50,

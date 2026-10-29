@@ -1,8 +1,10 @@
 import {FieldValue, Firestore, Timestamp} from "firebase-admin/firestore";
 import {Collections} from "../../constants/collections";
+import {parseSettings} from "../../notification/services/notification_settings";
 import {
   ExpiryHousehold,
   ExpiryInventoryItem,
+  ExpiryRecipient,
   planExpiryNotifications,
   PlannedExpiryNotification,
   selectNotificationsToCreate,
@@ -18,16 +20,52 @@ export interface ExpiryRunResult {
 export class ExpiryService {
   constructor(private readonly firestore: Firestore) {}
 
-  async run(now: Date = new Date()): Promise<ExpiryRunResult> {
-    const households = await this.loadHouseholds();
+  /**
+   * Plans expiry notifications for users whose `reminderHour` equals [hour]
+   * (Vietnam time), honoring each user's `expiryAlertDays` and push switch.
+   */
+  async runForHour(now: Date, hour: number): Promise<ExpiryRunResult> {
+    const recipients = await this.loadRecipients(hour);
+    if (recipients.size === 0) {
+      return {created: 0, skipped: 0};
+    }
+    const households = await this.loadHouseholds([...recipients.keys()]);
     const items = await this.loadActiveItems(households);
-    const planned = planExpiryNotifications({now, households, items});
+    const planned = planExpiryNotifications({now, households, items, recipients});
     return this.persist(planned);
   }
 
-  private async loadHouseholds(): Promise<ExpiryHousehold[]> {
-    const snapshot = await this.firestore.collection(Collections.HOUSEHOLDS).get();
-    return snapshot.docs.map((doc) => {
+  private async loadRecipients(hour: number): Promise<Map<string, ExpiryRecipient>> {
+    const snapshot = await this.firestore
+      .collection(Collections.USERS)
+      .where("notificationSettings.reminderHour", "==", hour)
+      .get();
+
+    const recipients = new Map<string, ExpiryRecipient>();
+    for (const doc of snapshot.docs) {
+      if (doc.get("isActive") === false) {
+        continue;
+      }
+      const settings = parseSettings(doc.get("notificationSettings"));
+      if (settings.pushEnabled) {
+        recipients.set(doc.id, {expiryAlertDays: settings.expiryAlertDays});
+      }
+    }
+    return recipients;
+  }
+
+  private async loadHouseholds(userIds: string[]): Promise<ExpiryHousehold[]> {
+    const snapshots = await Promise.all(
+      userIds.map((uid) =>
+        this.firestore
+          .collection(Collections.HOUSEHOLDS)
+          .where("members", "array-contains", uid)
+          .get()
+      )
+    );
+
+    const households = new Map<string, ExpiryHousehold>();
+    for (const doc of snapshots.flatMap((s) => s.docs)) {
       const members = doc.get("members");
       const locked = doc.get("lockedMembers");
       const lockedIds = Array.isArray(locked) ? locked : [];
@@ -35,8 +73,9 @@ export class ExpiryService {
         members.filter((member): member is string =>
           typeof member === "string" && !lockedIds.includes(member)) :
         [];
-      return {id: doc.id, memberIds};
-    });
+      households.set(doc.id, {id: doc.id, memberIds});
+    }
+    return [...households.values()];
   }
 
   private async loadActiveItems(

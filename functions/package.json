@@ -17,7 +17,7 @@
     "backfill:initial-quantity": "npm run build && node lib/scripts/backfill_initial_quantity.js",
     "logs": "firebase functions:log",
     "test": "npm run build && node --test test/*.test.js",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-foora-rules \"node --test test/rules/*.test.js\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-foora-rules \"node --test --test-concurrency=1 test/rules/*.test.js\""
   },
   "engines": {
     "node": "22"

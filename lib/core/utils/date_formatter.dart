@@ -71,4 +71,22 @@ class DateFormatter {
     final months = (days / 30).floor();
     return 'Còn $months tháng';
   }
+
+  /// Format DateTime into a relative time-ago string in Vietnamese
+  static String timeAgo(DateTime dateTime, [DateTime? currentDate]) {
+    final now = currentDate ?? DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return 'Vừa xong';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} phút trước';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return formatDate(dateTime);
+    }
+  }
 }

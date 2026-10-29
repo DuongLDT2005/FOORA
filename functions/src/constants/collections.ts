@@ -33,6 +33,8 @@ export const Collections = {
 
   // Households Subcollections (households/{householdId}/...)
   INVENTORY_ITEMS: "inventory_items",
+  SHOPPING_LISTS: "shopping_lists",
+  SHOPPING_ITEMS: "items",
 
   // Fixed Document IDs
   AI_USAGE_CURRENT_DOC: "current",

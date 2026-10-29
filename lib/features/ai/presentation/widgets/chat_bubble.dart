@@ -16,6 +16,7 @@ class ChatBubble extends StatelessWidget {
     required this.message,
     this.onReviewActions,
     this.onCooked,
+    this.onAddToShopping,
   });
 
   final AiChatMessage message;
@@ -23,6 +24,10 @@ class ChatBubble extends StatelessWidget {
 
   /// Starts a "I cooked this" report the user edits before sending.
   final ValueChanged<AiRecipe>? onCooked;
+
+  /// Opens the sheet that adds the recipe's missing ingredients to a
+  /// shopping list; null hides the button (no active household).
+  final ValueChanged<AiRecipe>? onAddToShopping;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +65,9 @@ class ChatBubble extends StatelessWidget {
               (recipe) => _RecipeCard(
                 recipe: recipe,
                 onCooked: onCooked == null ? null : () => onCooked!(recipe),
+                onAddToShopping: onAddToShopping == null
+                    ? null
+                    : () => onAddToShopping!(recipe),
               ),
             ),
             if (message.actions.isNotEmpty &&
@@ -77,10 +85,15 @@ class ChatBubble extends StatelessWidget {
 }
 
 class _RecipeCard extends StatelessWidget {
-  const _RecipeCard({required this.recipe, this.onCooked});
+  const _RecipeCard({
+    required this.recipe,
+    this.onCooked,
+    this.onAddToShopping,
+  });
 
   final AiRecipe recipe;
   final VoidCallback? onCooked;
+  final VoidCallback? onAddToShopping;
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +179,15 @@ class _RecipeCard extends StatelessWidget {
                   ),
                   icon: Icon(Icons.check_circle_outline_rounded, size: 18.r),
                   label: const Text('Tôi đã nấu món này'),
+                ),
+              if (onAddToShopping != null && toBuy.isNotEmpty)
+                TextButton.icon(
+                  onPressed: onAddToShopping,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  ),
+                  icon: Icon(Icons.add_shopping_cart_rounded, size: 18.r),
+                  label: const Text('Thêm vào danh sách mua'),
                 ),
             ],
           ),
