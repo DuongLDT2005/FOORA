@@ -10,6 +10,7 @@ import '../../domain/entities/ai_action.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../providers/ai_provider.dart';
 import 'ai_entry_receipt_card.dart' show aiDisplayDate;
+import '../../../../shared/widgets/app_button.dart';
 
 /// Inline receipt for consume/discard proposals. Confirming sends only the
 /// decision: the server applies the proposed amount and splits it over the
@@ -146,7 +147,7 @@ class _AiConsumeReceiptCardState extends ConsumerState<AiConsumeReceiptCard> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _sending ? null : _confirm,
-                  child: Text(
+                  child: AppButtonLabel(
                     _sending ? 'Đang cập nhật kho…' : 'Xác nhận cập nhật kho',
                   ),
                 ),
@@ -158,11 +159,11 @@ class _AiConsumeReceiptCardState extends ConsumerState<AiConsumeReceiptCard> {
                 child: needsReview
                     ? FilledButton(
                         onPressed: widget.onEdit,
-                        child: const Text('Kiểm tra và chọn lô'),
+                        child: const AppButtonLabel('Kiểm tra và chọn lô'),
                       )
                     : TextButton(
                         onPressed: widget.onEdit,
-                        child: const Text('Sửa lượng hoặc chọn lô'),
+                        child: const AppButtonLabel('Sửa lượng hoặc chọn lô'),
                       ),
               ),
             ],

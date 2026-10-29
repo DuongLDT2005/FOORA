@@ -88,7 +88,7 @@ class _PrivacySettingsPageState extends ConsumerState<PrivacySettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Hủy'),
+            child: const AppButtonLabel('Hủy'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(

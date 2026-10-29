@@ -10,6 +10,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../household/presentation/providers/household_provider.dart';
 import '../providers/profile_provider.dart';
@@ -192,7 +193,7 @@ class ProfilePage extends ConsumerWidget {
                   child: OutlinedButton.icon(
                     onPressed: () => _handleLogout(context, ref),
                     icon: const Icon(LucideIcons.logOut, size: 18),
-                    label: const Text('Đăng xuất'),
+                    label: const AppButtonLabel('Đăng xuất'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.red600,
                       backgroundColor: AppColors.red50,
@@ -309,7 +310,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: AppColors.onBackground,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 2.h),
@@ -319,7 +320,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                     color: AppColors.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 12.h),

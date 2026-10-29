@@ -85,9 +85,8 @@ functions/src/
 │   ├── callables/
 │   │   └── ai_assistant.ts         # Callable chat AI chỉ đọc kho, text hoặc voice transcript
 │   ├── services/
-│   │   └── ai_assistant_service.ts # Context kho, model AI (Gemini), quota ngày và idempotency
-│   ├── schedulers/
-│   │   └── cleanup_ai_requests.ts  # Hoàn quota request treo hết lease
+│   │   ├── ai_assistant_service.ts # Context kho, model AI (Gemini), quota ngày và idempotency
+│   │   └── ai_request_cleanup.ts   # Hoàn quota request treo hết lease (maintenanceSweepCron gọi)
 │   └── index.ts
 │
 ├── notification/                   # 5. NOTIFICATION MODULE
@@ -118,9 +117,8 @@ functions/src/
 │   │   └── cancel_cas_payment_order.ts
 │   ├── webhooks/
 │   │   └── cas_transactions_webhook.ts
-│   ├── schedules/
-│   │   └── expire_pending_payments.ts
 │   ├── services/
+│   │   ├── payment_expiry.ts       # Hết hạn đơn chờ & subscription (maintenanceSweepCron gọi)
 │   │   ├── payos_client.ts
 │   │   ├── payos_webhook.ts
 │   │   └── payment_service.ts
@@ -174,9 +172,9 @@ functions/src/
 | **`receipt`** | `parseReceiptAi` | Callable | `onCall` | `{ ocrText: string; householdId: string }` | Trích xuất JSON danh sách thực phẩm (`name`, `quantity`, `unit`, `storageLocationId`). |
 | **`ai`** | `aiAssistant` | Callable | `onCall` | `{ requestId, sessionId, householdId, message, inputMode }` | `sessionId` là UUID v4 do client tạo cho mỗi cuộc trò chuyện; lịch sử gửi model chỉ lấy trong session đó. Trả JSON gồm `reply`, recipe đã validate và action **đề xuất** (`add_inventory` được khớp với `foods` như quét hóa đơn; `consume`/`discard` giữ nguyên đơn vị người dùng nói, áp dụng FEFO khi xác nhận); xác thực household, quota AI theo ngày Việt Nam và request idempotency; không ghi kho. |
 | | `applyAiActions` | Callable | `onCall` | `{ messageId, decisions[] }` | Duyệt/loại toàn bộ action của một message, kiểm tra lại batch và quyền trong transaction, FEFO, foodLimit, lưu kết quả từng action; retry cùng decisions không ghi lần hai. |
-| | `cleanupExpiredAiRequests` | Scheduled | Mỗi 5 phút | Request AI hết lease | Chuyển pending request treo sang failed và hoàn quota đúng ngày đã giữ. |
 | **`notification`** | `onNotificationCreated` | Firestore | `users/{userId}/notifications/{id}` | Snapshot document thông báo mới | Gửi tin nhắn FCM đến toàn bộ thiết bị đang active trong `users/{userId}/devices`. |
-| | `hourlyReminderCron` | Scheduled | `0 * * * *` (giờ VN) | Không có (Tự động) | Với user có `notificationSettings.reminderHour` = giờ hiện tại: ghi `expiration_alert` (ngày đầu sau hạn) và `upcoming_expiration` (đúng 1/3/7 ngày đã chọn). Với user đúng thứ + giờ nhắc đi chợ: ghi `shopping_reminder` (id `shopping_{YYYY}W{ww}`, `create()` nên chạy lại không gửi trùng; bỏ qua nếu danh sách và gợi ý đều rỗng hoặc `pushEnabled = false`). Thay cho `checkExpiryDailyCron` đã xóa → tổng **2** Scheduler job (`hourlyReminderCron`, `expirePendingPayments`). |
+| | `hourlyReminderCron` | Scheduled | `0 * * * *` (giờ VN) | Không có (Tự động) | Với user có `notificationSettings.reminderHour` = giờ hiện tại: ghi `expiration_alert` (ngày đầu sau hạn) và `upcoming_expiration` (đúng 1/3/7 ngày đã chọn). Với user đúng thứ + giờ nhắc đi chợ: ghi `shopping_reminder` (id `shopping_{YYYY}W{ww}`, `create()` nên chạy lại không gửi trùng; bỏ qua nếu danh sách và gợi ý đều rỗng hoặc `pushEnabled = false`). Mỗi giờ cũng gửi nhắc Premium sắp hết hạn (thay `premiumExpiryReminderCron` đã gộp vào). Ba phần chạy độc lập (`Promise.allSettled`). Thay cho `checkExpiryDailyCron` đã xóa. |
+| **`maintenance`** | `maintenanceSweepCron` | Scheduled | Mỗi 5 phút | Không có (Tự động) | Gộp `cleanupExpiredAiRequests` + `expirePendingPayments` cũ: chuyển request AI treo hết lease sang failed và hoàn quota đúng ngày đã giữ; hết hạn đơn thanh toán chờ quá hạn và subscription Premium đã hết, hạ user về Free, khóa phần vượt gói và báo cho chủ. Hai phần chạy độc lập. |
 | **`shopping`** | `deleteShoppingList` | Callable | `onCall` (Member) | `{ householdId, shoppingListId }` | Xóa danh sách và toàn bộ `items` (client không được xóa list trực tiếp). |
 | | `importShoppingItemsToInventory` | Callable | `onCall` (Member) | `{ householdId, shoppingListId, items: [{ shoppingItemId, storageLocationId, categoryId, actualQuantity, purchaseDate? }] }` (1..50) | Một transaction: đọc lại món (phải đã tick, chưa nhập), tạo batch qua `InventoryService.executeBatchAddInTransaction` (foodLimit, `activeItemCount`, hạn dùng theo shelf-life rule), đánh dấu món đã nhập. Vượt `foodLimit` → `resource-exhausted`; người khác đã nhập → `failed-precondition`; gọi lại sau khi thành công trả id cũ. `categoryId` phải tồn tại và khác `other`. |
 | | `getShoppingSuggestions` | Callable | `onCall` (Member) | `{ householdId }` | Gợi ý "Hay mua" từ lịch sử `inventory_items` 180 ngày (≥ 3 ngày mua, median khoảng cách, đang hết/sắp hết, chưa có trong danh sách), tối đa 10, kèm `reason`. Không ghi dữ liệu, không tốn quota AI. |
@@ -185,7 +183,6 @@ functions/src/
 | **`payment`** | `createCasPaymentOrder` | Callable | `onCall` | `{ membershipId: string }` | Creates or reuses a server-priced payOS QR order. |
 | | `cancelCasPaymentOrder` | Callable | `onCall` | `{ paymentId: string }` | Cancels a pending payment. |
 | | `casTransactionsWebhook` | HTTP | `onRequest` | Signed payOS webhook | Verifies the payOS checksum, reconciles and atomically activates Premium. |
-| | `expirePendingPayments` | Scheduled | Every 5 minutes | None | Expires overdue pending orders. |
 | **`household`** | `generateHouseholdInvitation` | Callable | `onCall` (Owner) | `{ householdId }` | Tạo mã 6 ký tự (hạn cố định 7 ngày), thu hồi mã đang hiệu lực cũ. Trả `{ invitationId, code, householdId, householdName, expiresAt }`. |
 | | `getActiveHouseholdInvitation` | Callable | `onCall` (Owner) | `{ householdId }` | Mã đang hiệu lực hoặc `null` (tự đánh dấu `expired` khi quá hạn). |
 | | `revokeHouseholdInvitation` | Callable | `onCall` (Owner) | `{ householdId, invitationId }` | Thu hồi mã; kiểm tra mã thuộc đúng household. |
@@ -225,7 +222,8 @@ Payment exports:
   payments to `cancelled`.
 - `casTransactionsWebhook`: HTTP endpoint; verifies the payOS signature with
   `PAYOS_CHECKSUM_KEY`, reconciles amount/reference/time, and atomically activates Premium.
-- `expirePendingPayments`: scheduled function that expires overdue pending orders.
+- `expireOverduePayments` (`services/payment_expiry.ts`): expires overdue pending orders and ended
+  subscriptions; run every 5 minutes by `maintenanceSweepCron`.
 
 Required secrets are `PAYOS_CLIENT_ID`, `PAYOS_API_KEY` and `PAYOS_CHECKSUM_KEY`.
 Non-secret parameters are `PAYOS_BASE_URL`, `PAYOS_RETURN_URL`,

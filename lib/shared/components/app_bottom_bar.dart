@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../widgets/app_button.dart';
 
 // --- AppBottomBar (Common Bottom Bar for Mobile Pages) ---
 /// Unified bottom bar matching the design system:
@@ -84,7 +85,7 @@ class AppBottomBar extends StatelessWidget {
                           ),
                         ),
                       )
-                    : Text(
+                    : AppButtonLabel(
                         'Quản lý gói đăng ký',
                         style: TextStyle(
                           fontSize: 15.sp,
@@ -163,7 +164,7 @@ class AppBottomBar extends StatelessWidget {
                                 ),
                               ),
                             )
-                          : Text(
+                          : AppButtonLabel(
                               'Nâng cấp Premium',
                               style: AppTextStyles.tabLabel.copyWith(
                                 fontSize: 16.sp,
@@ -254,7 +255,7 @@ class AppFormActions extends StatelessWidget {
                 ),
                 padding: EdgeInsets.zero,
               ),
-              child: Text(
+              child: AppButtonLabel(
                 cancelLabel,
                 style: TextStyle(
                   fontSize: 15.sp,
@@ -298,10 +299,8 @@ class AppFormActions extends StatelessWidget {
                         Icon(submitIcon, size: 20.r, color: Colors.white),
                         SizedBox(width: 8.w),
                         Flexible(
-                          child: Text(
+                          child: AppButtonLabel(
                             submitLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w700,

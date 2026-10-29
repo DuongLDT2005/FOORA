@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/app_button.dart';
 
 /// Bottom bar for Free users with the upgrade button.
 class MembershipFreeFooter extends StatelessWidget {
@@ -89,7 +90,7 @@ class MembershipFreeFooter extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16.r),
                   ),
                 ),
-                child: Text(
+                child: AppButtonLabel(
                   'Nâng cấp Premium',
                   style: AppTextStyles.bodyMedium.copyWith(
                     fontFamily: AppTextStyles.fontFamilyHeadline,
@@ -136,7 +137,7 @@ class MembershipPremiumFooter extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16.r),
               ),
             ),
-            child: Text(
+            child: AppButtonLabel(
               'Quản lý gói',
               style: AppTextStyles.bodyMedium.copyWith(
                 fontFamily: AppTextStyles.fontFamilyHeadline,

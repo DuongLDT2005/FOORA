@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/entities/ai_recipe.dart';
 import 'ai_chat_suggestions.dart' show aiExpiryLabel;
@@ -169,7 +170,7 @@ class _RecipeCard extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 4.w),
                 ),
                 icon: Icon(Icons.play_circle_outline_rounded, size: 18.r),
-                label: const Text('Xem cách nấu'),
+                label: const AppButtonLabel('Xem cách nấu'),
               ),
               if (onCooked != null && inStock.isNotEmpty)
                 TextButton.icon(
@@ -178,7 +179,7 @@ class _RecipeCard extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                   ),
                   icon: Icon(Icons.check_circle_outline_rounded, size: 18.r),
-                  label: const Text('Tôi đã nấu món này'),
+                  label: const AppButtonLabel('Tôi đã nấu món này'),
                 ),
               if (onAddToShopping != null && toBuy.isNotEmpty)
                 TextButton.icon(
@@ -187,7 +188,7 @@ class _RecipeCard extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                   ),
                   icon: Icon(Icons.add_shopping_cart_rounded, size: 18.r),
-                  label: const Text('Thêm vào danh sách mua'),
+                  label: const AppButtonLabel('Thêm vào danh sách mua'),
                 ),
             ],
           ),

@@ -22,7 +22,7 @@ export * from "./ai";
 export * from "./payment";
 export * from "./analytics";
 export * from "./household";
-export * from "./membership";
 export * from "./shopping";
+export * from "./maintenance";
 
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/components/app_bottom_bar.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../inventory/domain/entities/food_category.dart';
 import '../../../inventory/domain/entities/storage_location.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
@@ -915,7 +916,7 @@ class _AiActionReviewSheetState extends ConsumerState<AiActionReviewSheet> {
                   draft.manualAllocation = !draft.manualAllocation;
                   _changed(draft);
                 },
-                child: Text(
+                child: AppButtonLabel(
                   draft.manualAllocation ? 'Chọn một lô' : 'Chia thủ công',
                 ),
               ),

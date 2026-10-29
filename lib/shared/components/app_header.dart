@@ -138,7 +138,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 Expanded(
                   child: Text(
                     title,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.headlineSmall.copyWith(
                       color: Colors.white,

@@ -25,63 +25,67 @@ class HomeGreetingHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Hi, $firstName! 👋',
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamilyHeadline,
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w900, // font-extrabold/black
-                  color: AppColors.slate800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              if (householdName != null && householdName!.isNotEmpty) ...[
-                // Ink feedback + vertical padding give the small label a
-                // finger-sized touch target without changing the layout much.
-                InkWell(
-                  borderRadius: BorderRadius.circular(8.r),
-                  onTap: () => HouseholdSwitchBottomSheet.show(context),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          LucideIcons.home,
-                          size: 13.r,
-                          color: AppColors.emerald700,
-                        ),
-                        SizedBox(width: 4.w),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: 160.w),
-                          child: Text(
-                            householdName!,
-                            style: TextStyle(
-                              fontFamily: AppTextStyles.fontFamilySans,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.emerald700,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        SizedBox(width: 2.w),
-                        Icon(
-                          LucideIcons.chevronDown,
-                          size: 13.r,
-                          color: AppColors.emerald700,
-                        ),
-                      ],
-                    ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hi, $firstName! 👋',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamilyHeadline,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w900, // font-extrabold/black
+                    color: AppColors.slate800,
+                    letterSpacing: -0.5,
                   ),
                 ),
+                if (householdName != null && householdName!.isNotEmpty) ...[
+                  // Ink feedback + vertical padding give the small label a
+                  // finger-sized touch target without changing the layout much.
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8.r),
+                    onTap: () => HouseholdSwitchBottomSheet.show(context),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.home,
+                            size: 13.r,
+                            color: AppColors.emerald700,
+                          ),
+                          SizedBox(width: 4.w),
+                          Flexible(
+                            child: Text(
+                              householdName!,
+                              style: TextStyle(
+                                fontFamily: AppTextStyles.fontFamilySans,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.emerald700,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 2.w),
+                          Icon(
+                            LucideIcons.chevronDown,
+                            size: 13.r,
+                            color: AppColors.emerald700,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
+          SizedBox(width: 12.w),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
             decoration: BoxDecoration(

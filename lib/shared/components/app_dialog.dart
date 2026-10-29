@@ -174,7 +174,7 @@ class AppDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                       ),
-                      child: Text(
+                      child: AppButtonLabel(
                         cancelText!,
                         style: TextStyle(
                           fontSize: 13.5.sp,

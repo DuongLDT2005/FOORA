@@ -190,7 +190,8 @@ Chứa mã nguồn Node.js/TypeScript chạy trên Firebase Cloud Functions đ�
 | **`inventory/`** | Thêm món qua callable (kiểm tra foodLimit), đồng bộ `activeItemCount`, lập kế hoạch thông báo hạn dùng (FEFO). |
 | **`receipt/`** | Gọi Gemini API parse hóa đơn từ văn bản OCR thô, chống giả mạo client. |
 | **`ai/`** | Proxy gọi Gemini API, ghi nhận số lần dùng và kiểm tra quota gói thành viên. |
-| **`notification/`** | Gửi tin nhắn đẩy FCM; `hourlyReminderCron` nhắc hạn dùng và nhắc đi chợ theo cài đặt từng user. |
+| **`notification/`** | Gửi tin nhắn đẩy FCM; `hourlyReminderCron` nhắc hạn dùng và nhắc đi chợ theo cài đặt từng user, nhắc Premium sắp hết hạn. |
+| **`maintenance/`** | `maintenanceSweepCron` mỗi 5 phút: hoàn quota request AI treo, hết hạn đơn thanh toán và subscription Premium. |
 | **`shopping/`** | Xóa danh sách mua sắm, nhập món đã mua vào kho (transaction + foodLimit), gợi ý "Hay mua". |
 | **`membership/`** | Quản lý nâng cấp/hạ cấp gói, reset quota quét hàng tháng. |
 | **`payment/`** | Tạo đơn QR payOS, xác thực webhook, đối soát và kích hoạt subscription Premium (`autoRenew: false`). |

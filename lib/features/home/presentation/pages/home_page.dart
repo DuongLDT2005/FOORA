@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_widget.dart';
@@ -80,18 +78,6 @@ class HomePage extends ConsumerWidget {
                 onExpiredTap: () => context.push(AppRouteNames.wasteStatistics),
               ),
 
-              // Quick action: shopping lists (PLAN_01 §5.1)
-              Padding(
-                padding: EdgeInsets.only(bottom: 24.h),
-                child: FeatureCard(
-                  icon: LucideIcons.shoppingBag,
-                  iconColor: AppColors.primary,
-                  iconBgColor: AppColors.emerald50,
-                  title: 'Danh sách mua sắm',
-                  subtitle: 'Lên kế hoạch đi chợ & tự động nhập kho',
-                  onTap: () => context.push(AppRouteNames.shoppingLists),
-                ),
-              ),
               if (totalCount == 0)
                 Padding(
                   padding: EdgeInsets.only(top: 32.h),

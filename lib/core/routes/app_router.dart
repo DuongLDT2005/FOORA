@@ -33,6 +33,7 @@ import '../../features/shopping/domain/entities/shopping_list.dart';
 import '../../features/shopping/presentation/pages/shopping_list_detail_page.dart';
 import '../../features/shopping/presentation/pages/shopping_lists_page.dart';
 import '../../shared/layouts/mobile_shell_scaffold.dart';
+import '../../shared/widgets/app_button.dart';
 import '../firebase/auth_session_providers.dart';
 import '../firebase/firebase_providers.dart';
 import '../utils/app_logger.dart';
@@ -492,7 +493,9 @@ class _NotFoundScreen extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.home),
-                label: Text(isWebAdmin ? 'Về Admin Dashboard' : 'Về Trang chủ'),
+                label: AppButtonLabel(
+                  isWebAdmin ? 'Về Admin Dashboard' : 'Về Trang chủ',
+                ),
               ),
             ],
           ),

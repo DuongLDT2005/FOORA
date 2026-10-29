@@ -39,6 +39,7 @@ class MobileShellScaffold extends ConsumerWidget {
                 context.push(AppRouteNames.notifications);
               },
               onAssistantTap: () => context.push(AppRouteNames.aiAssistant),
+              onShoppingTap: () => context.push(AppRouteNames.shoppingLists),
             ),
       body: navigationShell,
       floatingActionButton: isScanTab
@@ -90,12 +91,14 @@ class _MobileShellHeader extends StatelessWidget
   final int unreadCount;
   final VoidCallback onNotificationTap;
   final VoidCallback onAssistantTap;
+  final VoidCallback onShoppingTap;
 
   const _MobileShellHeader({
     required this.userInitial,
     required this.unreadCount,
     required this.onNotificationTap,
     required this.onAssistantTap,
+    required this.onShoppingTap,
   });
 
   @override
@@ -161,10 +164,24 @@ class _MobileShellHeader extends StatelessWidget
                   ),
                 ],
               ),
-              // Right: Assistant + Notification Bell Button with Unread Badge
+              // Right: Shopping lists + Assistant + Notification Bell Button
+              // with Unread Badge
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  IconButton(
+                    onPressed: onShoppingTap,
+                    tooltip: 'Danh sách mua sắm',
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppColors.emerald50,
+                    ),
+                    icon: Icon(
+                      LucideIcons.shoppingCart,
+                      size: 21.r,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  SizedBox(width: 4.w),
                   IconButton(
                     onPressed: onAssistantTap,
                     tooltip: 'Trợ lý FOORA',

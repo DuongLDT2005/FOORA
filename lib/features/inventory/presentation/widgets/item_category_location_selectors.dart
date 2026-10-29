@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_shimmer.dart';
 import '../../../../shared/helpers/bottom_sheet_helper.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../domain/entities/food_category.dart';
 import '../../domain/entities/storage_location.dart';
 
@@ -102,7 +103,10 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
             if (onRetry != null)
               TextButton(
                 onPressed: onRetry,
-                child: Text('Thử lại', style: TextStyle(fontSize: 12.sp)),
+                child: AppButtonLabel(
+                  'Thử lại',
+                  style: TextStyle(fontSize: 12.sp),
+                ),
               ),
           ],
         ),

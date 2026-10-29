@@ -64,6 +64,9 @@ class MyApp extends ConsumerWidget {
             darkTheme: AppTheme.darkTheme,
             themeMode: ThemeMode.system,
             routerConfig: router,
+            builder: (context, child) => kIsWeb
+                ? child ?? const SizedBox.shrink()
+                : _AppZoom(child: child ?? const SizedBox.shrink()),
             locale: const Locale('vi', 'VN'),
             supportedLocales: const [Locale('vi', 'VN'), Locale('en', 'US')],
             localizationsDelegates: const [
@@ -73,6 +76,45 @@ class MyApp extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Renders the whole mobile app slightly smaller, like a 90% zoom: pages lay
+/// out on a larger logical canvas that is then scaled down to the screen.
+/// Fixed theme sizes and ScreenUtil sizes shrink together, so proportions
+/// stay as designed. Insets are scaled up by the same factor so the status
+/// bar, gesture bar and keyboard still line up after the scale-down.
+class _AppZoom extends StatelessWidget {
+  const _AppZoom({required this.child});
+
+  static const double _scale = 0.9;
+
+  final Widget child;
+
+  static EdgeInsets _unscale(EdgeInsets insets) => insets / _scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final size = media.size / _scale;
+    return FittedBox(
+      fit: BoxFit.fill,
+      alignment: Alignment.topLeft,
+      child: SizedBox.fromSize(
+        size: size,
+        child: MediaQuery(
+          data: media.copyWith(
+            size: size,
+            devicePixelRatio: media.devicePixelRatio * _scale,
+            padding: _unscale(media.padding),
+            viewPadding: _unscale(media.viewPadding),
+            viewInsets: _unscale(media.viewInsets),
+            systemGestureInsets: _unscale(media.systemGestureInsets),
+          ),
+          child: child,
+        ),
       ),
     );
   }

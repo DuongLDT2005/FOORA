@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/ai_chat_session.dart';
 import '../providers/ai_provider.dart';
+import '../../../../shared/widgets/app_button.dart';
 
 /// Saved conversations shown in the history sheet of the chat page.
 class AiChatHistoryList extends ConsumerWidget {
@@ -34,7 +35,7 @@ class AiChatHistoryList extends ConsumerWidget {
         'Không tải được lịch sử trò chuyện.',
         action: TextButton(
           onPressed: () => ref.invalidate(aiChatSessionsProvider),
-          child: const Text('Thử lại'),
+          child: const AppButtonLabel('Thử lại'),
         ),
       ),
       data: (sessions) => sessions.isEmpty

@@ -22,7 +22,7 @@ Payment flow hien co gom:
   `PAYOS_CHECKSUM_KEY`, doi soat amount/reference/transaction id.
 - Kich hoat Premium khi payment `completed`.
 - Dua payment vao `requires_review` khi sai amount hoac late payment.
-- Scheduler `expirePendingPayments` chuyen payment qua han sang `expired` va
+- Scheduler `maintenanceSweepCron` (ham `expireOverduePayments`) chuyen payment qua han sang `expired` va
   subscription het han sang `expired`.
 - Flutter hien man xac nhan, QR, ket qua va lich su payment.
 
@@ -425,7 +425,8 @@ Neu webhook that khong ve:
 - Webhook HTTP:
   `functions/src/payment/webhooks/cas_transactions_webhook.ts`
 - Scheduler expiry:
-  `functions/src/payment/schedules/expire_pending_payments.ts`
+  `functions/src/payment/services/payment_expiry.ts`
+  (chay boi `functions/src/maintenance/schedulers/maintenance_sweep_cron.ts`)
 - Flutter datasource:
   `lib/features/payment/data/datasources/payment_remote_datasource.dart`
 - Flutter controller:

@@ -7,6 +7,7 @@ import '../../../../core/constants/app_enums.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_shimmer.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../domain/entities/shopping_item_draft.dart';
 import '../../domain/entities/shopping_suggestion.dart';
 import '../providers/shopping_providers.dart';
@@ -48,7 +49,7 @@ class FrequentSuggestionsSection extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => ref.invalidate(shoppingSuggestionsProvider),
-              child: const Text('Thử lại'),
+              child: const AppButtonLabel('Thử lại'),
             ),
           ],
         ),
@@ -190,14 +191,16 @@ class FrequentSuggestionCard extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                     SizedBox(width: 6.w),
-                    Text(
-                      'Thêm ${formatShoppingQuantity(suggestion.quantity)} '
-                      '${suggestion.unit}',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamilySans,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                    Flexible(
+                      child: AppButtonLabel(
+                        'Thêm ${formatShoppingQuantity(suggestion.quantity)} '
+                        '${suggestion.unit}',
+                        style: TextStyle(
+                          fontFamily: AppTextStyles.fontFamilySans,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ],

@@ -12,6 +12,7 @@ import '../../domain/entities/ai_action.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/services/ai_food_category.dart';
 import '../providers/ai_provider.dart';
+import '../../../../shared/widgets/app_button.dart';
 
 class AiEntryReceiptCard extends ConsumerStatefulWidget {
   const AiEntryReceiptCard({super.key, required this.message, this.onEdit});
@@ -210,7 +211,7 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
           if (pending && categoryAsync.hasError)
             TextButton(
               onPressed: () => ref.invalidate(foodCategoriesProvider),
-              child: const Text('Không tải được danh mục · Thử lại'),
+              child: const AppButtonLabel('Không tải được danh mục · Thử lại'),
             ),
           if (_error != null) ...[
             SizedBox(height: 8.h),
@@ -225,7 +226,9 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: canConfirm && !_sending ? _confirm : null,
-                child: Text(_sending ? 'Đang nhập kho…' : 'Xác nhận nhập kho'),
+                child: AppButtonLabel(
+                  _sending ? 'Đang nhập kho…' : 'Xác nhận nhập kho',
+                ),
               ),
             ),
             if (hasEdit) ...[
@@ -234,7 +237,7 @@ class _AiEntryReceiptCardState extends ConsumerState<AiEntryReceiptCard> {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: widget.onEdit,
-                  child: const Text('Sửa tên, lượng hoặc hạn dùng'),
+                  child: const AppButtonLabel('Sửa tên, lượng hoặc hạn dùng'),
                 ),
               ),
             ],

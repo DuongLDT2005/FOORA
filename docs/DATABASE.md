@@ -632,7 +632,7 @@ of the schema and are ignored by the app.
 **Writes**: backend only (Firestore Rules deny all client writes). The payOS
 webhook creates/extends the document in the same transaction that completes the
 payment: `endDate = max(paidAt, currentEndDate) + durationDays`. The
-`expirePendingPayments` scheduler moves `active` subscriptions whose `endDate`
+`maintenanceSweepCron` scheduler (`expireOverduePayments`) moves `active` subscriptions whose `endDate`
 has passed to `expired`.
 
 **Entitlement** (source of truth for Premium): a subscription grants its plan

@@ -15,6 +15,7 @@ import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/helpers/bottom_sheet_helper.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
 import '../../../shopping/domain/usecases/build_recipe_shopping_drafts.dart';
 import '../../../shopping/presentation/providers/shopping_providers.dart';
@@ -372,7 +373,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             _startNewChat();
           },
           icon: Icon(LucideIcons.squarePen, size: 18.r),
-          label: const Text('Cuộc trò chuyện mới'),
+          label: const AppButtonLabel('Cuộc trò chuyện mới'),
         ),
       ),
       child: AiChatHistoryList(
@@ -506,7 +507,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                             child: TextButton(
                               onPressed: () =>
                                   ref.invalidate(aiChatHistoryProvider),
-                              child: const Text(
+                              child: const AppButtonLabel(
                                 'Không tải được lịch sử chat · Thử lại',
                               ),
                             ),
@@ -726,7 +727,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             padding: EdgeInsets.only(bottom: 20.h),
             child: TextButton(
               onPressed: () => ref.invalidate(aiChatHistoryProvider),
-              child: const Text('Không tải được lịch sử chat · Thử lại'),
+              child: const AppButtonLabel(
+                'Không tải được lịch sử chat · Thử lại',
+              ),
             ),
           ),
         Icon(LucideIcons.sparkles, size: 27.r, color: AppColors.primary),
@@ -810,7 +813,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           ),
           TextButton(
             onPressed: () => context.push(AppRouteNames.membership),
-            child: const Text('Nâng cấp gói'),
+            child: const AppButtonLabel('Nâng cấp gói'),
           ),
         ],
       ),
@@ -840,11 +843,11 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
               children: [
                 TextButton(
                   onPressed: () => ref.read(aiChatProvider.notifier).retry(),
-                  child: const Text('Thử lại'),
+                  child: const AppButtonLabel('Thử lại'),
                 ),
                 TextButton(
                   onPressed: _editPending,
-                  child: const Text('Sửa câu hỏi'),
+                  child: const AppButtonLabel('Sửa câu hỏi'),
                 ),
               ],
             ),

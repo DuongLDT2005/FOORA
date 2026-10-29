@@ -109,65 +109,47 @@ class InventoryPage extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  InkWell(
-                    borderRadius: BorderRadius.circular(10.r),
-                    onTap: () => HouseholdSwitchBottomSheet.show(context),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 6.h),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: 190.w),
-                            child: Text(
-                              ref
-                                      .watch(currentHouseholdStreamProvider)
-                                      .valueOrNull
-                                      ?.name ??
-                                  'Kho thực phẩm',
-                              style: TextStyle(
-                                fontFamily: AppTextStyles.fontFamilyHeadline,
-                                fontSize: 22.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.slate800,
+                  Flexible(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10.r),
+                      onTap: () => HouseholdSwitchBottomSheet.show(context),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6.h),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                ref
+                                        .watch(currentHouseholdStreamProvider)
+                                        .valueOrNull
+                                        ?.name ??
+                                    'Kho thực phẩm',
+                                style: TextStyle(
+                                  fontFamily: AppTextStyles.fontFamilyHeadline,
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.slate800,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          SizedBox(width: 4.w),
-                          Icon(
-                            LucideIcons.chevronDown,
-                            size: 18.r,
-                            color: AppColors.slate500,
-                          ),
-                        ],
+                            SizedBox(width: 4.w),
+                            Icon(
+                              LucideIcons.chevronDown,
+                              size: 18.r,
+                              color: AppColors.slate500,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
+                  SizedBox(width: 12.w),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Shopping List shortcut
-                      GestureDetector(
-                        onTap: () {
-                          context.push(AppRouteNames.shoppingLists);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(7.r),
-                          decoration: BoxDecoration(
-                            color: AppColors.slate100,
-                            borderRadius: BorderRadius.circular(20.r),
-                            border: Border.all(color: AppColors.slate200),
-                          ),
-                          child: Icon(
-                            LucideIcons.shoppingBag,
-                            size: 16.r,
-                            color: AppColors.slate700,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
                       // Manage expiry button
                       GestureDetector(
                         onTap: () {

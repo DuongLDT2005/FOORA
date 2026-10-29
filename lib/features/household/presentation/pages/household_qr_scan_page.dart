@@ -9,6 +9,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/helpers/toast_helper.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../providers/household_provider.dart';
 import '../utils/qr_image_decoder.dart';
 
@@ -200,7 +201,7 @@ class _HouseholdQrScanPageState extends ConsumerState<HouseholdQrScanPage> {
                   OutlinedButton.icon(
                     onPressed: _decodingImage ? null : _pickFromGallery,
                     icon: Icon(LucideIcons.image, size: 18.r),
-                    label: Text(
+                    label: AppButtonLabel(
                       _decodingImage
                           ? 'Đang đọc ảnh...'
                           : 'Chọn ảnh QR từ thư viện',
