@@ -1,3 +1,2 @@
 // Feature module: membership
-export {};
-
+export {premiumExpiryReminderCron} from "./schedulers/premium_expiry_reminder_cron";

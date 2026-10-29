@@ -8,7 +8,9 @@ import {
 import * as logger from "firebase-functions/logger";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {MAX_HOUSEHOLD_MEMBERS} from "../../membership/services/entitlement";
 import {MembershipService} from "../../membership/services/membership_service";
+import {PlanEnforcementService} from "../../membership/services/plan_enforcement";
 import {
   throwFailedPrecondition,
   throwInvalidArgument,
@@ -22,13 +24,10 @@ import {
   normalizeInviteCode,
 } from "./invite_code";
 
+export {MAX_HOUSEHOLD_MEMBERS};
+
 /** Invitation lifetime (PLAN_05 D3). */
 export const INVITATION_TTL_DAYS = 7;
-/**
- * Hard ceiling on members per household, applied even when a plan's
- * `memberLimit` is null (unlimited) or misconfigured, to prevent abuse.
- */
-export const MAX_HOUSEHOLD_MEMBERS = 20;
 /** Wrong invite codes allowed per window before the user is locked out. */
 export const MAX_FAILED_INVITE_ATTEMPTS = 10;
 export const INVITE_ATTEMPT_WINDOW_MS = 60 * 60 * 1000;
@@ -43,6 +42,23 @@ export interface HouseholdMemberInfo {
   avatarUrl: string | null;
   role: "owner" | "member";
   isCurrentUser: boolean;
+  /** Over the owner's plan seat limit; cannot use the household. */
+  isLocked: boolean;
+}
+
+const LOCKED_MEMBER_MESSAGE =
+  "Bạn đang tạm thời bị khóa khỏi gia đình này vì gói của chủ gia đình " +
+  "không còn đủ chỗ. Hãy nhờ chủ gia đình gia hạn Premium.";
+
+/**
+ * Whether [uid] is locked out of a household by its owner's plan.
+ * @param {DocumentData} householdData Household document data.
+ * @param {string} uid User id.
+ * @return {boolean} True when locked.
+ */
+export function isLockedMember(householdData: DocumentData, uid: string): boolean {
+  const locked = householdData.lockedMembers;
+  return Array.isArray(locked) && locked.includes(uid);
 }
 
 export interface HouseholdInvitationResult {
@@ -293,6 +309,9 @@ export class HouseholdService {
       const serverTimestamp = FieldValue.serverTimestamp();
 
       if (members.includes(callerUid)) {
+        if (isLockedMember(householdData, callerUid)) {
+          throwFailedPrecondition(LOCKED_MEMBER_MESSAGE);
+        }
         tx.update(userRef, {
           activeHouseholdId: householdId,
           updatedAt: serverTimestamp,
@@ -506,6 +525,7 @@ export class HouseholdService {
           "Bạn đã được chuyển về tủ lạnh của mình.",
       });
     });
+    await this.reenforceAfterSeatFreed(householdId);
 
     logger.info(
       `[HouseholdService] Owner ${callerUid} removed member ` +
@@ -546,6 +566,7 @@ export class HouseholdService {
 
       await this.detachMember(tx, householdId, callerUid);
     });
+    await this.reenforceAfterSeatFreed(householdId);
 
     logger.info(
       `[HouseholdService] User ${callerUid} left household ${householdId}`
@@ -571,6 +592,9 @@ export class HouseholdService {
     const members: string[] = householdSnap.data()?.members || [];
     if (!members.includes(callerUid)) {
       throwPermissionDenied("Bạn không thuộc gia đình này để có thể chuyển đổi.");
+    }
+    if (isLockedMember(householdSnap.data()!, callerUid)) {
+      throwFailedPrecondition(LOCKED_MEMBER_MESSAGE);
     }
 
     await db.collection(Collections.USERS).doc(callerUid).update({
@@ -658,6 +682,7 @@ export class HouseholdService {
           avatarUrl: udata.avatarUrl || null,
           role: snap.id === ownerId ? "owner" : "member",
           isCurrentUser: snap.id === callerUid,
+          isLocked: isLockedMember(householdData, snap.id),
         };
       });
 
@@ -701,6 +726,7 @@ export class HouseholdService {
     const serverTimestamp = FieldValue.serverTimestamp();
     tx.update(householdRef, {
       members: FieldValue.arrayRemove(uid),
+      lockedMembers: FieldValue.arrayRemove(uid),
       updatedAt: serverTimestamp,
     });
 
@@ -727,6 +753,23 @@ export class HouseholdService {
       activeHouseholdId: fallbackId,
       updatedAt: serverTimestamp,
     });
+  }
+
+  /**
+   * A freed seat may let a locked member back in. Failures are logged only:
+   * the leave/remove itself already succeeded.
+   * @param {string} householdId Household that lost a member.
+   * @return {Promise<void>}
+   */
+  private static async reenforceAfterSeatFreed(householdId: string): Promise<void> {
+    try {
+      await PlanEnforcementService.enforceHousehold(householdId);
+    } catch (error) {
+      logger.error("[HouseholdService] Plan enforcement after leave failed", {
+        householdId,
+        error,
+      });
+    }
   }
 
   /**

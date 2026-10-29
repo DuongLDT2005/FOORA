@@ -10,6 +10,12 @@ export const MembershipIds = {
   PREMIUM: "premium",
 } as const;
 
+/**
+ * Hard ceiling on members per household, applied even when a plan's
+ * `memberLimit` is null (unlimited) or misconfigured, to prevent abuse.
+ */
+export const MAX_HOUSEHOLD_MEMBERS = 20;
+
 /** Anything with Firestore Timestamp's `toMillis()` (or a JS Date). */
 export type TimeLike = {toMillis(): number} | Date | null | undefined;
 
@@ -58,6 +64,47 @@ export function pickActiveSubscription<T extends SubscriptionLike>(
     }
   }
   return best;
+}
+
+/**
+ * Members who exceed the household's seat limit. The owner always keeps a
+ * seat; the remaining seats go to members in join order (the `members`
+ * array keeps arrayUnion insertion order).
+ * @param {string[]} members Member uids in join order.
+ * @param {string} ownerId Household owner uid.
+ * @param {number} seatLimit Seats allowed, owner included.
+ * @return {string[]} Uids to lock, in join order.
+ */
+export function pickLockedMembers(
+  members: string[],
+  ownerId: string,
+  seatLimit: number
+): string[] {
+  const kept = new Set<string>([ownerId]);
+  for (const uid of members) {
+    if (kept.size >= seatLimit) break;
+    kept.add(uid);
+  }
+  return members.filter((uid) => !kept.has(uid));
+}
+
+/**
+ * Active items that exceed the food limit: the earliest added stay usable,
+ * later ones are locked. `null` means unlimited.
+ * @param {{id: string, createdAtMillis: number}[]} items Active items.
+ * @param {number | null} foodLimit Plan food limit.
+ * @return {string[]} Item ids to lock.
+ */
+export function pickLockedItemIds(
+  items: {id: string; createdAtMillis: number}[],
+  foodLimit: number | null
+): string[] {
+  if (foodLimit === null) return [];
+  return [...items]
+    .sort((a, b) =>
+      a.createdAtMillis - b.createdAtMillis || a.id.localeCompare(b.id))
+    .slice(Math.max(foodLimit, 0))
+    .map((item) => item.id);
 }
 
 /**

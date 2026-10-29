@@ -3,6 +3,29 @@ import {FieldValue} from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {REGION, db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {PlanEnforcementService} from "../../membership/services/plan_enforcement";
+
+/**
+ * An item leaving `active` frees a slot under the food limit, so the oldest
+ * locked item (if any) can be unlocked.
+ * @param {string} householdId Household id.
+ * @return {Promise<void>}
+ */
+async function unlockFreedSlot(householdId: string): Promise<void> {
+  const household = await db.collection(Collections.HOUSEHOLDS)
+    .doc(householdId).get();
+  if (((household.get("lockedItemCount") as number | undefined) ?? 0) <= 0) {
+    return;
+  }
+  try {
+    await PlanEnforcementService.enforceHousehold(householdId);
+  } catch (error) {
+    logger.error("[onInventoryItemMutation] Plan enforcement failed", {
+      householdId,
+      error,
+    });
+  }
+}
 
 /**
  * Firestore Trigger: onInventoryItemMutation
@@ -42,6 +65,7 @@ export const onInventoryItemMutation = functions
           activeItemCount: FieldValue.increment(-1),
           updatedAt: FieldValue.serverTimestamp(),
         });
+        await unlockFreedSlot(householdId);
       }
       return;
     }
@@ -73,5 +97,8 @@ export const onInventoryItemMutation = functions
         activeItemCount: FieldValue.increment(delta),
         updatedAt: FieldValue.serverTimestamp(),
       });
+      if (delta < 0) {
+        await unlockFreedSlot(householdId);
+      }
     }
   });

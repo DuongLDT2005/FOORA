@@ -24,6 +24,7 @@ class InventoryItemModel extends InventoryItem {
     super.source = InventoryItemSource.manual,
     super.status = InventoryItemStatus.active,
     super.statusChangedAt,
+    super.isLocked = false,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -41,6 +42,7 @@ class InventoryItemModel extends InventoryItem {
     final name = json['name'] as String? ?? '';
     final quantity = (json['quantity'] as num?)?.toDouble() ?? 0.0;
     final percentage = (json['remainingPercentage'] as num?)?.toInt() ?? 100;
+    final status = InventoryItemStatus.fromString(json['status'] as String?);
     final inferredInitial = percentage > 0 && quantity > 0
         ? quantity / (percentage / 100)
         : quantity;
@@ -66,8 +68,12 @@ class InventoryItemModel extends InventoryItem {
       expirationDate: _parseDateTime(json['expirationDate']),
       photoUrl: json['photoUrl'] as String?,
       source: InventoryItemSource.fromString(json['source'] as String?),
-      status: InventoryItemStatus.fromString(json['status'] as String?),
+      status: status,
       statusChangedAt: _parseDateTimeNullable(json['statusChangedAt']),
+      // Only an active item can be locked; the flag is backend-managed and
+      // never written back by the client.
+      isLocked:
+          json['isLocked'] == true && status == InventoryItemStatus.active,
       createdAt: _parseDateTime(json['createdAt']),
       updatedAt: _parseDateTime(json['updatedAt']),
     );
@@ -92,6 +98,7 @@ class InventoryItemModel extends InventoryItem {
       source: item.source,
       status: item.status,
       statusChangedAt: item.statusChangedAt,
+      isLocked: item.isLocked,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     );

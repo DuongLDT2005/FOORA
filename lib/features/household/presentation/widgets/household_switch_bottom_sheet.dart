@@ -102,6 +102,7 @@ class _HouseholdSwitchBottomSheetState
                   final isActive = h.id == activeHouseholdId;
                   final isOwner = h.isOwner(currentUserId);
                   final isSwitchingThis = _switchingId == h.id;
+                  final isLocked = h.isLockedMember(currentUserId);
 
                   final radius = BorderRadius.circular(14.r);
                   return Padding(
@@ -121,7 +122,9 @@ class _HouseholdSwitchBottomSheetState
                       ),
                       child: InkWell(
                         borderRadius: radius,
-                        onTap: _switchingId == null ? () => _switch(h) : null,
+                        onTap: _switchingId == null && !isLocked
+                            ? () => _switch(h)
+                            : null,
                         child: Padding(
                           padding: EdgeInsets.all(14.r),
                           child: Row(
@@ -194,7 +197,9 @@ class _HouseholdSwitchBottomSheetState
                                     ),
                                     SizedBox(height: 3.h),
                                     Text(
-                                      '${h.members.length} thành viên • ${h.activeItemCount} thực phẩm',
+                                      isLocked
+                                          ? 'Tạm khóa: chủ gia đình đã hết Premium'
+                                          : '${h.members.length} thành viên • ${h.activeItemCount} thực phẩm',
                                       style: TextStyle(
                                         fontFamily:
                                             AppTextStyles.fontFamilySans,
@@ -209,6 +214,12 @@ class _HouseholdSwitchBottomSheetState
                                 const AppLoadingSpinner(
                                   color: AppColors.primary,
                                   strokeWidth: 2,
+                                )
+                              else if (isLocked)
+                                Icon(
+                                  LucideIcons.lock,
+                                  size: 20.r,
+                                  color: AppColors.slate400,
                                 )
                               else if (isActive)
                                 Icon(

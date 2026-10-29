@@ -1,9 +1,11 @@
 import {randomBytes} from "node:crypto";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {HttpsError} from "firebase-functions/v2/https";
+import * as logger from "firebase-functions/logger";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
 import {MembershipIds} from "../../membership/services/entitlement";
+import {PlanEnforcementService} from "../../membership/services/plan_enforcement";
 import {AuthenticatedUser, PaymentStatus} from "../../types";
 import {throwInvalidArgument, throwNotFound} from "../../utils/errors";
 import {paymentExpiryMinutes} from "../config";
@@ -220,11 +222,11 @@ export class PaymentService {
     const referenceRef = db.collection(Collections.PAYMENT_REFERENCES)
       .doc(transactionData.referenceNumber);
 
-    return db.runTransaction(async (
+    const outcome = await db.runTransaction(async (
       firestoreTransaction
-    ): Promise<PaymentStatus> => {
+    ): Promise<{status: PaymentStatus; activatedUserId?: string}> => {
       const reference = await firestoreTransaction.get(referenceRef);
-      if (!reference.exists) return "requires_review";
+      if (!reference.exists) return {status: "requires_review"};
 
       const referenceData = reference.data() ?? {};
       const paymentRef = db.collection(Collections.USERS)
@@ -238,10 +240,12 @@ export class PaymentService {
         firestoreTransaction.get(providerTransactionRef),
       ]);
       if (duplicate.exists) {
-        return (payment.data()?.status as PaymentStatus | undefined) ??
-          "completed";
+        return {
+          status: (payment.data()?.status as PaymentStatus | undefined) ??
+            "completed",
+        };
       }
-      if (!payment.exists) return "requires_review";
+      if (!payment.exists) return {status: "requires_review"};
 
       const data = payment.data() ?? {};
       const paidAt = Timestamp.fromDate(transactionData.transactionDate);
@@ -321,8 +325,25 @@ export class PaymentService {
         });
       }
 
-      return nextStatus;
+      return {
+        status: nextStatus,
+        activatedUserId: shouldActivate ?
+          String(referenceData.userId) : undefined,
+      };
     });
+
+    // Premium is back: unlock members and items locked by the Free limits.
+    if (outcome.activatedUserId) {
+      try {
+        await PlanEnforcementService.enforceForOwner(outcome.activatedUserId);
+      } catch (error) {
+        logger.error("[PaymentService] Unlocking after payment failed", {
+          userId: outcome.activatedUserId,
+          error,
+        });
+      }
+    }
+    return outcome.status;
   }
 
   private toOrderResult(

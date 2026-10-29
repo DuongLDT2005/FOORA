@@ -15,6 +15,7 @@ const {
   doc,
   setDoc,
   updateDoc,
+  getDoc,
   serverTimestamp,
   Timestamp,
 } = require("firebase/firestore");
@@ -96,4 +97,75 @@ test("accepts an edit that keeps the status unchanged", async () => {
   await assertSucceeds(
     updateDoc(itemRef(), {quantity: 2, updatedAt: serverTimestamp()}),
   );
+});
+
+const LOCKED_ITEM_ID = "item-locked";
+const LOCKED_MEMBER_UID = "member-locked";
+
+async function seedLockedHousehold() {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "households", HOUSEHOLD_ID), {
+      name: "Nhà",
+      members: [MEMBER_UID, LOCKED_MEMBER_UID],
+      lockedMembers: [LOCKED_MEMBER_UID],
+    });
+    await setDoc(
+      doc(db, "households", HOUSEHOLD_ID, "inventory_items", LOCKED_ITEM_ID),
+      {
+        name: "Trứng",
+        quantity: 2,
+        initialQuantity: 2,
+        remainingPercentage: 100,
+        status: "active",
+        isLocked: true,
+        statusChangedAt: Timestamp.fromDate(new Date("2026-10-01")),
+      },
+    );
+  });
+}
+
+function lockedItemRef(uid) {
+  const db = testEnv.authenticatedContext(uid).firestore();
+  return doc(db, "households", HOUSEHOLD_ID, "inventory_items", LOCKED_ITEM_ID);
+}
+
+test("rejects editing a locked item", async () => {
+  await seedLockedHousehold();
+  await assertFails(
+    updateDoc(lockedItemRef(MEMBER_UID), {
+      quantity: 1,
+      remainingPercentage: 50,
+      updatedAt: serverTimestamp(),
+    }),
+  );
+});
+
+test("rejects unlocking an item from the client", async () => {
+  await seedLockedHousehold();
+  await assertFails(
+    updateDoc(lockedItemRef(MEMBER_UID), {
+      isLocked: false,
+      updatedAt: serverTimestamp(),
+    }),
+  );
+});
+
+test("accepts discarding a locked item", async () => {
+  await seedLockedHousehold();
+  await assertSucceeds(
+    updateDoc(lockedItemRef(MEMBER_UID), {
+      quantity: 0,
+      remainingPercentage: 0,
+      status: "discarded",
+      statusChangedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+  );
+});
+
+test("locked members cannot read the inventory", async () => {
+  await seedLockedHousehold();
+  await assertFails(getDoc(lockedItemRef(LOCKED_MEMBER_UID)));
+  await assertSucceeds(getDoc(lockedItemRef(MEMBER_UID)));
 });

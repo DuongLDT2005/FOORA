@@ -59,11 +59,14 @@ export async function loadAssistantInventory(
       .where("expirationDate", "<", todayStart)
       .orderBy("expirationDate", "desc").limit(INVENTORY_CONTEXT_LIMIT + 1).get(),
   ]);
-  const usableDocs = usableSnap.docs.slice(0, INVENTORY_CONTEXT_LIMIT);
+  // Items locked by the owner's plan are out of reach until unlocked.
+  const usable = usableSnap.docs.filter((doc) => doc.get("isLocked") !== true);
+  const expired = expiredSnap.docs.filter((doc) => doc.get("isLocked") !== true);
+  const usableDocs = usable.slice(0, INVENTORY_CONTEXT_LIMIT);
   const remaining = INVENTORY_CONTEXT_LIMIT - usableDocs.length;
-  const inventoryTruncated = usableSnap.size > INVENTORY_CONTEXT_LIMIT ||
-    expiredSnap.size > remaining;
-  const inventoryDocs = [...usableDocs, ...expiredSnap.docs.slice(0, remaining)];
+  const inventoryTruncated = usable.length > INVENTORY_CONTEXT_LIMIT ||
+    expired.length > remaining;
+  const inventoryDocs = [...usableDocs, ...expired.slice(0, remaining)];
   const inventory = inventoryDocs.map((doc, index): AssistantInventoryItem => {
     const data = doc.data();
     const expiry = data.expirationDate?.toDate?.();

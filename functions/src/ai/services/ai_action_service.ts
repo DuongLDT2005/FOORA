@@ -2,6 +2,7 @@ import {createHash} from "crypto";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {isLockedMember} from "../../household/services/household_service";
 import {InventoryService} from "../../inventory/services/inventory_service";
 import {AuthenticatedUser} from "../../types";
 import {throwFailedPrecondition, throwInvalidArgument,
@@ -274,7 +275,8 @@ export class AiActionService {
       const household = await tx.get(householdRef);
       const members = household.data()?.members as string[] | undefined;
       if (!household.exists ||
-          (household.data()?.ownerId !== user.uid && !members?.includes(user.uid))) {
+          (household.data()?.ownerId !== user.uid && !members?.includes(user.uid)) ||
+          isLockedMember(household.data()!, user.uid)) {
         throwPermissionDenied("Bạn không còn là thành viên của tủ lạnh này.");
       }
       const itemRefs = householdRef.collection(Collections.INVENTORY_ITEMS);
@@ -408,7 +410,8 @@ export class AiActionService {
           const expected = candidates.get(allocation.itemId);
           const item = current.get(allocation.itemId);
           if (!expected || !item || allUsedIds.has(allocation.itemId) ||
-              item.status !== "active" || item.name !== expected.name ||
+              item.status !== "active" || item.isLocked === true ||
+              item.name !== expected.name ||
               item.quantity !== expected.quantity ||
               item.unit !== expected.unit || unit !== expected.unit ||
               (item.expirationDate?.toDate?.() ?

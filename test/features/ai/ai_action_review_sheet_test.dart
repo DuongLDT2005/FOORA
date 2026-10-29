@@ -315,7 +315,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(of: footer, matching: find.byIcon(Icons.check_rounded)),
+      find.descendant(of: footer, matching: find.byIcon(Icons.save_outlined)),
       findsOneWidget,
     );
     // Same height for both buttons, submit twice as wide as cancel.
@@ -332,7 +332,7 @@ void main() {
     await tester.pump();
     expect(find.text('Bỏ qua phiếu này'), findsOneWidget);
     expect(
-      find.descendant(of: footer, matching: find.byIcon(Icons.close_rounded)),
+      find.descendant(of: footer, matching: find.byIcon(Icons.block_rounded)),
       findsOneWidget,
     );
 

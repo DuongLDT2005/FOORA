@@ -24,8 +24,10 @@ void main() async {
   await FirebaseInitializer.initialize();
 
   // 3. Register Firebase Messaging Background Handler (mobile platforms only)
+  //    and show pushes that arrive while the app is open.
   if (!kIsWeb) {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await LocalNotificationPresenter.instance.initialize();
   }
 
   // 4. Pre-initialize SharedPreferences for synchronous Riverpod access

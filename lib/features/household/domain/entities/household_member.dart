@@ -9,6 +9,8 @@ class HouseholdMember {
   final String? avatarUrl;
   final HouseholdRole role;
   final bool isCurrentUser;
+  // Over the owner's plan seat limit; cannot use the household.
+  final bool isLocked;
 
   const HouseholdMember({
     required this.id,
@@ -16,6 +18,7 @@ class HouseholdMember {
     this.avatarUrl,
     required this.role,
     this.isCurrentUser = false,
+    this.isLocked = false,
   });
 
   bool get isOwner => role == HouseholdRole.owner;
@@ -38,9 +41,11 @@ class HouseholdMember {
         other.fullName == fullName &&
         other.avatarUrl == avatarUrl &&
         other.role == role &&
-        other.isCurrentUser == isCurrentUser;
+        other.isCurrentUser == isCurrentUser &&
+        other.isLocked == isLocked;
   }
 
   @override
-  int get hashCode => Object.hash(id, fullName, avatarUrl, role, isCurrentUser);
+  int get hashCode =>
+      Object.hash(id, fullName, avatarUrl, role, isCurrentUser, isLocked);
 }

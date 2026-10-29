@@ -26,6 +26,9 @@ class InventoryItem {
   // Tracks the exact timestamp when status changed to consumed/discarded.
   // Used for monthly waste statistics bucketing (Vietnam time UTC+7).
   final DateTime? statusChangedAt;
+  // Set by the backend when the item exceeds the owner's plan foodLimit;
+  // a locked item can only be used up or thrown away.
+  final bool isLocked;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -46,6 +49,7 @@ class InventoryItem {
     this.source = InventoryItemSource.manual,
     this.status = InventoryItemStatus.active,
     this.statusChangedAt,
+    this.isLocked = false,
     required this.createdAt,
     required this.updatedAt,
   }) : initialQuantity = initialQuantity ?? quantity;
@@ -66,6 +70,7 @@ class InventoryItem {
     String? storageLocationId,
     DateTime? purchaseDate,
     DateTime? statusChangedAt,
+    bool? isLocked,
     DateTime? expirationDate,
     String? photoUrl,
     InventoryItemSource? source,
@@ -90,6 +95,7 @@ class InventoryItem {
       source: source ?? this.source,
       status: status ?? this.status,
       statusChangedAt: statusChangedAt ?? this.statusChangedAt,
+      isLocked: isLocked ?? this.isLocked,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -115,6 +121,7 @@ class InventoryItem {
         other.source == source &&
         other.status == status &&
         other.statusChangedAt == statusChangedAt &&
+        other.isLocked == isLocked &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -137,6 +144,7 @@ class InventoryItem {
     source,
     status,
     statusChangedAt,
+    isLocked,
     createdAt,
     updatedAt,
   );

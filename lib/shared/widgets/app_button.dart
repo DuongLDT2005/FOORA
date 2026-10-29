@@ -3,6 +3,29 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
 
+// --- AppButtonLabel ---
+/// Keeps button text on one line, shrinking it when the button is narrow
+/// (e.g. 2-3 buttons side by side in a dialog) instead of wrapping.
+class AppButtonLabel extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+
+  const AppButtonLabel(this.text, {super.key, this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(text, style: style, maxLines: 1, softWrap: false),
+    );
+  }
+}
+
+/// Smaller side padding than the theme default, so labels fit in
+/// buttons that share a row.
+EdgeInsetsGeometry get _compactPadding =>
+    EdgeInsets.symmetric(horizontal: 12.w, vertical: 16);
+
 // --- PrimaryButton ---
 /// Main call-to-action button with loading state.
 class PrimaryButton extends StatelessWidget {
@@ -23,6 +46,7 @@ class PrimaryButton extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(padding: _compactPadding),
         child: isLoading
             ? SizedBox(
                 width: 20.r,
@@ -32,7 +56,7 @@ class PrimaryButton extends StatelessWidget {
                   color: Colors.white,
                 ),
               )
-            : Text(text),
+            : AppButtonLabel(text),
       ),
     );
   }
@@ -50,7 +74,11 @@ class SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: OutlinedButton(onPressed: onPressed, child: Text(text)),
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(padding: _compactPadding),
+        child: AppButtonLabel(text),
+      ),
     );
   }
 }
@@ -78,7 +106,7 @@ class DangerButton extends StatelessWidget {
         icon: icon != null
             ? Icon(icon, size: 20.r, color: AppColors.red500)
             : const SizedBox.shrink(),
-        label: Text(
+        label: AppButtonLabel(
           text,
           style: TextStyle(
             fontSize: 15.sp,
@@ -89,7 +117,7 @@ class DangerButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.red500.withValues(alpha: 0.05),
           side: BorderSide(color: AppColors.red500.withValues(alpha: 0.2)),
-          padding: EdgeInsets.symmetric(vertical: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.r),
           ),
@@ -152,7 +180,7 @@ class AppButton {
                   ),
                 )
               : Icon(icon, size: 18.r),
-          label: Text(label),
+          label: AppButtonLabel(label),
         ),
       );
     }
@@ -174,7 +202,7 @@ class AppButton {
         child: OutlinedButton.icon(
           onPressed: onPressed,
           icon: Icon(icon, size: 18.r),
-          label: Text(label),
+          label: AppButtonLabel(label),
         ),
       );
     }

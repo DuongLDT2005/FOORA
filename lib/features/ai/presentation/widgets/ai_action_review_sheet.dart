@@ -385,7 +385,11 @@ class _AiActionReviewSheetState extends ConsumerState<AiActionReviewSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(bottom: keyboardHeight),
+        // heightFactor 1: a scroll-controlled sheet may be as tall as the
+        // screen, and a plain Center would float the content in the middle
+        // with empty space above and below.
         child: Center(
+          heightFactor: 1,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: SizedBox(
@@ -447,55 +451,40 @@ class _AiActionReviewSheetState extends ConsumerState<AiActionReviewSheet> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-                    decoration: const BoxDecoration(
-                      color: AppColors.surfaceContainerLowest,
-                      border: Border(
-                        top: BorderSide(color: AppColors.slate100),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_error != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.error_outline_rounded,
-                                  size: 18,
-                                  color: AppColors.red700,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    _error!,
-                                    style: const TextStyle(
-                                      color: AppColors.red700,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            size: 18,
+                            color: AppColors.red700,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(color: AppColors.red700),
                             ),
                           ),
-                        AppFormActions(
-                          onCancel: () => Navigator.of(context).pop(),
-                          onSubmit: _submit,
-                          isSubmitting: _sending,
-                          cancelLabel: 'Để sau',
-                          submitLabel: selectedCount == 0
-                              ? 'Bỏ qua phiếu này'
-                              : isEntryReceipt
-                              ? 'Xác nhận nhập kho'
-                              : 'Cập nhật kho ($selectedCount)',
-                          submitIcon: selectedCount == 0
-                              ? Icons.close_rounded
-                              : Icons.check_rounded,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                  // Same Cancel/Save bar as the inventory item form.
+                  AppBottomBar.form(
+                    onCancel: () => Navigator.of(context).pop(),
+                    onSubmit: _submit,
+                    isSubmitting: _sending,
+                    cancelLabel: 'Để sau',
+                    submitLabel: selectedCount == 0
+                        ? 'Bỏ qua phiếu này'
+                        : isEntryReceipt
+                        ? 'Xác nhận nhập kho'
+                        : 'Cập nhật kho ($selectedCount)',
+                    submitIcon: selectedCount == 0
+                        ? Icons.block_rounded
+                        : Icons.save_outlined,
                   ),
                 ],
               ),
@@ -517,12 +506,10 @@ class _AiActionReviewSheetState extends ConsumerState<AiActionReviewSheet> {
     hintText: hint,
     helperText: helper,
     helperMaxLines: 2,
+    helperStyle: const TextStyle(color: AppColors.slate600),
     suffixText: suffix,
     suffixIcon: suffixIcon,
     isDense: true,
-    // An empty field (the optional expiry) keeps its label on the border
-    // like the filled ones, and shows its hint.
-    floatingLabelBehavior: FloatingLabelBehavior.always,
     filled: false,
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
   );

@@ -27,6 +27,25 @@ class InventoryPage extends ConsumerWidget {
   const InventoryPage({super.key});
 
   /// Asks whether the item was used up or thrown away, then updates it.
+  /// Locked items exceed the Free food limit: they cannot be edited, only
+  /// used up or thrown away (swipe), or unlocked by renewing Premium.
+  Future<void> _onLockedItemTap(BuildContext context) async {
+    final upgrade = await DialogHelper.showConfirmDialog(
+      context,
+      title: 'Món đang bị khóa',
+      message:
+          'Tủ lạnh đang có nhiều món hơn giới hạn của gói Free nên món này '
+          'tạm thời bị khóa. Chủ gia đình gia hạn Premium để mở khóa, hoặc '
+          'vuốt sang trái để đánh dấu đã dùng / vứt bỏ.',
+      confirmText: 'Xem gói Premium',
+      cancelText: 'Đóng',
+      icon: LucideIcons.lock,
+    );
+    if (upgrade == true && context.mounted) {
+      context.push(AppRouteNames.membership);
+    }
+  }
+
   Future<bool> _onRemoveItem(
     BuildContext context,
     WidgetRef ref,
@@ -256,9 +275,14 @@ class InventoryPage extends ConsumerWidget {
                                     category: category,
                                     storageLocationId: item.storageLocationId,
                                     expirationDate: item.expirationDate,
+                                    isLocked: item.isLocked,
                                     onConfirmDelete: () =>
                                         _onRemoveItem(context, ref, item.id),
                                     onTap: () {
+                                      if (item.isLocked) {
+                                        _onLockedItemTap(context);
+                                        return;
+                                      }
                                       context.push(
                                         AppRouteNames.itemForm,
                                         extra: item,

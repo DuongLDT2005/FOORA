@@ -15,9 +15,13 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    // Members locked out by the owner's plan (households.lockedMembers) keep
+    // seeing the household document but lose access to its inventory.
     function isHouseholdMember(householdId) {
+      let household = get(/databases/$(database)/documents/households/$(householdId)).data;
       return isAuthenticated()
-        && request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.members;
+        && request.auth.uid in household.members
+        && !(request.auth.uid in household.get('lockedMembers', []));
     }
 
     // Users collection & Subcollections
@@ -124,6 +128,14 @@ service cloud.firestore {
             'status', 'statusChangedAt', 'updatedAt'
           ])
           && request.resource.data.status in ['active', 'consumed', 'discarded']
+          // Items over the plan's foodLimit (isLocked) are read-only except
+          // for being used up or thrown away, which frees a slot.
+          && (resource.data.get('isLocked', false) != true
+              || (request.resource.data.status != 'active'
+                  && changedKeys().hasOnly([
+                    'quantity', 'remainingPercentage', 'status',
+                    'statusChangedAt', 'updatedAt'
+                  ])))
           // Re-activating a consumed/discarded item would bypass foodLimit.
           && !(resource.data.status != 'active' && request.resource.data.status == 'active')
           && request.resource.data.quantity is number

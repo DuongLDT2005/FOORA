@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Logo green; tints the notification icon and app name. -->
+    <color name="notification_accent">#70AA44</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

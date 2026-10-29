@@ -151,6 +151,40 @@ class MemberListItem extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (member.isLocked) ...[
+                      SizedBox(width: 6.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 2.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.amber50,
+                          borderRadius: BorderRadius.circular(6.r),
+                          border: Border.all(color: AppColors.amber100),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.lock,
+                              size: 11.r,
+                              color: AppColors.amber700,
+                            ),
+                            SizedBox(width: 3.w),
+                            Text(
+                              'Đã khóa',
+                              style: TextStyle(
+                                fontFamily: AppTextStyles.fontFamilySans,
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.amber700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],

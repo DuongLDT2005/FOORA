@@ -29,8 +29,11 @@ export class ExpiryService {
     const snapshot = await this.firestore.collection(Collections.HOUSEHOLDS).get();
     return snapshot.docs.map((doc) => {
       const members = doc.get("members");
+      const locked = doc.get("lockedMembers");
+      const lockedIds = Array.isArray(locked) ? locked : [];
       const memberIds = Array.isArray(members) ?
-        members.filter((member): member is string => typeof member === "string") :
+        members.filter((member): member is string =>
+          typeof member === "string" && !lockedIds.includes(member)) :
         [];
       return {id: doc.id, memberIds};
     });
@@ -49,6 +52,9 @@ export class ExpiryService {
         .get();
 
       for (const doc of snapshot.docs) {
+        if (doc.get("isLocked") === true) {
+          continue;
+        }
         const expirationDate = toDate(doc.get("expirationDate"));
         if (!expirationDate) {
           continue;

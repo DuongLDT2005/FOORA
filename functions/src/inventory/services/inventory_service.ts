@@ -1,6 +1,7 @@
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {db} from "../../config/firebase";
 import {Collections} from "../../constants/collections";
+import {isLockedMember} from "../../household/services/household_service";
 import {MembershipService} from "../../membership/services/membership_service";
 import {
   throwNotFound,
@@ -182,7 +183,8 @@ export class InventoryService {
 
       const householdData = householdDoc.data()!;
       const members: string[] = householdData.members || [];
-      if (!members.includes(uid) && householdData.ownerId !== uid) {
+      if ((!members.includes(uid) && householdData.ownerId !== uid) ||
+          isLockedMember(householdData, uid)) {
         throwPermissionDenied("Bạn không có quyền thêm món vào gia đình này.");
       }
 
@@ -312,7 +314,8 @@ export class InventoryService {
 
       const householdData = householdDoc.data()!;
       const members: string[] = householdData.members || [];
-      if (!members.includes(uid) && householdData.ownerId !== uid) {
+      if ((!members.includes(uid) && householdData.ownerId !== uid) ||
+          isLockedMember(householdData, uid)) {
         throwPermissionDenied("Bạn không có quyền thêm món vào gia đình này.");
       }
 

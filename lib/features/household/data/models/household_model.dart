@@ -9,6 +9,7 @@ class HouseholdModel extends Household {
     required super.name,
     required super.ownerId,
     required super.members,
+    super.lockedMembers = const [],
     super.activeItemCount = 0,
     required super.createdAt,
     required super.updatedAt,
@@ -33,6 +34,11 @@ class HouseholdModel extends Household {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      lockedMembers:
+          (json['lockedMembers'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       activeItemCount: (json['activeItemCount'] as num?)?.toInt() ?? 0,
       createdAt: _parseDateTime(json['createdAt']),
       updatedAt: _parseDateTime(json['updatedAt']),
@@ -46,6 +52,7 @@ class HouseholdModel extends Household {
       name: household.name,
       ownerId: household.ownerId,
       members: household.members,
+      lockedMembers: household.lockedMembers,
       activeItemCount: household.activeItemCount,
       createdAt: household.createdAt,
       updatedAt: household.updatedAt,

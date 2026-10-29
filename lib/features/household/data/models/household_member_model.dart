@@ -9,6 +9,7 @@ class HouseholdMemberModel extends HouseholdMember {
     super.avatarUrl,
     required super.role,
     super.isCurrentUser = false,
+    super.isLocked = false,
   });
 
   factory HouseholdMemberModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,7 @@ class HouseholdMemberModel extends HouseholdMember {
       avatarUrl: json['avatarUrl'] as String?,
       role: HouseholdRole.fromString(json['role'] as String?),
       isCurrentUser: json['isCurrentUser'] as bool? ?? false,
+      isLocked: json['isLocked'] as bool? ?? false,
     );
   }
 
@@ -28,6 +30,7 @@ class HouseholdMemberModel extends HouseholdMember {
       'avatarUrl': avatarUrl,
       'role': role.value,
       'isCurrentUser': isCurrentUser,
+      'isLocked': isLocked,
     };
   }
 }

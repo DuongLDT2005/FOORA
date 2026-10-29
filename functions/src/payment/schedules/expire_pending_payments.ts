@@ -3,7 +3,48 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 import {db, REGION} from "../../config/firebase";
 import * as logger from "firebase-functions/logger";
 import {Collections} from "../../constants/collections";
+import {MembershipIds} from "../../membership/services/entitlement";
 import {MembershipService} from "../../membership/services/membership_service";
+import {
+  HouseholdEnforcementResult,
+  PlanEnforcementService,
+} from "../../membership/services/plan_enforcement";
+
+/**
+ * Tells the owner their Premium ended and what was locked because of it.
+ * @param {string} uid Owner whose Premium expired.
+ * @param {HouseholdEnforcementResult[]} households Enforcement results.
+ * @return {Promise<void>}
+ */
+async function notifyPremiumExpired(
+  uid: string,
+  households: HouseholdEnforcementResult[]
+): Promise<void> {
+  const lockedMembers = households
+    .reduce((total, item) => total + item.lockedMemberCount, 0);
+  const lockedItems = households
+    .reduce((total, item) => total + item.lockedItemCount, 0);
+  const locked = [
+    lockedMembers > 0 ? `${lockedMembers} thành viên` : null,
+    lockedItems > 0 ? `${lockedItems} món` : null,
+  ].filter((part) => part !== null);
+  const message = locked.length > 0 ?
+    `Tài khoản đã về gói Free. ${locked.join(" và ")} vượt giới hạn gói ` +
+      "Free đã bị khóa. Gia hạn Premium để mở khóa lại." :
+    "Tài khoản đã về gói Free. Gia hạn Premium để tiếp tục dùng các " +
+      "quyền lợi không giới hạn.";
+  await db.collection(Collections.USERS).doc(uid)
+    .collection(Collections.NOTIFICATIONS).doc()
+    .set({
+      householdId: households[0]?.householdId ?? null,
+      type: "system",
+      title: "Gói Premium đã hết hạn",
+      message,
+      inventoryItemId: null,
+      isRead: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+}
 
 export const expirePendingPayments = onSchedule(
   {
@@ -56,16 +97,21 @@ export const expirePendingPayments = onSchedule(
       await subscriptionBatch.commit();
 
       // Recompute the derived cache: only downgrade users with no other
-      // active subscription.
+      // active subscription, then lock what exceeds the Free plan.
+      const userIds = [...affectedUserIds];
       const results = await Promise.allSettled(
-        [...affectedUserIds].map((uid) =>
-          MembershipService.syncMembershipCache(uid))
+        userIds.map(async (uid) => {
+          const membershipId = await MembershipService.syncMembershipCache(uid);
+          if (membershipId !== MembershipIds.FREE) return;
+          const households = await PlanEnforcementService.enforceForOwner(uid);
+          await notifyPremiumExpired(uid, households);
+        })
       );
       results.forEach((result, index) => {
         if (result.status === "rejected") {
           logger.error(
-            "[expirePendingPayments] membership cache sync failed",
-            {uid: [...affectedUserIds][index], error: result.reason}
+            "[expirePendingPayments] membership downgrade failed",
+            {uid: userIds[index], error: result.reason}
           );
         }
       });

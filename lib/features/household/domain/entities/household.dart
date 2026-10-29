@@ -9,6 +9,8 @@ class Household {
   final String name;
   final String ownerId;
   final List<String> members; // Array of userIds
+  // Members over the owner's plan seat limit; backend-managed.
+  final List<String> lockedMembers;
   final int activeItemCount;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -18,6 +20,7 @@ class Household {
     required this.name,
     required this.ownerId,
     required this.members,
+    this.lockedMembers = const [],
     this.activeItemCount = 0,
     required this.createdAt,
     required this.updatedAt,
@@ -29,11 +32,15 @@ class Household {
   /// Whether [userId] belongs to this household.
   bool isMember(String userId) => members.contains(userId);
 
+  /// Whether [userId] is locked out by the owner's plan.
+  bool isLockedMember(String userId) => lockedMembers.contains(userId);
+
   Household copyWith({
     String? id,
     String? name,
     String? ownerId,
     List<String>? members,
+    List<String>? lockedMembers,
     int? activeItemCount,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -43,6 +50,7 @@ class Household {
       name: name ?? this.name,
       ownerId: ownerId ?? this.ownerId,
       members: members ?? this.members,
+      lockedMembers: lockedMembers ?? this.lockedMembers,
       activeItemCount: activeItemCount ?? this.activeItemCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -57,6 +65,10 @@ class Household {
         other.name == name &&
         other.ownerId == ownerId &&
         const ListEquality<dynamic>().equals(other.members, members) &&
+        const ListEquality<dynamic>().equals(
+          other.lockedMembers,
+          lockedMembers,
+        ) &&
         other.activeItemCount == activeItemCount &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
@@ -68,6 +80,7 @@ class Household {
     name,
     ownerId,
     Object.hashAll(members),
+    Object.hashAll(lockedMembers),
     activeItemCount,
     createdAt,
     updatedAt,

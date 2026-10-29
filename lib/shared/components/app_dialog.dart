@@ -96,8 +96,8 @@ class AppDialog extends StatelessWidget {
               ),
               SizedBox(height: 24.h),
               if (secondaryText != null) ...[
-                // Choice layout: Two balanced primary actions (Vứt bỏ & Đã dùng)
-                // with plenty of horizontal space so text never wraps awkwardly.
+                // Choice layout: Two balanced primary actions (Vứt bỏ & Đã dùng);
+                // labels shrink to fit instead of wrapping, as in AppButton.
                 Row(
                   children: [
                     Expanded(
@@ -108,15 +108,13 @@ class AppDialog extends StatelessWidget {
                           size: 17.r,
                           color: AppColors.red600,
                         ),
-                        label: Text(
+                        label: AppButtonLabel(
                           secondaryText!,
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w700,
                             color: AppColors.red600,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: AppColors.red50,
@@ -139,15 +137,13 @@ class AppDialog extends StatelessWidget {
                           size: 18.r,
                           color: Colors.white,
                         ),
-                        label: Text(
+                        label: AppButtonLabel(
                           confirmText,
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,

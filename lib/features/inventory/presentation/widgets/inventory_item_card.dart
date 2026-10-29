@@ -19,6 +19,8 @@ class InventoryItemCard extends StatelessWidget {
   final FoodCategory? category;
   final String storageLocationId; // 'fridge' or 'freezer'
   final DateTime expirationDate;
+  // Over the Free plan's food limit: shown dimmed with a lock badge.
+  final bool isLocked;
   final VoidCallback? onDelete;
   final Future<bool?> Function()? onConfirmDelete;
   final VoidCallback onTap;
@@ -34,6 +36,7 @@ class InventoryItemCard extends StatelessWidget {
     this.category,
     required this.storageLocationId,
     required this.expirationDate,
+    this.isLocked = false,
     this.onDelete,
     this.onConfirmDelete,
     required this.onTap,
@@ -86,142 +89,175 @@ class InventoryItemCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                // Image with expired filter
-                _buildImage(isExpired),
-                SizedBox(width: 12.w),
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top row: Title and Status Badge
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 14.sp, // ~11px in web
-                                fontWeight: FontWeight.bold,
-                                color: isExpired
-                                    ? AppColors.slate400
-                                    : AppColors.slate800,
-                                decoration: isExpired
-                                    ? TextDecoration.lineThrough
-                                    : null,
+            child: Opacity(
+              opacity: isLocked ? 0.6 : 1,
+              child: Row(
+                children: [
+                  // Image with expired filter
+                  _buildImage(isExpired),
+                  SizedBox(width: 12.w),
+                  // Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top row: Title and Status Badge
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: TextStyle(
+                                  fontSize: 14.sp, // ~11px in web
+                                  fontWeight: FontWeight.bold,
+                                  color: isExpired
+                                      ? AppColors.slate400
+                                      : AppColors.slate800,
+                                  decoration: isExpired
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          SizedBox(width: 8.w),
-                          _buildStatusBadge(
-                            isExpired,
-                            isWarning,
-                            daysUntilExpiry,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 6.h),
-                      _buildStorageBadge(),
-                      SizedBox(height: 6.h),
-                      // Middle row: Quantity and percentage
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Lượng còn: $quantity $unit',
+                            SizedBox(width: 8.w),
+                            isLocked
+                                ? _buildLockedBadge()
+                                : _buildStatusBadge(
+                                    isExpired,
+                                    isWarning,
+                                    daysUntilExpiry,
+                                  ),
+                          ],
+                        ),
+                        SizedBox(height: 6.h),
+                        _buildStorageBadge(),
+                        SizedBox(height: 6.h),
+                        // Middle row: Quantity and percentage
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Lượng còn: $quantity $unit',
+                                style: TextStyle(
+                                  fontSize: 12.sp, // ~9px in web
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.slate400,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '$percentageRemaining%',
                               style: TextStyle(
-                                fontSize: 12.sp, // ~9px in web
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.slate400,
                               ),
                             ),
-                          ),
-                          Text(
-                            '$percentageRemaining%',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.slate400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      // Progress Bar
-                      Container(
-                        height: 4.h,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppColors.slate50,
-                          borderRadius: BorderRadius.circular(4.r),
+                          ],
                         ),
-                        child: FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: (percentageRemaining / 100).clamp(
-                            0.0,
-                            1.0,
+                        SizedBox(height: 4.h),
+                        // Progress Bar
+                        Container(
+                          height: 4.h,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: AppColors.slate50,
+                            borderRadius: BorderRadius.circular(4.r),
                           ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: isExpired
-                                  ? AppColors.red500
-                                  : (isWarning
-                                        ? AppColors.amber500
-                                        : AppColors.emerald500),
-                              borderRadius: BorderRadius.circular(4.r),
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: (percentageRemaining / 100).clamp(
+                              0.0,
+                              1.0,
                             ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      // Bottom row: Expiry Date, Category
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            'HSD: ${DateFormatter.formatDate(expirationDate)}',
-                            style: TextStyle(
-                              fontSize: 11.sp, // ~8px in web
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.slate400,
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4.w),
-                            child: Text(
-                              '•',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: AppColors.slate400,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isExpired
+                                    ? AppColors.red500
+                                    : (isWarning
+                                          ? AppColors.amber500
+                                          : AppColors.emerald500),
+                                borderRadius: BorderRadius.circular(4.r),
                               ),
                             ),
                           ),
-                          Expanded(
-                            child: Text(
-                              category?.name ?? 'Chưa phân loại',
+                        ),
+                        SizedBox(height: 6.h),
+                        // Bottom row: Expiry Date, Category
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'HSD: ${DateFormatter.formatDate(expirationDate)}',
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: 11.sp, // ~8px in web
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.slate400,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4.w),
+                              child: Text(
+                                '•',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.slate400,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                category?.name ?? 'Chưa phân loại',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.slate400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Badge for an item locked by the Free plan's food limit.
+  Widget _buildLockedBadge() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: AppColors.slate100,
+        borderRadius: BorderRadius.circular(4.r),
+        border: Border.all(color: AppColors.slate200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.lock, size: 10.r, color: AppColors.slate600),
+          SizedBox(width: 2.w),
+          Text(
+            'ĐÃ KHÓA',
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w900,
+              color: AppColors.slate600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
