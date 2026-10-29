@@ -105,6 +105,7 @@ enum NotificationType {
   expirationAlert('expiration_alert'),
   upcomingExpiration('upcoming_expiration'),
   priorityFood('priority_food'),
+  shoppingReminder('shopping_reminder'),
   system('system');
 
   final String value;
@@ -201,6 +202,24 @@ enum HouseholdInvitationStatus {
     return HouseholdInvitationStatus.values.firstWhere(
       (e) => e.value == value,
       orElse: () => HouseholdInvitationStatus.active,
+    );
+  }
+}
+
+/// How a shopping item was added: 'manual', 'voice', 'suggestion', 'ai_recipe'
+enum ShoppingItemSource {
+  manual('manual'),
+  voice('voice'),
+  suggestion('suggestion'),
+  aiRecipe('ai_recipe');
+
+  final String value;
+  const ShoppingItemSource(this.value);
+
+  static ShoppingItemSource fromString(String? value) {
+    return ShoppingItemSource.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => ShoppingItemSource.manual,
     );
   }
 }

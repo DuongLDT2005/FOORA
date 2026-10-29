@@ -126,54 +126,79 @@ class InventoryPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  // Manage expiry button
-                  GestureDetector(
-                    onTap: () {
-                      context.push(AppRouteNames.expirationManagement);
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.red50,
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(color: AppColors.red100),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Quản lý hạn dùng',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.red700,
-                            ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Shopping List shortcut
+                      GestureDetector(
+                        onTap: () {
+                          context.push(AppRouteNames.shoppingLists);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(7.r),
+                          decoration: BoxDecoration(
+                            color: AppColors.slate100,
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(color: AppColors.slate200),
                           ),
-                          if (totalWarning > 0) ...[
-                            SizedBox(width: 6.w),
-                            Container(
-                              padding: EdgeInsets.all(4.r),
-                              decoration: const BoxDecoration(
-                                color: AppColors.red600,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                totalWarning.toString(),
+                          child: Icon(
+                            LucideIcons.shoppingBag,
+                            size: 16.r,
+                            color: AppColors.slate700,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      // Manage expiry button
+                      GestureDetector(
+                        onTap: () {
+                          context.push(AppRouteNames.expirationManagement);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.red50,
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(color: AppColors.red100),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Quản lý hạn dùng',
                                 style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  fontFamily: 'Inter',
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.red700,
                                 ),
                               ),
-                            ),
-                          ],
-                        ],
+                              if (totalWarning > 0) ...[
+                                SizedBox(width: 6.w),
+                                Container(
+                                  padding: EdgeInsets.all(4.r),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.red600,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    totalWarning.toString(),
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

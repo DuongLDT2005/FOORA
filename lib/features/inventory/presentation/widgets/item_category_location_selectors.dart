@@ -20,6 +20,10 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
   final ValueChanged<String> onLocationChanged;
   final VoidCallback? onRetry;
 
+  /// When set and no listed category is selected, this hint is shown instead
+  /// of falling back to the first category, so the user must pick one.
+  final String? categoryPlaceholder;
+
   const ItemCategoryLocationSelectors({
     super.key,
     required this.isLoading,
@@ -30,6 +34,7 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
     required this.onCategoryChanged,
     required this.onLocationChanged,
     this.onRetry,
+    this.categoryPlaceholder,
   });
 
   @override
@@ -105,9 +110,13 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
     }
 
     // 3. Display dropdown & selector
-    final activeCatId = categories.any((c) => c.id == selectedCategoryId)
+    final hasSelectedCategory = categories.any(
+      (c) => c.id == selectedCategoryId,
+    );
+    final showPlaceholder = !hasSelectedCategory && categoryPlaceholder != null;
+    final activeCatId = hasSelectedCategory
         ? selectedCategoryId
-        : categories.first.id;
+        : (showPlaceholder ? '' : categories.first.id);
 
     final activeLocId =
         storageLocations.any((l) => l.id == selectedStorageLocationId)
@@ -189,20 +198,28 @@ class ItemCategoryLocationSelectors extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(
-                        _getCategoryIcon(selectedCat.icon),
+                        showPlaceholder
+                            ? LucideIcons.layoutGrid
+                            : _getCategoryIcon(selectedCat.icon),
                         size: 20.r,
-                        color: AppColors.primary,
+                        color: showPlaceholder
+                            ? AppColors.slate400
+                            : AppColors.primary,
                       ),
                       SizedBox(width: 10.w),
                       Flexible(
                         child: Text(
-                          selectedCat.name,
+                          showPlaceholder
+                              ? categoryPlaceholder!
+                              : selectedCat.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyMedium.copyWith(
                             fontWeight: FontWeight.w600,
                             fontSize: 14.sp,
-                            color: AppColors.slate800,
+                            color: showPlaceholder
+                                ? AppColors.slate400
+                                : AppColors.slate800,
                           ),
                         ),
                       ),
