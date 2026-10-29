@@ -262,7 +262,7 @@ Future AI capabilities may include:
 - Recipe recommendations
 - Menu recommendations
 - Smart shopping recommendations
-- Voice-based inventory queries
+- Voice-based inventory queries (implemented alongside initial assistant chat via speech-to-text; inventory actions remain planned)
 - Voice-based inventory updates
 
 AI food recognition from food images is **not part of the current core MVP**.

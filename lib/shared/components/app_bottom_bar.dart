@@ -32,87 +32,13 @@ class AppBottomBar extends StatelessWidget {
   }) {
     return AppBottomBar(
       key: key,
-      child: Row(
-        children: [
-          // Cancel button (Flex 1)
-          Expanded(
-            flex: 1,
-            child: SizedBox(
-              height: 50.h,
-              child: ElevatedButton(
-                onPressed: isSubmitting ? null : onCancel,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.slate100,
-                  foregroundColor: AppColors.slate600,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  padding: EdgeInsets.zero,
-                ),
-                child: Text(
-                  cancelLabel,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.slate600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          // Save info button (Flex 2)
-          Expanded(
-            flex: 2,
-            child: SizedBox(
-              height: 50.h,
-              child: ElevatedButton(
-                onPressed: isSubmitting ? null : onSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                  shadowColor: AppColors.primary.withValues(alpha: 0.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                ),
-                child: isSubmitting
-                    ? SizedBox(
-                        width: 22.r,
-                        height: 22.r,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2.4,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(submitIcon, size: 20.r, color: Colors.white),
-                          SizedBox(width: 8.w),
-                          Flexible(
-                            child: Text(
-                              submitLabel,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-          ),
-        ],
+      child: AppFormActions(
+        onCancel: onCancel,
+        onSubmit: onSubmit,
+        cancelLabel: cancelLabel,
+        submitLabel: submitLabel,
+        submitIcon: submitIcon,
+        isSubmitting: isSubmitting,
       ),
     );
   }
@@ -284,6 +210,111 @@ class AppBottomBar extends StatelessWidget {
           child: SafeArea(top: false, left: false, right: false, child: child),
         ),
       ),
+    );
+  }
+}
+
+/// The Cancel + Save pair of [AppBottomBar.form], for footers that are not
+/// a page's bottom bar (e.g. a bottom sheet).
+class AppFormActions extends StatelessWidget {
+  const AppFormActions({
+    super.key,
+    required this.onCancel,
+    required this.onSubmit,
+    this.cancelLabel = 'Hủy',
+    this.submitLabel = 'Lưu thông tin',
+    this.submitIcon = Icons.save_outlined,
+    this.isSubmitting = false,
+  });
+
+  final VoidCallback? onCancel;
+  final VoidCallback? onSubmit;
+  final String cancelLabel;
+  final String submitLabel;
+  final IconData submitIcon;
+  final bool isSubmitting;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Cancel button (Flex 1)
+        Expanded(
+          flex: 1,
+          child: SizedBox(
+            height: 50.h,
+            child: ElevatedButton(
+              onPressed: isSubmitting ? null : onCancel,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.slate100,
+                foregroundColor: AppColors.slate600,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(
+                cancelLabel,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.slate600,
+                ),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 12.w),
+        // Save info button (Flex 2)
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            height: 50.h,
+            child: ElevatedButton(
+              onPressed: isSubmitting ? null : onSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 2,
+                shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+              ),
+              child: isSubmitting
+                  ? SizedBox(
+                      width: 22.r,
+                      height: 22.r,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(submitIcon, size: 20.r, color: Colors.white),
+                        SizedBox(width: 8.w),
+                        Flexible(
+                          child: Text(
+                            submitLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

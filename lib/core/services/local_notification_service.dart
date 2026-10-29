@@ -75,9 +75,7 @@ class LocalNotificationServiceImpl implements LocalNotificationService {
         final offset = now.timeZoneOffset;
         final location = tz.getLocation(
           tz.timeZoneDatabase.locations.keys.firstWhere(
-            (k) =>
-                tz.getLocation(k).currentTimeZone.offset ==
-                offset.inMilliseconds,
+            (k) => tz.getLocation(k).currentTimeZone.offset == offset,
             orElse: () => 'UTC',
           ),
         );

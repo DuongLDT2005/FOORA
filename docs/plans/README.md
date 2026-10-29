@@ -10,7 +10,7 @@ Khi code, làm **đúng theo plan**; nếu cần lệch thì sửa plan trước
 | 01 | [PLAN_01_SHOPPING_LIST.md](./PLAN_01_SHOPPING_LIST.md) | 5. Shopping list + "Frequently bought" | — |
 | 02 | [PLAN_02_WEEKLY_SHOPPING_REMINDER.md](./PLAN_02_WEEKLY_SHOPPING_REMINDER.md) | 7. Nhắc đi chợ hằng tuần (+ đồng bộ cài đặt thông báo) | 01 |
 | 03 | [PLAN_03_NEARBY_STORES_MAP.md](./PLAN_03_NEARBY_STORES_MAP.md) | 8. Map siêu thị / chợ gần đây | 01 (nút "Đi chợ") |
-| 04 | [PLAN_04_AI_VOICE_ASSISTANT.md](./PLAN_04_AI_VOICE_ASSISTANT.md) | 9. Trợ lý AI giọng nói (cập nhật kho + gợi ý món) | 01 |
+| 04 | [PLAN_04_AI_VOICE_ASSISTANT.md](./PLAN_04_AI_VOICE_ASSISTANT.md) | 9. Trợ lý AI giọng nói (cập nhật kho + gợi ý món) | Độc lập; nút thêm shopping list sau 01 |
 | 05 | [PLAN_05_HOUSEHOLD_SHARING.md](./PLAN_05_HOUSEHOLD_SHARING.md) | Household sharing (mã mời 6 ký tự) | — |
 | 06 | [PLAN_06_WASTE_STATISTICS.md](./PLAN_06_WASTE_STATISTICS.md) | Waste statistics | — |
 | 07 | [PLAN_07_WEB_ADMIN.md](./PLAN_07_WEB_ADMIN.md) | Web admin dashboard + đăng nhập admin | — |

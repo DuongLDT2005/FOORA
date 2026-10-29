@@ -13,6 +13,7 @@ export interface MembershipLimits {
   receiptScanQuota: number | null;
   /** Max people in a household owned by this plan, owner included. */
   memberLimit: number | null;
+  aiAssistantDailyQuota?: number | null;
 }
 
 /**
@@ -68,6 +69,7 @@ export class MembershipService {
         data.receiptScanQuota : null,
       memberLimit: typeof data.memberLimit === "number" ?
         data.memberLimit : null,
+      aiAssistantDailyQuota: data.aiAssistantDailyQuota,
     };
   }
 

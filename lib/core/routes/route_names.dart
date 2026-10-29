@@ -15,6 +15,7 @@ class AppRouteNames {
   static const String itemForm = '/inventory/item-form';
   static const String expirationManagement = '/inventory/expiration-management';
   static const String notifications = '/notifications';
+  static const String aiAssistant = '/ai-assistant';
   static const String profileDetail = '/profile/detail';
   static const String notificationSettings = '/profile/notification-settings';
   static const String myMembership = '/profile/my-membership';

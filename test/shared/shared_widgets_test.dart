@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foora/shared/components/app_bottom_bar.dart';
 import 'package:foora/shared/widgets/app_button.dart';
 import 'package:foora/shared/widgets/app_card.dart';
 import 'package:foora/shared/widgets/app_text_field.dart';
@@ -154,6 +155,52 @@ void main() {
 
       expect(find.text('Không thể kết nối mạng'), findsOneWidget);
     });
+
+    testWidgets('AppFormActions triggers cancel and submit', (tester) async {
+      var cancelled = false;
+      var submitted = false;
+
+      await tester.pumpWidget(
+        makeTestableWidget(
+          AppFormActions(
+            onCancel: () => cancelled = true,
+            onSubmit: () => submitted = true,
+            cancelLabel: 'Để sau',
+            submitLabel: 'Xác nhận',
+            submitIcon: Icons.check_rounded,
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+      await tester.tap(find.text('Để sau'));
+      await tester.tap(find.text('Xác nhận'));
+      expect(cancelled, isTrue);
+      expect(submitted, isTrue);
+    });
+
+    testWidgets(
+      'AppFormActions shows a spinner and disables while submitting',
+      (tester) async {
+        await tester.pumpWidget(
+          makeTestableWidget(
+            AppFormActions(
+              onCancel: () {},
+              onSubmit: () {},
+              submitLabel: 'Xác nhận',
+              isSubmitting: true,
+            ),
+          ),
+        );
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('Xác nhận'), findsNothing);
+        final buttons = tester.widgetList<ElevatedButton>(
+          find.byType(ElevatedButton),
+        );
+        expect(buttons.every((button) => button.onPressed == null), isTrue);
+      },
+    );
 
     testWidgets('FeatureCard renders title, subtitle and handles tap', (
       tester,
