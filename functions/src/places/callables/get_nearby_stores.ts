@@ -4,14 +4,18 @@ import {REGION} from "../../config/firebase";
 import {ApiResponse} from "../../types";
 import {getAuthenticatedUser} from "../../utils/auth";
 import {handleFunctionError, throwInvalidArgument} from "../../utils/errors";
-import {OverpassClient} from "../services/overpass_client";
+import {
+  DEFAULT_OVERPASS_ENDPOINTS,
+  OverpassClient,
+} from "../services/overpass_client";
 import {
   NearbyStoreRecord,
 } from "../services/overpass_query";
 import {NearbyStoresResult, PlacesService} from "../services/places_service";
 
+/** Comma-separated; later URLs are fallbacks when earlier ones fail. */
 const overpassUrl = defineString("OVERPASS_URL", {
-  default: "https://overpass-api.de/api/interpreter",
+  default: DEFAULT_OVERPASS_ENDPOINTS.join(","),
 });
 
 interface GetNearbyStoresInput {

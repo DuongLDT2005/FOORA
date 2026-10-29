@@ -16,6 +16,9 @@ import '../../../../shared/helpers/bottom_sheet_helper.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
+import '../../../shopping/domain/usecases/build_recipe_shopping_drafts.dart';
+import '../../../shopping/presentation/providers/shopping_providers.dart';
+import '../../../shopping/presentation/widgets/add_recipe_to_shopping_sheet.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/entities/ai_recipe.dart';
 import '../providers/ai_provider.dart';
@@ -294,6 +297,47 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     context.showToast('Sửa lại lượng bạn đã dùng rồi gửi để trừ kho.');
   }
 
+  /// Lets the user add the recipe's "to buy" ingredients to a shopping list
+  /// after reviewing them; the assistant itself never writes the list.
+  Future<void> _addToShopping(AiRecipe recipe) async {
+    final outcome = await AddRecipeToShoppingSheet.show(
+      context,
+      recipeTitle: recipe.title,
+      ingredients: [
+        for (final ingredient in recipe.ingredients)
+          if (!ingredient.inInventory)
+            RecipeShoppingIngredient(
+              name: ingredient.name,
+              quantity: ingredient.quantity,
+              unit: ingredient.unit,
+            ),
+      ],
+    );
+    if (outcome == null || !mounted) return;
+    final result = outcome.result;
+    final saved = result.added + result.merged;
+    final parts = [
+      if (saved > 0)
+        'Đã thêm $saved món'
+            '${result.merged > 0 ? ' (cộng dồn ${result.merged})' : ''}',
+      if (result.failedNames.isNotEmpty)
+        'Không thêm được: ${result.failedNames.join(', ')}',
+    ];
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(parts.join('. ')),
+        action: saved == 0
+            ? null
+            : SnackBarAction(
+                label: 'Xem',
+                onPressed: () => context.push(
+                  AppRouteNames.shoppingListDetailPath(outcome.listId),
+                ),
+              ),
+      ),
+    );
+  }
+
   /// Clears the draft (and any dictation) before switching conversations.
   void _resetComposer() {
     if (_isListening) {
@@ -401,6 +445,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         !chat.isSending &&
         chat.pendingMessage == null;
     final isEmptyChat = messages.isEmpty && chat.pendingMessage == null;
+    final canUseShoppingLists = ref.watch(canUseShoppingListsProvider);
     final followUps =
         !outOfQuota &&
             !chat.isSending &&
@@ -510,6 +555,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                                 : ValueKey(message.id),
                             message: message,
                             onCooked: _reportCooked,
+                            onAddToShopping: canUseShoppingLists
+                                ? _addToShopping
+                                : null,
                             onReviewActions: message.actionStatus == 'proposed'
                                 ? () async {
                                     await showModalBottomSheet<void>(

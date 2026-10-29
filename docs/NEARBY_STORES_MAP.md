@@ -22,13 +22,17 @@ Coordinates are validated and radius is clamped to 500–5000 m (default 3000).
 Its response is `ApiResponse<{ stores, cached, source: 'openstreetmap' }>`,
 where `cached` tells the client that the 24-hour cache was used.
 
-`OVERPASS_URL` is a non-secret Firebase parameter. Its production default is
-`https://overpass-api.de/api/interpreter`.
+`OVERPASS_URL` is a non-secret Firebase parameter holding a comma-separated
+list of Overpass endpoints: `overpass-api.de`, then the `overpass.private.coffee`
+and `maps.mail.ru` mirrors. A network error, 429 or 5xx moves on to the next
+mirror; a 4xx means the query is wrong and fails at once. The warning log
+lists every mirror with its error (for example `fetch failed (ECONNRESET)`).
 
 Overpass returns elements by ID, not by distance, so the callable asks for up
-to 1000 elements and caches the 200 nearest to the cell centre. A 429/504 is
-retried once after 30 s only when the 62 s query budget still allows it;
-otherwise the stale cache is returned, or `unavailable` when there is none.
+to 1000 elements and caches the 200 nearest to the cell centre. All mirrors share a
+62 s budget. With a single endpoint, a 429/504 is retried once after 30 s when
+the budget still allows it. When everything fails the stale cache is returned,
+or `unavailable` when there is none.
 
 ## Local development
 

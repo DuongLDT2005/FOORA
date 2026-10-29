@@ -4,6 +4,7 @@
 > - **Nhiều danh sách / household** thay cho một danh sách: `households/{id}/shopping_lists/{listId}/items/{itemId}` (schema ở DATABASE.md §9.1–9.2). Route `/shopping-lists` và `/shopping-lists/:id`.
 > - Trạng thái món là `isPurchased` + `isAddedToInventory` (thay cho `pending`/`bought`): tick "đã mua" ghi trực tiếp (Rules kiểm tra), sau đó "Nhập kho (n)" gọi callable **`importShoppingItemsToInventory`** (thay cho `completeShoppingItems`), dùng chung `InventoryService.executeBatchAddInTransaction`.
 > - Xóa danh sách qua callable `deleteShoppingList` (recursive delete); gợi ý "Hay mua" và nhập giọng nói làm đúng §4.1, §4.2, §2.1, §5.4.
+> - Thêm từ gợi ý món AI (PLAN 04 Phase 5): `AddRecipeToShoppingSheet` + `BuildRecipeShoppingDraftsUseCase` + `ShoppingController.addItems`, `source: ai_recipe`.
 > - Gộp món trùng (§5.3): client tìm món chưa mua cùng `normalizedName` + `unit` rồi cộng số lượng trong transaction (SDK client không query được trong transaction).
 
 > Chức năng 5 trong `PRM393_Project.docx` (tương ứng "Shopping cart" của project mẫu).

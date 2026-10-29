@@ -48,6 +48,12 @@ final _activeHouseholdIdProvider = Provider<String?>((ref) {
   return id == null || id.isEmpty ? null : id;
 });
 
+/// Shopping lists belong to a household, so other features (the AI recipe
+/// card) only offer "add to shopping list" when one is active.
+final canUseShoppingListsProvider = Provider<bool>(
+  (ref) => ref.watch(_activeHouseholdIdProvider) != null,
+);
+
 // --- Streams ---
 
 final shoppingListsStreamProvider =
@@ -152,6 +158,38 @@ class ShoppingController {
     );
     _ref.invalidate(shoppingSuggestionsProvider);
     return result;
+  }
+
+  /// Adds [drafts] one by one. A failed item does not stop the others; its
+  /// name is reported so the user can add it by hand.
+  Future<AddShoppingItemsResult> addItems(
+    String listId,
+    List<ShoppingItemDraft> drafts,
+  ) async {
+    final useCase = AddShoppingItemUseCase(_repository);
+    final householdId = _householdId;
+    var added = 0;
+    var merged = 0;
+    final failedNames = <String>[];
+    for (final draft in drafts) {
+      try {
+        final result = await useCase(
+          householdId: householdId,
+          listId: listId,
+          draft: draft,
+          userId: _userId,
+        );
+        result.merged ? merged++ : added++;
+      } catch (_) {
+        failedNames.add(draft.name);
+      }
+    }
+    _ref.invalidate(shoppingSuggestionsProvider);
+    return AddShoppingItemsResult(
+      added: added,
+      merged: merged,
+      failedNames: failedNames,
+    );
   }
 
   Future<void> updateItem(ShoppingItem item, ShoppingItemDraft draft) {

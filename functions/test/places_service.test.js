@@ -142,3 +142,57 @@ test("skips the retry when the time budget is spent", async () => {
 
   await assert.rejects(client.query("q"), OverpassError);
 });
+
+test("falls over to the next mirror when one cannot be reached", async () => {
+  const called = [];
+  const client = new OverpassClient(
+    "https://a.test/api, https://b.test/api",
+    async (url) => {
+      called.push(url);
+      if (url.startsWith("https://a.test")) {
+        throw new TypeError("fetch failed", {cause: {code: "ECONNRESET"}});
+      }
+      return response(200, {elements: [{type: "node", id: 1}]});
+    },
+    async () => assert.fail("should not wait"),
+    () => 0
+  );
+
+  assert.equal((await client.query("q")).length, 1);
+  assert.deepEqual(called, ["https://a.test/api", "https://b.test/api"]);
+});
+
+test("reports every mirror's error when all of them fail", async () => {
+  const client = new OverpassClient(
+    ["https://a.test/api", "https://b.test/api"],
+    async (url) => {
+      if (url.startsWith("https://a.test")) {
+        throw new TypeError("fetch failed", {cause: {code: "ENOTFOUND"}});
+      }
+      return response(503);
+    },
+    async () => assert.fail("should not wait"),
+    () => 0
+  );
+
+  await assert.rejects(client.query("q"), (error) =>
+    error instanceof OverpassError &&
+    error.message === "a.test: fetch failed (ENOTFOUND); b.test: HTTP 503"
+  );
+});
+
+test("does not try other mirrors for a bad query", async () => {
+  const called = [];
+  const client = new OverpassClient(
+    ["https://a.test/api", "https://b.test/api"],
+    async (url) => {
+      called.push(url);
+      return response(400);
+    },
+    async () => assert.fail("should not wait"),
+    () => 0
+  );
+
+  await assert.rejects(client.query("q"), OverpassError);
+  assert.deepEqual(called, ["https://a.test/api"]);
+});
