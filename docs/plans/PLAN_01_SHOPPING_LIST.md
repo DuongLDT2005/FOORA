@@ -9,7 +9,7 @@
 
 > Chức năng 5 trong `PRM393_Project.docx` (tương ứng "Shopping cart" của project mẫu).
 > Phụ thuộc: nên làm sau PLAN 05 (household sharing) vì danh sách dùng chung cả household.
-> Được dùng bởi: PLAN 02 (nhắc đi chợ), PLAN 03 (nút "Đi chợ" → Map), PLAN 04 (AI thêm nguyên liệu thiếu).
+> Được dùng bởi: PLAN 02 (nhắc đi chợ), PLAN 04 (AI thêm nguyên liệu thiếu). PLAN 03 (Map) đã bỏ nên không có nút "Đi chợ".
 
 ## 1. Phạm vi (đúng theo đề, không thêm)
 
@@ -18,7 +18,7 @@
 3. Gợi ý "Hay mua" dựa trên lịch sử mua: tần suất, khoảng cách mua lại trung bình, tồn kho hiện tại. Mỗi gợi ý có **lý do**,
    ví dụ: *"Bạn thường mua Sữa tươi mỗi ~7 ngày, lần cuối 8 ngày trước, đã hết trong tủ."*
 4. Tick **"Đã mua"** → món chuyển vào inventory, **hạn dùng tự tính** từ shelf-life rules.
-5. Nút **"Đi chợ"** mở màn Map (PLAN 03).
+5. ~~Nút **"Đi chợ"** mở màn Map (PLAN 03).~~ Đã bỏ cùng PLAN 03 (29/10/2026).
 
 Ngoài phạm vi: giá tiền, chia danh sách theo cửa hàng, nhiều danh sách.
 
@@ -374,7 +374,7 @@ Unit test: số, số chữ, "nửa kg", "lạng", không có đơn vị, nhiề
 
 ### 5.6 UI màn `ShoppingListPage`
 
-- Header `AppHeader` "Danh sách đi chợ", action icon `LucideIcons.map` → "Đi chợ" (PLAN 03).
+- Header `AppHeader` "Danh sách đi chợ" (không có nút "Đi chợ" vì PLAN 03 đã bỏ).
 - Section 1 "Gợi ý hay mua" (ẩn nếu rỗng): list ngang `FrequentSuggestionCard` (tên, số lượng gợi ý, reason 2 dòng, nút "+ Thêm"). Loading = `AppShimmer`, lỗi = dòng nhỏ có "Thử lại" (không chặn danh sách).
 - Section 2 "Cần mua" (pending): `ShoppingItemTile` – checkbox, tên, `quantity unit`, người thêm (tên thành viên nếu có PLAN 05), swipe trái xóa (`DialogHelper.showDeleteDialog`), tap → sửa.
 - Section 3 "Đã mua gần đây" (thu gọn mặc định).

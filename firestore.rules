@@ -292,11 +292,6 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Nearby-store cache is only read and maintained by Cloud Functions.
-    match /place_cache/{cellId} {
-      allow read, write: if false;
-    }
-
     // Bug Reports collection
     match /bug_reports/{reportId} {
       allow create: if isAuthenticated()

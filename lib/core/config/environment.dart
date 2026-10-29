@@ -37,19 +37,6 @@ class AppEnv {
     );
   }
 
-  /// Fixed "lat,lng" used instead of GPS on emulators that cannot provide a
-  /// position. Ignored in release builds so real phones always use GPS.
-  static ({double latitude, double longitude})? get devLocation {
-    if (kReleaseMode) return null;
-    const raw = String.fromEnvironment('DEV_LOCATION');
-    final parts = raw.split(',');
-    if (parts.length != 2) return null;
-    final latitude = double.tryParse(parts[0].trim());
-    final longitude = double.tryParse(parts[1].trim());
-    if (latitude == null || longitude == null) return null;
-    return (latitude: latitude, longitude: longitude);
-  }
-
   static String? get apiBaseUrl {
     const url = String.fromEnvironment('API_BASE_URL', defaultValue: '');
     return url.isEmpty ? null : url;

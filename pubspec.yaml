@@ -58,9 +58,6 @@ dependencies:
   mobile_scanner: ^7.4.2
   camera: ^0.12.1
   fl_chart: ^1.2.0
-  flutter_map: ^8.3.2
-  latlong2: ^0.9.1
-  geolocator: ^14.1.1
   url_launcher: ^6.3.3
   # Pure-Dart helpers for the domain layer (no Flutter dependency).
   meta: ^1.18.0

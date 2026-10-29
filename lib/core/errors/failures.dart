@@ -36,8 +36,6 @@ abstract class Failure {
       return NotFoundFailure(exception.message, exception.code);
     } else if (exception is PermissionDeniedException) {
       return PermissionDeniedFailure(exception.message, exception.code);
-    } else if (exception is LocationException) {
-      return LocationFailure(exception.locationCode, exception.message);
     }
     return ServerFailure(exception.message, exception.code);
   }
@@ -83,13 +81,6 @@ class PermissionDeniedFailure extends Failure {
     super.message = 'Bạn không có quyền thực hiện thao tác này.',
     super.code,
   ]);
-}
-
-class LocationFailure extends Failure {
-  LocationFailure(this.locationCode, [String? message])
-    : super(message ?? 'Không thể lấy vị trí.', locationCode.name);
-
-  final LocationErrorCode locationCode;
 }
 
 /// The account plan's quota was exceeded (e.g. free-plan inventory item limit).

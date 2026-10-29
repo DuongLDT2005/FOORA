@@ -17,7 +17,6 @@ export const Collections = {
   PAYMENT_PROVIDER_TRANSACTIONS: "payment_provider_transactions",
   HOUSEHOLD_INVITATIONS: "household_invitations",
   INVITE_ATTEMPTS: "invite_attempts",
-  PLACE_CACHE: "place_cache",
 
   // Users Subcollections (users/{userId}/...)
   SUBSCRIPTIONS: "subscriptions",

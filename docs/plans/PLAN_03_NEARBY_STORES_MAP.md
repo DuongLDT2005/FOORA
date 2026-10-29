@@ -1,5 +1,7 @@
 # PLAN 03 – Bản đồ siêu thị / chợ gần đây
 
+> **ĐÃ BỎ (29/10/2026).** Code Flutter (`lib/features/places`), callable `getNearbyStores`, collection `place_cache`, quyền vị trí và package `flutter_map`/`latlong2`/`geolocator` đã được gỡ. Lý do: các server Overpass công cộng không ổn định khi gọi từ Cloud Functions (timeout, 504, chặn kết nối), nên tính năng không dùng được trên production. Giữ file này để tham khảo nếu làm lại.
+
 > Chức năng 8 trong `PRM393_Project.docx`: *"OpenStreetMap map showing the user's location and nearby supermarkets
 > and markets, with name, distance and directions. It opens directly from the shopping list ('Go shopping')."*
 > Phụ thuộc: PLAN 01 (nút "Đi chợ"). Có thể làm độc lập nếu tạm mở từ Home.

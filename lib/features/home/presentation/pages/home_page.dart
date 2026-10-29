@@ -82,7 +82,7 @@ class HomePage extends ConsumerWidget {
 
               // Quick action: shopping lists (PLAN_01 §5.1)
               Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
+                padding: EdgeInsets.only(bottom: 24.h),
                 child: FeatureCard(
                   icon: LucideIcons.shoppingBag,
                   iconColor: AppColors.primary,
@@ -90,18 +90,6 @@ class HomePage extends ConsumerWidget {
                   title: 'Danh sách mua sắm',
                   subtitle: 'Lên kế hoạch đi chợ & tự động nhập kho',
                   onTap: () => context.push(AppRouteNames.shoppingLists),
-                ),
-              ),
-              // Quick action: nearby stores (PLAN_03)
-              Padding(
-                padding: EdgeInsets.only(bottom: 24.h),
-                child: FeatureCard(
-                  icon: LucideIcons.mapPinned,
-                  iconColor: AppColors.primary,
-                  iconBgColor: AppColors.emerald50,
-                  title: 'Tìm nơi đi chợ',
-                  subtitle: 'Xem siêu thị và chợ ở gần vị trí của bạn',
-                  onTap: () => context.push(AppRouteNames.nearbyStores),
                 ),
               ),
               if (totalCount == 0)
