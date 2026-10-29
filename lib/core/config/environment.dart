@@ -22,12 +22,13 @@ class AppEnv {
   }
 
   static bool get useFirebaseEmulator {
-    // If explicitly provided via --dart-define, override the environment default
+    // If explicitly provided via --dart-define or .env.json, use that value
     if (const bool.hasEnvironment('USE_FIREBASE_EMULATOR')) {
       return const bool.fromEnvironment('USE_FIREBASE_EMULATOR');
     }
-    // Environment defaults: dev -> true, prod -> false
-    return environment == Environment.dev;
+    // Default to false so the app connects to live Firebase Cloud by default
+    // without requiring local Firebase emulators to be running.
+    return false;
   }
 
   static String get emulatorHost {

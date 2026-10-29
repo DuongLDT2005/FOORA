@@ -21,5 +21,6 @@ export * from "./receipt";
 export * from "./payment";
 export * from "./analytics";
 export * from "./household";
+export * from "./shopping";
 
 

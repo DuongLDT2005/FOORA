@@ -204,3 +204,39 @@ enum HouseholdInvitationStatus {
     );
   }
 }
+
+/// Trạng thái của một danh sách mua sắm
+enum ShoppingListStatus {
+  active('active'),
+  completed('completed'),
+  deleting('deleting');
+
+  final String value;
+  const ShoppingListStatus(this.value);
+
+  static ShoppingListStatus fromString(String? value) {
+    return ShoppingListStatus.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => ShoppingListStatus.active,
+    );
+  }
+}
+
+/// Nguồn gốc tạo ra món cần mua
+enum ShoppingItemSource {
+  manual('manual'),
+  inventory('inventory'),
+  suggestion('suggestion'),
+  aiRecipe('ai_recipe');
+
+  final String value;
+  const ShoppingItemSource(this.value);
+
+  static ShoppingItemSource fromString(String? value) {
+    return ShoppingItemSource.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => ShoppingItemSource.manual,
+    );
+  }
+}
+

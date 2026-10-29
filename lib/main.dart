@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/app_config.dart';
 import 'core/firebase/firebase_initializer.dart';
 import 'core/routes/app_router.dart';
+import 'core/services/local_notification_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/storage_service.dart';
 import 'core/theme/app_theme.dart';
@@ -31,10 +32,17 @@ void main() async {
   // 4. Pre-initialize SharedPreferences for synchronous Riverpod access
   final sharedPreferences = await SharedPreferences.getInstance();
 
+  // 5. Initialize Local Notification Service (for Weekly Shopping Reminders, etc.)
+  final localNotificationService = LocalNotificationServiceImpl();
+  if (!kIsWeb) {
+    await localNotificationService.initialize();
+  }
+
   runApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+        localNotificationServiceProvider.overrideWithValue(localNotificationService),
       ],
       child: const MyApp(),
     ),

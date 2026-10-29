@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/routes/app_router.dart';
 import '../../../../core/routes/route_names.dart';
+import '../../../../core/services/local_notification_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/app_logger.dart';
 
@@ -62,6 +63,7 @@ class NotificationOpenListener extends ConsumerStatefulWidget {
 class _NotificationOpenListenerState
     extends ConsumerState<NotificationOpenListener> {
   StreamSubscription<Map<String, String>>? _openedSub;
+  StreamSubscription<String>? _localOpenedSub;
 
   @override
   void initState() {
@@ -79,11 +81,24 @@ class _NotificationOpenListenerState
           AppLogger.e('Could not read the launching push message', e, st);
         });
     _openedSub = source.onMessageOpenedApp.listen(_open);
+
+    // Listen to local notification tap events (e.g., Weekly Shopping Reminder FR-05)
+    final localNotificationService = ref.read(localNotificationServiceProvider);
+    _localOpenedSub = localNotificationService.onNotificationTapped.listen((payload) {
+      if (!mounted) return;
+      if (payload == LocalNotificationServiceImpl.weeklyShoppingPayload ||
+          payload == AppRouteNames.shoppingLists) {
+        ref.read(routerProvider).push(AppRouteNames.shoppingLists);
+      } else if (payload.startsWith('/')) {
+        ref.read(routerProvider).push(payload);
+      }
+    });
   }
 
   @override
   void dispose() {
     _openedSub?.cancel();
+    _localOpenedSub?.cancel();
     super.dispose();
   }
 

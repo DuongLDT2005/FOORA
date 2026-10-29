@@ -17,7 +17,14 @@ service cloud.firestore {
 
     function isHouseholdMember(householdId) {
       return isAuthenticated()
-        && request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.members;
+        && exists(/databases/$(database)/documents/households/$(householdId))
+        && (
+          get(/databases/$(database)/documents/households/$(householdId)).data.ownerId == request.auth.uid
+          || (
+            'members' in get(/databases/$(database)/documents/households/$(householdId)).data
+            && request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.members
+          )
+        );
     }
 
     // Users collection & Subcollections
@@ -117,6 +124,13 @@ service cloud.firestore {
           // Changing status to consumed/discarded requires statusChangedAt to be set.
           && (resource.data.status == request.resource.data.status
               || request.resource.data.statusChangedAt == request.time);
+      }
+
+      // ===============================================================
+      // Shopping Lists & Shopping Items Subcollections
+      // ===============================================================
+      match /shopping_lists/{document=**} {
+        allow read, write: if isHouseholdMember(householdId);
       }
     }
 

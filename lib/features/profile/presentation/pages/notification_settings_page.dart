@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/components/app_header.dart';
 import '../../../../shared/layouts/subpage_layout.dart';
+import '../../../notification/presentation/widgets/weekly_reminder_settings_card.dart';
 import '../providers/notification_settings_provider.dart';
 
 /// Notification settings: push toggle, expiry-alert rules and daily reminder time.
@@ -181,6 +182,12 @@ class NotificationSettingsPage extends ConsumerWidget {
                 ),
               ),
             ]),
+            SizedBox(height: 20.h),
+
+            // Section 4: Weekly Shopping Reminder (SRS FR-01 to FR-06)
+            _buildSectionHeader('Nhắc nhở mua sắm hàng tuần'),
+            const WeeklyReminderSettingsCard(),
+            SizedBox(height: 20.h),
           ],
         ),
       ),

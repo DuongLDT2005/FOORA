@@ -126,24 +126,47 @@ class InventoryPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  // Manage expiry button
-                  GestureDetector(
-                    onTap: () {
-                      context.push(AppRouteNames.expirationManagement);
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Shopping List shortcut
+                      GestureDetector(
+                        onTap: () {
+                          context.push(AppRouteNames.shoppingLists);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(7.r),
+                          decoration: BoxDecoration(
+                            color: AppColors.slate100,
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(color: AppColors.slate200),
+                          ),
+                          child: Icon(
+                            LucideIcons.shoppingBag,
+                            size: 16.r,
+                            color: AppColors.slate700,
+                          ),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.red50,
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(color: AppColors.red100),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                      SizedBox(width: 8.w),
+                      // Manage expiry button
+                      GestureDetector(
+                        onTap: () {
+                          context.push(AppRouteNames.expirationManagement);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.red50,
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(color: AppColors.red100),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                           Text(
                             'Quản lý hạn dùng',
                             style: TextStyle(
@@ -175,9 +198,11 @@ class InventoryPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
+          ),
 
             // Search and Location Filters
             Padding(

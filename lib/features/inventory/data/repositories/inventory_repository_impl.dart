@@ -103,7 +103,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<List<FoodCategory>> getCategories() async {
     try {
-      return await remoteDataSource.getCategories();
+      final list = await remoteDataSource.getCategories();
+      return List<FoodCategory>.from(list);
     } on ServerException catch (e) {
       throw ServerFailure(e.message, e.code);
     } catch (_) {
