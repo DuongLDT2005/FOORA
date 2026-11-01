@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/helpers/dialog_helper.dart';
 import '../../../../shared/helpers/toast_helper.dart';
+import '../helpers/inventory_item_actions.dart';
 import '../providers/expiration_list_provider.dart';
 import '../providers/inventory_provider.dart';
 import '../widgets/expiration_group_header.dart';
@@ -17,26 +18,10 @@ import '../widgets/expiration_stats_board.dart';
 import '../../domain/entities/inventory_item.dart';
 
 /// Expiry management screen. Groups items into Expired / Today / Tomorrow /
-/// Upcoming / Safe and lets the user sort, swipe-delete or bulk-remove expired food.
+/// Upcoming / Safe and lets the user sort or bulk-remove expired food. Cards
+/// behave like the inventory tab: tap to edit, swipe to mark consumed/discarded.
 class ExpirationManagementPage extends ConsumerWidget {
   const ExpirationManagementPage({super.key});
-
-  /// Marks a single swiped item as discarded.
-  Future<void> _onSwipeDelete(
-    BuildContext context,
-    WidgetRef ref,
-    InventoryItem item,
-  ) async {
-    try {
-      await ref.read(inventoryStatusControllerProvider).changeStatus([
-        item.id,
-      ], InventoryItemStatus.discarded);
-    } on Failure catch (failure) {
-      if (context.mounted) {
-        ToastHelper.show(context, failure.message, isError: true);
-      }
-    }
-  }
 
   /// Asks for confirmation, then discards every expired item in one batch.
   Future<void> _onDeleteAllExpired(
@@ -90,6 +75,18 @@ class ExpirationManagementPage extends ConsumerWidget {
     String getLocationName(String id) {
       final match = locations.where((l) => l.id == id);
       return match.isNotEmpty ? match.first.name : 'Chưa phân loại';
+    }
+
+    Widget buildCard(InventoryItem item, ExpirationGroupType groupType) {
+      return ExpirationItemCard(
+        item: item,
+        categoryName: getCategoryName(item.categoryId),
+        storageLocationName: getLocationName(item.storageLocationId),
+        groupType: groupType,
+        onTap: () => InventoryItemActions.open(context, item),
+        onConfirmDelete: () =>
+            InventoryItemActions.confirmRemove(context, ref, item.id),
+      );
     }
 
     return Container(
@@ -334,16 +331,7 @@ class ExpirationManagementPage extends ConsumerWidget {
                         ),
                       ),
                       ...state.expiredItems.map(
-                        (item) => ExpirationItemCard(
-                          item: item,
-                          categoryName: getCategoryName(item.categoryId),
-                          storageLocationName: getLocationName(
-                            item.storageLocationId,
-                          ),
-                          groupType: ExpirationGroupType.expired,
-                          onSwipeDelete: () =>
-                              _onSwipeDelete(context, ref, item),
-                        ),
+                        (item) => buildCard(item, ExpirationGroupType.expired),
                       ),
                       SizedBox(height: 12.h),
                     ],
@@ -356,16 +344,7 @@ class ExpirationManagementPage extends ConsumerWidget {
                         animateDot: true,
                       ),
                       ...state.todayItems.map(
-                        (item) => ExpirationItemCard(
-                          item: item,
-                          categoryName: getCategoryName(item.categoryId),
-                          storageLocationName: getLocationName(
-                            item.storageLocationId,
-                          ),
-                          groupType: ExpirationGroupType.today,
-                          onSwipeDelete: () =>
-                              _onSwipeDelete(context, ref, item),
-                        ),
+                        (item) => buildCard(item, ExpirationGroupType.today),
                       ),
                       SizedBox(height: 12.h),
                     ],
@@ -377,16 +356,7 @@ class ExpirationManagementPage extends ConsumerWidget {
                         color: AppColors.amber500,
                       ),
                       ...state.tomorrowItems.map(
-                        (item) => ExpirationItemCard(
-                          item: item,
-                          categoryName: getCategoryName(item.categoryId),
-                          storageLocationName: getLocationName(
-                            item.storageLocationId,
-                          ),
-                          groupType: ExpirationGroupType.tomorrow,
-                          onSwipeDelete: () =>
-                              _onSwipeDelete(context, ref, item),
-                        ),
+                        (item) => buildCard(item, ExpirationGroupType.tomorrow),
                       ),
                       SizedBox(height: 12.h),
                     ],
@@ -398,16 +368,7 @@ class ExpirationManagementPage extends ConsumerWidget {
                         color: AppColors.amber500,
                       ),
                       ...state.upcomingItems.map(
-                        (item) => ExpirationItemCard(
-                          item: item,
-                          categoryName: getCategoryName(item.categoryId),
-                          storageLocationName: getLocationName(
-                            item.storageLocationId,
-                          ),
-                          groupType: ExpirationGroupType.upcoming,
-                          onSwipeDelete: () =>
-                              _onSwipeDelete(context, ref, item),
-                        ),
+                        (item) => buildCard(item, ExpirationGroupType.upcoming),
                       ),
                       SizedBox(height: 12.h),
                     ],
@@ -419,16 +380,7 @@ class ExpirationManagementPage extends ConsumerWidget {
                         color: AppColors.emerald500,
                       ),
                       ...state.safeItems.map(
-                        (item) => ExpirationItemCard(
-                          item: item,
-                          categoryName: getCategoryName(item.categoryId),
-                          storageLocationName: getLocationName(
-                            item.storageLocationId,
-                          ),
-                          groupType: ExpirationGroupType.safe,
-                          onSwipeDelete: () =>
-                              _onSwipeDelete(context, ref, item),
-                        ),
+                        (item) => buildCard(item, ExpirationGroupType.safe),
                       ),
                     ],
 
