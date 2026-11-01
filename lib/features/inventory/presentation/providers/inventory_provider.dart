@@ -198,6 +198,8 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
       try {
         final fetchedCategories = await repository.getCategories();
         final fetchedLocations = await repository.getStorageLocations();
+        // The provider recreates this notifier when its dependencies load.
+        if (!mounted) return;
         state = state.copyWith(
           categories: fetchedCategories,
           storageLocations: fetchedLocations,
@@ -208,19 +210,22 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
               (state.categoryId.isEmpty || state.categoryId == 'vegetables')) {
             await onCategoryChanged(fetchedCategories.first.id);
           }
+          if (!mounted) return;
           if (fetchedLocations.isNotEmpty &&
               (state.storageLocationId.isEmpty ||
                   state.storageLocationId == 'fridge')) {
             await onLocationChanged(fetchedLocations.first.id);
           }
         } else {
-          await _recalculateExpiry();
+          await _refreshShelfLife(applyExpiration: false);
         }
       } catch (_) {
+        if (!mounted) return;
         state = state.copyWith(isLoadingMetadata: false);
       }
     } else {
-      await _recalculateExpiry();
+      // An item being edited keeps its stored expiry date when the form opens.
+      await _refreshShelfLife(applyExpiration: itemToEdit == null);
     }
   }
 
@@ -390,7 +395,11 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
   }
 
   /// Recalculates the expiry date + rule hint for the current fields.
-  Future<void> _recalculateExpiry() async {
+  Future<void> _recalculateExpiry() => _refreshShelfLife(applyExpiration: true);
+
+  /// Loads the rule hint for the current fields. The estimated date replaces
+  /// the current expiry date only when [applyExpiration] is `true`.
+  Future<void> _refreshShelfLife({required bool applyExpiration}) async {
     final estimate = await ref.read(calculateExpirationDateUseCaseProvider)(
       foodId: state.foodId,
       categoryId: state.categoryId,
@@ -399,13 +408,14 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
     );
     if (!mounted) return;
     final shelfLife = estimate.shelfLife;
+    final expirationDate = applyExpiration ? estimate.expirationDate : null;
     state = shelfLife == null
         ? state.copyWith(
-            expirationDate: estimate.expirationDate,
+            expirationDate: expirationDate,
             clearShelfLifeRule: true,
           )
         : state.copyWith(
-            expirationDate: estimate.expirationDate,
+            expirationDate: expirationDate,
             maxStorageTime: shelfLife.maxValue,
             minStorageTime: shelfLife.minValue,
             storageTimeUnit: shelfLife.unit,

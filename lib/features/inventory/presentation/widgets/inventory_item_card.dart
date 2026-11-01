@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/food_category.dart';
 import 'food_image_avatar.dart';
+import 'locked_item_badge.dart';
 
 /// Food item card with progress bar, expiration state styling, and swipe-to-delete
 /// Built exactly to FOORA AI HTML Design spec
@@ -124,7 +125,7 @@ class InventoryItemCard extends StatelessWidget {
                             ),
                             SizedBox(width: 8.w),
                             isLocked
-                                ? _buildLockedBadge()
+                                ? const LockedItemBadge()
                                 : _buildStatusBadge(
                                     isExpired,
                                     isWarning,
@@ -230,34 +231,6 @@ class InventoryItemCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  /// Badge for an item locked by the Free plan's food limit.
-  Widget _buildLockedBadge() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: AppColors.slate100,
-        borderRadius: BorderRadius.circular(4.r),
-        border: Border.all(color: AppColors.slate200),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(LucideIcons.lock, size: 10.r, color: AppColors.slate600),
-          SizedBox(width: 2.w),
-          Text(
-            'ĐÃ KHÓA',
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w900,
-              color: AppColors.slate600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
       ),
     );
   }
