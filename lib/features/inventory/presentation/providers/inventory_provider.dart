@@ -361,7 +361,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
 
   // Simple field setters.
   void onQuantityChanged(double newQty) {
-    if (!newQty.isFinite || newQty < 0) return;
+    if (!newQty.isFinite || newQty < 0 || newQty == state.quantity) return;
     final baseline = itemToEdit == null || newQty > state.initialQuantity
         ? newQty
         : state.initialQuantity;
@@ -381,7 +381,11 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
 
   void onRemainingPercentageChanged(double newPercentage) {
     final percent = newPercentage.round().clamp(0, 100);
-    onQuantityChanged(state.initialQuantity * percent / 100);
+    // The batch size stays fixed; only the remaining amount follows the slider.
+    state = state.copyWith(
+      quantity: (state.initialQuantity * percent).round() / 100,
+      remainingPercentage: percent,
+    );
   }
 
   /// Purchase date changed -> expiry must be recalculated.
@@ -498,7 +502,7 @@ class InventoryFormNotifier extends StateNotifier<InventoryFormState> {
           normalizedName: state.name.trim().toLowerCase(),
           categoryId: state.categoryId,
           quantity: state.quantity,
-          initialQuantity: state.quantity,
+          initialQuantity: state.initialQuantity,
           unit: state.unit,
           remainingPercentage: state.remainingPercentage,
           storageLocationId: state.storageLocationId,

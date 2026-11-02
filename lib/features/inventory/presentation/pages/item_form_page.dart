@@ -117,6 +117,10 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     super.dispose();
   }
 
+  /// Shows at most two decimals, without trailing zeros (5, 2.5, 0.33).
+  String _formatQuantity(double quantity) =>
+      quantity.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+
   /// Opens a date picker constrained to the allowed range.
   Future<void> _pickDate({
     required BuildContext context,
@@ -405,10 +409,26 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
 
                   SizedBox(height: 20.h),
 
-                  // Percentage follows the remaining quantity and original batch size.
+                  // 4. Remaining Percentage (Slider)
+                  AppPercentageSlider(
+                    value: formState.remainingPercentage.toDouble(),
+                    onChanged: (percent) {
+                      formNotifier.onRemainingPercentageChanged(percent);
+                      // Submit reads the text field, so it must follow the slider.
+                      _quantityController.text = _formatQuantity(
+                        ref
+                            .read(
+                              inventoryFormNotifierProvider(widget.itemToEdit),
+                            )
+                            .quantity,
+                      );
+                    },
+                  ),
+                  SizedBox(height: 8.h),
                   Text(
-                    'Lượng còn lại: ${formState.remainingPercentage}% '
-                    '(mốc ${formState.initialQuantity} ${formState.unit})',
+                    'Số lượng ban đầu: '
+                    '${_formatQuantity(formState.initialQuantity)} '
+                    '${formState.unit}',
                     style: AppTextStyles.bodySmall,
                   ),
 
